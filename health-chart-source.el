@@ -115,6 +115,10 @@ normalizes it.  `health-chart-source-cli' runs the biomarker CLI,
     (category . :category))
   "JSON member name -> canonical plist key.  Unknown members are dropped.")
 
+(defconst health-chart-source-field-aliases
+  '((taken_at . :date))
+  "Other JSON member names for a canonical key, as biomarker-cli emits them.")
+
 (defconst health-chart-source-list-keys '(measurements data results items)
   "Envelope members that may hold the measurement list, in order.")
 
@@ -124,7 +128,8 @@ normalizes it.  `health-chart-source-cli' runs the biomarker CLI,
                      ((symbolp key) (symbol-name key))
                      (t (format "%s" key))))
          (wire (intern (replace-regexp-in-string "-" "_" name))))
-    (alist-get wire health-chart-source-fields)))
+    (or (alist-get wire health-chart-source-fields)
+        (alist-get wire health-chart-source-field-aliases))))
 
 (defun health-chart-source--value (key v)
   "Canonical form of value V for canonical KEY."
@@ -244,9 +249,11 @@ biomarker/v1 measurement object."
   "The argument list biomarker gets for COMMAND with ARGS (a plist)."
   (append (when health-chart-source-db
             (list "--db" (expand-file-name health-chart-source-db)))
-          (list (symbol-name command))
+          ;; biomarker's own `trend' answers summary statistics, not the
+          ;; series; the series is what `query' returns.
+          (list (symbol-name (if (eq command 'trend) 'query command)))
           (cl-loop for (key flag) in '((:person "--person") (:marker "--marker")
-                                       (:since "--since") (:until "--until"))
+                                       (:since "--from") (:until "--to"))
                    for v = (plist-get args key)
                    when v append (list flag (format "%s" v)))
           health-chart-source-extra-args
