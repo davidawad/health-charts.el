@@ -36,6 +36,17 @@
                           health-chart-source-test--spec-json))
                  (list health-chart-source-test--canonical))))
 
+(ert-deftest health-chart-source-test-parses-real-biomarker-cli-output ()
+  ;; A record exactly as biomarker-cli 0.1 `query --format json' emits it:
+  ;; the draw date is `taken_at', and extra members are ignored.
+  (let ((m (car (health-chart-source-parse
+                 "{\"schema\":\"biomarker/v1\",\"kind\":\"measurements\",\"count\":1,\"data\":[{\"id\":2,\"person\":\"alex\",\"marker\":\"ldl-c\",\"marker_name\":\"LDL Cholesterol\",\"category\":\"lipid\",\"taken_at\":\"2023-02-14\",\"qualifier\":null,\"value\":138.0,\"unit\":\"mg/dL\",\"ref_low\":null,\"ref_high\":100.0,\"opt_low\":null,\"opt_high\":70.0,\"flag\":\"high\",\"tags\":[\"annual\"]}]}"))))
+    (should (equal (plist-get m :date) "2023-02-14"))
+    (should (equal (plist-get m :marker) "ldl-c"))
+    (should (equal (plist-get m :value) 138.0))
+    (should (equal (plist-get m :ref-high) 100.0))
+    (should (eq (plist-get m :flag) 'high))))
+
 (ert-deftest health-chart-source-test-normalizes-every-lisp-form ()
   (let ((want health-chart-source-test--canonical))
     ;; plist, canonical keys
@@ -98,7 +109,7 @@
     (should (equal (health-chart-source-cli-args 'latest)
                    '("latest" "--format" "json")))
     (should (equal (health-chart-source-cli-args 'trend :person "alex" :marker "ldl_c" :since "2024-01-01")
-                   '("trend" "--person" "alex" "--marker" "ldl_c" "--since" "2024-01-01"
+                   '("query" "--person" "alex" "--marker" "ldl_c" "--from" "2024-01-01"
                      "--format" "json"))))
   (let ((health-chart-source-db "/tmp/bio.db") (health-chart-source-extra-args '("--quiet")))
     (should (equal (health-chart-source-cli-args 'flag :person "sam")
