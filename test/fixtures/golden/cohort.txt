@@ -1,0 +1,18 @@
+Cohort · cardio
+
+ApoB                  ◐ suboptimal   Lp(a)                       ▲ high
+84 mg/dL · 2025-06-02                140 nmol/L · 2024-02-12
+▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░┃░────   ░░░───────────────────────────┃───
+█▆▃▂▄▁       ↘ improved              ▁█           ↗ worsened
+
+HbA1c                     ○ normal   Vitamin D                    ▼ low
+5.4 % · 2025-03-03                   26 ng/mL · 2024-11-18
+░░░░░░░┃░░░░░░░░░░░░░░░░░░────────   ───┃─░░░░░░░░░░░░░░░░░░░░░░░░░░───
+█▅▁          ↘ improved              █▄▁          ↘ worsened
+
+hs-CRP position           ○ normal   Ferritin                     ? n/a
+0.4 of range · 2025-06-02            n/a · no draw
+░░░░░░░░░░░░┃░░░░░░░░░░░░░░░░░────   no range to place it in
+▅█▃▁         → on-target
+
+┃ value   ▒ optimal   ░ reference or bounds   ─ outside

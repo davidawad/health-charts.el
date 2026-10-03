@@ -1,0 +1,5 @@
+Indicators · metabolic
+Indicator       Value  Unit      Status        Trend
+HbA1c             5.1  %         ● optimal     ▄▁█▄▁▄       → steady
+Glucose            87  mg/dL     ● optimal     ▅▂█▄▁▇       → on-target
+Glucose slope  -0.115  mg/dL/yr  ? n/a         ▅▂█▄▁▇       ↗ rising

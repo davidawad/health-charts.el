@@ -3,7 +3,8 @@
 #   health-chart render spec.json        (or: ... | health-chart render -)
 #   health-chart explain|validate spec.json
 #   biomarker trend --marker ldl_c --format json | health-chart pipe timeseries ['{"width":60}']
-#   health-chart example KIND | kinds | describe | doctor
+#   health-chart example KIND | kinds | describe | doctor | cohorts
+#   health-chart cohort NAME ['{"kind":"staleness","person":"alex"}'] | cohort-explain NAME [PROPS]
 # Set EMACS to pick the binary. See health-chart-batch.el for the spec format.
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

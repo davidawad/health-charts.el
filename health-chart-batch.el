@@ -25,6 +25,11 @@
 ;;   kinds                      every kind with its shape and doc, as JSON
 ;;   describe                   the whole package as JSON
 ;;   doctor                     health rows as JSON
+;;   cohorts                    every indicator cohort, as JSON
+;;   cohort   NAME [PROPS]      fetch and render cohort NAME (PROPS: "kind"
+;;                              scorecard|cohort|staleness, "person",
+;;                              "as_of", "backend", ...; text by default)
+;;   cohort-explain NAME [PROPS]  the pure plan of `cohort', as JSON
 ;;
 ;; A SPEC is a JSON object: {"kind": "timeseries", "data": [...], ...props},
 ;; props being the keyword arguments of `health-chart-plot' without the
@@ -109,6 +114,38 @@
       ,@(unless (memq kind '(compare sparkline)) '((person . "alex")))
       (backend . "text"))))
 
+(defun health-chart-batch--jsonable (v)
+  "V with plists as objects and other lists as arrays, for `json-encode'."
+  (cond
+   ((and (proper-list-p v) (keywordp (car v)) (cl-evenp (length v))
+         (cl-loop for (k) on v by #'cddr always (keywordp k)))
+    (cl-loop for (k x) on v by #'cddr
+             collect (cons (intern (substring (symbol-name k) 1))
+                           (health-chart-batch--jsonable x))))
+   ((proper-list-p v) (if v (apply #'vector (mapcar #'health-chart-batch--jsonable v)) v))
+   ((consp v) (vector (health-chart-batch--jsonable (car v)) (health-chart-batch--jsonable (cdr v))))
+   (t v)))
+
+(defun health-chart-batch--cohort-props (json)
+  "Cohort command props from JSON (a parsed PROPS object or nil)."
+  (unless (or (null json) (and (consp json) (consp (car json))))
+    (signal 'health-chart-error
+            (list "cohort PROPS must be a JSON object, e.g. '{\"kind\":\"staleness\"}'"
+                  :code "bad_request")))
+  (let ((props (health-chart-batch--props json)))
+    (when (stringp (plist-get props :kind))
+      (setq props (plist-put props :kind (intern (plist-get props :kind)))))
+    (append props (unless (plist-member props :backend) '(:backend text)))))
+
+(defun health-chart-batch--cohort-args (args)
+  "The (NAME . PROPS) of a cohort command's ARGS, or signal."
+  (unless (car args)
+    (signal 'health-chart-error
+            (list "cohort needs a NAME; run `health-chart cohorts'" :code "bad_request")))
+  (cons (intern (car args))
+        (health-chart-batch--cohort-props
+         (when (cadr args) (health-chart-batch--parse (cadr args))))))
+
 (defun health-chart-batch--error-code (err)
   "Stable code for ERR: its :code, else derived from its symbol."
   (or (plist-get (cddr err) :code)
@@ -165,8 +202,18 @@
           ("kinds" (health-chart-batch--json (plist-get (health-chart-describe) :kinds)))
           ("describe" (health-chart-batch--json (health-chart-describe)))
           ("doctor" (health-chart-batch--json (apply #'vector (health-chart-doctor-checks))))
+          ("cohorts" (health-chart-batch--json (plist-get (health-chart-describe) :cohorts)))
+          ("cohort"
+           (let ((call (health-chart-batch--cohort-args args)))
+             (health-chart-batch--print-chart (apply #'health-chart-cohort-plot (car call) (cdr call)))))
+          ("cohort-explain"
+           (let ((call (health-chart-batch--cohort-args args)))
+             (health-chart-batch--json
+              (health-chart-batch--jsonable
+               (apply #'health-chart-cohort-plot-explain (car call) (cdr call))))))
           (_ (signal 'health-chart-error
-                     (list (format "unknown command %S; use render, explain, validate, pipe, example, kinds, describe or doctor" cmd)
+                     (list (format "unknown command %S; use render, explain, validate, pipe, example, kinds, describe, doctor, \
+cohorts, cohort or cohort-explain" cmd)
                            :code "bad_request"))))
         0)
     (error

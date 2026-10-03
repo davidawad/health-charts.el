@@ -109,6 +109,8 @@ A measurement's own :category wins; markers in no category fall into
 (defun health-chart-marker-label (marker)
   "Display label for MARKER id."
   (or (cdr (assoc marker health-chart-marker-labels))
+      (cdr (seq-find (lambda (entry) (health-chart-marker-equal (car entry) marker))
+                     health-chart-marker-labels))
       (replace-regexp-in-string "_" " " (format "%s" marker))))
 
 (defun health-chart-marker-category (m)
@@ -116,7 +118,9 @@ A measurement's own :category wins; markers in no category fall into
   (if (and (listp m) (plist-get m :category))
       (plist-get m :category)
     (let ((marker (if (stringp m) m (plist-get m :marker))))
-      (or (car (seq-find (lambda (entry) (member marker (cdr entry)))
+      (or (car (seq-find (lambda (entry)
+                           (seq-some (lambda (c) (health-chart-marker-equal c marker))
+                                     (cdr entry)))
                          health-chart-marker-categories))
           "other"))))
 
@@ -405,14 +409,27 @@ source's :flag is trusted."
   "Distinct draw dates of MS, oldest first."
   (sort (health-chart-distinct :date ms) #'string<))
 
+(defun health-chart-marker-key (marker)
+  "MARKER folded for comparison: lower case, letters and digits only.
+Sources spell one marker differently (biomarker-cli's \"ldl-c\" and
+\"hscrp\", this package's \"ldl_c\" and \"hs_crp\"); they share a key."
+  (when marker
+    (replace-regexp-in-string "[^a-z0-9]" "" (downcase (format "%s" marker)))))
+
+(defun health-chart-marker-equal (a b)
+  "Non-nil when markers A and B name the same marker."
+  (and a b (equal (health-chart-marker-key a) (health-chart-marker-key b))))
+
 (cl-defun health-chart-filter (ms &key person marker category since until)
   "MS restricted to PERSON, MARKER, CATEGORY and dates SINCE..UNTIL.
-A nil criterion does not filter.  MARKER may be a list of markers."
+A nil criterion does not filter.  MARKER may be a list of markers;
+markers match by `health-chart-marker-key'."
   (seq-filter
    (lambda (m)
      (and (or (null person) (equal person (plist-get m :person)))
-          (or (null marker) (if (listp marker) (member (plist-get m :marker) marker)
-                              (equal marker (plist-get m :marker))))
+          (or (null marker)
+              (seq-some (lambda (c) (health-chart-marker-equal c (plist-get m :marker)))
+                        (if (listp marker) marker (list marker))))
           (or (null category) (equal category (health-chart-marker-category m)))
           (or (null since) (not (string< (plist-get m :date) since)))
           (or (null until) (not (string< until (plist-get m :date))))))

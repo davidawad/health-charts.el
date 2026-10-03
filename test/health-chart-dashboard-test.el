@@ -26,7 +26,7 @@
     (should (equal health-chart-dashboard--person "alex"))
     (should (equal health-chart-dashboard--persons '("alex" "sam")))
     (let ((text (buffer-string)))
-      (should (string-match-p "Health charts · alex · category: all · text" text))
+      (should (string-match-p "Health charts · alex · category: all · cohort: none · text" text))
       (should (string-match-p "Biomarkers · alex" text))
       (should (string-match-p "Latest vs range · alex" text))
       (should (string-match-p "Out of range · alex" text)))))

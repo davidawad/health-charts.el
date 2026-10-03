@@ -21,6 +21,7 @@
 (require 'cl-lib)
 (require 'seq)
 (require 'health-chart-core)
+(require 'health-chart-indicator)
 
 (defun health-chart-model--bands (ranges props)
   "The (:ref (LO . HI) :opt (LO . HI)) bands RANGES yields under PROPS.
@@ -208,6 +209,97 @@ Returns (:person :from :to :rows); a row is (:marker :label :unit :before
                                        :pct (if (zerop bv) nil (* 100.0 (/ (- av bv) (float (abs bv)))))
                                        :verdict (health-chart-model--verdict b a))))))
                          (health-chart-by-marker mine)))))))
+
+;; -----------------------------------------------------------------------
+;; Indicator values: scorecard, cohort panel, staleness
+;; -----------------------------------------------------------------------
+
+(defun health-chart-model-scorecard (values &rest _props)
+  "Scorecard rows for canonical indicator VALUES, in order.
+Each row is (:id :label :value :unit :date :status :series :trend
+:direction :marker :person :cohort :indicator VALUE)."
+  (mapcar (lambda (v)
+            (list :id (plist-get v :id)
+                  :label (or (plist-get v :label) (plist-get v :id))
+                  :value (plist-get v :value) :unit (plist-get v :unit)
+                  :date (plist-get v :date)
+                  :status (health-chart-indicator-status v)
+                  :series (plist-get v :series)
+                  :trend (health-chart-indicator-trend v)
+                  :direction (plist-get v :direction)
+                  :marker (plist-get v :marker) :person (plist-get v :person)
+                  :cohort (plist-get v :cohort) :indicator v))
+          values))
+
+(defun health-chart-model-indicator-title (values fallback)
+  "A title naming the cohort or person of VALUES, after FALLBACK."
+  (format "%s · %s" fallback
+          (or (car (health-chart-distinct :cohort values))
+              (car (health-chart-distinct :person values))
+              "all")))
+
+(defun health-chart-model-cohort (values &rest props)
+  "Cohort-panel cards for indicator VALUES: scorecard rows with a track.
+A card adds :ref and :opt bands (as in `health-chart-model-series',
+honoring PROPS' :ref and :optimal; a value with no ranges shows its
+:bounds as the reference band) and :domain (LO . HI), nil when the
+value is missing or nothing bounds it."
+  (mapcar
+   (lambda (row)
+     (let* ((v (plist-get row :indicator))
+            (x (plist-get row :value))
+            (ranges (if (health-chart-indicator-has-ranges-p v)
+                        v
+                      (list :ref-low (car (plist-get v :bounds))
+                            :ref-high (cadr (plist-get v :bounds)))))
+            (bands (health-chart-model--bands ranges props))
+            (finite (delq nil (list x (car (plist-get bands :ref)) (cdr (plist-get bands :ref))
+                                    (car (plist-get bands :opt)) (cdr (plist-get bands :opt))))))
+       (append row bands
+               (list :domain
+                     (when (and (numberp x) (cdr finite))
+                       (let* ((lo (apply #'min finite)) (hi (apply #'max finite))
+                              (pad (* 0.12 (max (- hi lo) (* 0.2 (abs x)) 1e-6))))
+                         (cons (if (and (>= lo 0) (< (- lo pad) 0)) 0 (- lo pad))
+                               (+ hi pad))))))))
+   (apply #'health-chart-model-scorecard values props)))
+
+(defun health-chart-model-staleness-state (days due stale)
+  "Freshness of a draw DAYS old: fresh, due (past DUE) or stale (past STALE).
+Undated when DAYS is nil."
+  (cond ((null days) 'undated)
+        ((> days stale) 'stale)
+        ((> days due) 'due)
+        (t 'fresh)))
+
+(defun health-chart-model-staleness (values &rest props)
+  "Staleness model: days from each indicator's draw to an as-of date.
+PROPS: :as-of (default the latest :as-of of VALUES, else today),
+:due-days and :stale-days (default `health-chart-indicator-due-days' and
+`-stale-days').  Returns (:as-of :due :stale :scale :rows); a row is
+\(:id :label :date :days :state :marker :person), stalest first and
+undated last.  :scale is the day count a full bar spans."
+  (let* ((as-of (or (plist-get props :as-of)
+                    (car (last (sort (health-chart-distinct :as-of values) #'string<)))
+                    (format-time-string "%Y-%m-%d")))
+         (due (or (plist-get props :due-days) health-chart-indicator-due-days))
+         (stale (or (plist-get props :stale-days) health-chart-indicator-stale-days))
+         (now (health-chart-date-days as-of))
+         (rows (mapcar
+                (lambda (v)
+                  (let ((days (and (plist-get v :date)
+                                   (- now (health-chart-date-days (plist-get v :date))))))
+                    (list :id (plist-get v :id)
+                          :label (or (plist-get v :label) (plist-get v :id))
+                          :date (plist-get v :date) :days days
+                          :state (health-chart-model-staleness-state days due stale)
+                          :marker (plist-get v :marker) :person (plist-get v :person)
+                          :cohort (plist-get v :cohort))))
+                values)))
+    (list :as-of as-of :due due :stale stale
+          :scale (max 1 (round (* 1.25 stale))
+                      (apply #'max 0 (delq nil (mapcar (lambda (r) (plist-get r :days)) rows))))
+          :rows (seq-sort-by (lambda (r) (or (plist-get r :days) most-negative-fixnum)) #'> rows))))
 
 (defun health-chart-model-resample (values width)
   "VALUES averaged into at most WIDTH buckets (unchanged when shorter)."

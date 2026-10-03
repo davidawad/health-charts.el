@@ -25,6 +25,10 @@ Ask the package; don't read source to learn its state.
 6. Fetch: `health-chart-source-query` / `-trend` / `-latest` / `-flag`
    go through `health-chart-source-function`; use
    `health-chart-source-static` to work without the CLI.
+   Indicator cohorts: `health-chart-cohort-values` / `-cohort-plot`;
+   their pure plans are `health-chart-cohort-values-explain` /
+   `-cohort-plot-explain` (every effectful indicator call has an
+   `-explain` twin).
 7. Health: `(health-chart-doctor-checks)` — rows
    `(:name :status pass|fail|skip :detail :remediation)`.
 
@@ -41,7 +45,12 @@ Ask the package; don't read source to learn its state.
   add golden fixtures.
 - The biomarker wire format lives only in health-chart-source.el
   (`health-chart-source-fields`, `-list-keys`, `-cli-args`). Nothing
-  else may know JSON member names or CLI flags.
+  else may know JSON member names or CLI flags.  Likewise the indicator
+  catalog record format lives only in health-chart-indicator.el
+  (`health-chart-indicator-record-paths`).
+- Cohorts and recipe support are data: `health-chart-indicator-cohorts`
+  and `health-chart-indicator-evaluators`.  An effectful call gets a pure
+  `-explain` twin.
 - Errors: `define-error` under `health-chart-error`, data
   `(MESSAGE :code CODE ...)`, message says how to fix it. Never
   message-and-return-nil.

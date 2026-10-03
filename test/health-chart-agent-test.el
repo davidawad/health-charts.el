@@ -10,7 +10,8 @@
 
 (ert-deftest health-chart-agent-test-list-kinds-matches-registry ()
   (should (equal (mapcar #'car (health-chart-list-kinds))
-                 '(timeseries panel table bullet heatmap compare delta sparkline)))
+                 '(timeseries panel table bullet heatmap compare delta sparkline
+                   scorecard cohort staleness)))
   (dolist (k (health-chart-list-kinds))
     (should (plist-get (cdr k) :doc))
     (should (assq (plist-get (cdr k) :shape) health-chart-shapes))))
