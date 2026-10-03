@@ -1,0 +1,122 @@
+;;; health-chart-core-test.el --- Dates, numbers, status, collections -*- lexical-binding: t; -*-
+
+;;; Code:
+
+(require 'health-chart-test-helpers)
+
+(ert-deftest health-chart-core-test-date-days-round-trip ()
+  (should (= 0 (health-chart-date-days "1970-01-01")))
+  (should (= 1 (health-chart-date-days "1970-01-02")))
+  (should (= 20089 (health-chart-date-days "2025-01-01")))
+  (dolist (d '("1999-12-31" "2000-02-29" "2024-02-29" "2024-03-01" "2100-03-01" "1969-07-20"))
+    (should (equal d (health-chart-days-date (health-chart-date-days d)))))
+  ;; a timestamp suffix is tolerated, the day is what counts
+  (should (= (health-chart-date-days "2025-03-01")
+             (health-chart-date-days "2025-03-01T08:30:00Z"))))
+
+(ert-deftest health-chart-core-test-date-validation ()
+  (should (health-chart-date-p "2025-03-01"))
+  (should-not (health-chart-date-p "2025-13-01"))
+  (should-not (health-chart-date-p "2025-3-1"))
+  (should-not (health-chart-date-p 20250301))
+  (let ((err (should-error (health-chart-date-days "March") :type 'health-chart-error)))
+    (should (equal (plist-get (cddr err) :code) "invalid_date"))))
+
+(ert-deftest health-chart-core-test-format-date ()
+  (should (equal (health-chart-format-date "2025-03-01" "%y-%m") "25-03"))
+  (should (equal (health-chart-format-date "2025-03-01" "%d %b %Y") "01 Mar 2025"))
+  (should (equal (health-chart-format-date "2025-03-01") "2025-03-01")))
+
+(ert-deftest health-chart-core-test-number-formatting ()
+  (should (equal (health-chart-fmt 112) "112"))
+  (should (equal (health-chart-fmt 112.0) "112"))
+  (should (equal (health-chart-fmt 5.40) "5.4"))
+  (should (equal (health-chart-fmt 1.126) "1.13"))
+  ;; below 1, three significant digits: small markers keep their precision
+  (should (equal (health-chart-fmt 0.004) "0.004"))
+  (should (equal (health-chart-fmt 0.995) "0.995"))
+  (should (equal (health-chart-fmt 0.1256) "0.126"))
+  (should (equal (health-chart-fmt -0.0001) "-0.0001"))
+  (should (equal (health-chart-fmt 0.5) "0.5"))
+  (should (equal (health-chart-fmt 143.6) "144"))
+  (should (equal (health-chart-fmt-range 0 100) "0–100"))
+  (should (equal (health-chart-fmt-range nil 70) "≤70"))
+  (should (equal (health-chart-fmt-range 40 nil) "≥40"))
+  (should (equal (health-chart-fmt-range nil nil) ""))
+  (should (equal (health-chart-fmt-value (health-chart-test-m :value 5.6 :unit "%")) "5.6 %")))
+
+(ert-deftest health-chart-core-test-nice-ticks ()
+  (should (equal (health-chart-nice-ticks 63 137 4) '(80.0 100.0 120.0)))
+  (should (equal (health-chart-nice-ticks 0 10 6) '(0.0 2.0 4.0 6.0 8.0 10.0)))
+  (should (equal (health-chart-nice-ticks 5 5 3) '(5))))
+
+(ert-deftest health-chart-core-test-status ()
+  (cl-flet ((st (&rest p) (health-chart-status (apply #'health-chart-test-m p))))
+    (should (eq (st :value 112 :ref-low 0 :ref-high 100 :opt-high 70) 'high))
+    (should (eq (st :value 85 :ref-low 0 :ref-high 100 :opt-high 70) 'suboptimal))
+    (should (eq (st :value 60 :ref-low 0 :ref-high 100 :opt-high 70) 'optimal))
+    (should (eq (st :value 35 :ref-low 40) 'low))
+    (should (eq (st :value 50 :ref-low 40) 'normal))
+    (should (eq (st :value 50 :ref-low 40 :opt-low 60) 'suboptimal))
+    ;; boundaries are inside
+    (should (eq (st :value 100 :ref-low 0 :ref-high 100) 'normal))
+    (should (eq (st :value 70 :ref-high 100 :opt-high 70) 'optimal))
+    ;; no ranges: trust the source's flag
+    (should (eq (st :value 50 :flag "HIGH") 'high))
+    (should (eq (st :value 50 :flag "critical_low") 'low))
+    (should (eq (st :value 50 :flag "normal") 'normal))
+    (should (eq (st :value 50) 'unknown))))
+
+(ert-deftest health-chart-core-test-status-glyphs-and-labels ()
+  (dolist (s health-chart-statuses)
+    (should (stringp (health-chart-status-glyph s)))
+    (should (facep (health-chart-status-face s))))
+  (should (equal (health-chart-status-label 'high) "▲ high"))
+  (should (equal (health-chart-status-label 'unknown) "? n/a")))
+
+(ert-deftest health-chart-core-test-collections ()
+  (let ((ms (health-chart-test-ms)))
+    (should (equal (health-chart-persons ms) '("alex" "sam")))
+    (should (equal (car (health-chart-markers ms)) "ldl_c"))
+    (should (equal (health-chart-dates ms) health-chart--example-dates))
+    (should (= 6 (length (health-chart-filter ms :person "alex" :marker "ldl_c"))))
+    (should (= 12 (length (health-chart-filter ms :person "alex" :marker '("ldl_c" "apob")))))
+    (should (= 2 (length (health-chart-filter ms :person "sam" :marker "tsh"
+                                              :since "2025-01-01" :until "2025-12-31"))))
+    (should (cl-every (lambda (m) (equal "lipids" (health-chart-marker-category m)))
+                      (health-chart-filter ms :category "lipids")))
+    (let ((latest (health-chart-latest (health-chart-filter ms :person "alex"))))
+      (should (= 9 (length latest)))
+      (should (cl-every (lambda (m) (equal (plist-get m :date) "2025-06-02")) latest)))
+    (let ((sorted (health-chart-sort-by-date (reverse (health-chart-filter ms :person "alex" :marker "tsh")))))
+      (should (equal (mapcar (lambda (m) (plist-get m :date)) sorted) health-chart--example-dates)))))
+
+(ert-deftest health-chart-core-test-ranges-follow-latest-draw ()
+  (let ((ms (list (health-chart-test-m :date "2024-01-01" :ref-high 130)
+                  (health-chart-test-m :date "2025-01-01" :ref-high 100 :opt-high 70)
+                  (health-chart-test-m :date "2025-02-01"))))
+    (should (equal (health-chart-ranges ms)
+                   '(:ref-low nil :ref-high 100 :opt-low nil :opt-high 70)))))
+
+(ert-deftest health-chart-core-test-labels-and-categories ()
+  (should (equal (health-chart-marker-label "ldl_c") "LDL-C"))
+  (should (equal (health-chart-marker-label "free_t3") "free t3"))
+  (should (equal (health-chart-marker-category "hba1c") "metabolic"))
+  (should (equal (health-chart-marker-category "mystery") "other"))
+  (should (equal (health-chart-marker-category (health-chart-test-m :category "custom")) "custom")))
+
+(ert-deftest health-chart-core-test-pad ()
+  (should (equal (health-chart-pad "abc" 5) "abc  "))
+  (should (equal (health-chart-pad "abc" 5 t) "  abc"))
+  (should (equal (health-chart-pad "abcdef" 4) "abc…")))
+
+(ert-deftest health-chart-core-test-defcustoms-in-one-group ()
+  (let (strays)
+    (mapatoms (lambda (s)
+                (when (and (string-prefix-p "health-chart-" (symbol-name s))
+                           (get s 'standard-value)
+                           (not (assq s (get 'health-charts 'custom-group))))
+                  (push s strays))))
+    (should-not strays)))
+
+;;; health-chart-core-test.el ends here

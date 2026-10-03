@@ -1,0 +1,13 @@
+Out of range · alex
+               24 24 24 24 25 25
+               03 06 09 12 03 06  out
+LDL-C           ▲  ▲  ▲  ◐  ▲  ◐  4/6
+HDL-C           ◐  ◐  ◐  ◐  ◐  ●  0/6
+Triglycerides   ▲  ◐  ◐  ◐  ◐  ◐  1/6
+ApoB            ▲  ▲  ▲  ◐  ▲  ◐  4/6
+Glucose         ◐  ▲  ◐  ◐  ◐  ◐  1/6
+HbA1c           ◐  ▲  ◐  ◐  ◐  ●  1/6
+Vitamin D       ▼  ◐  ◐  ●  ◐  ●  1/6
+TSH             ●  ●  ●  ◐  ●  ●  0/6
+hs-CRP          ◐  ▲  ◐  ◐  ◐  ▲  2/6
+● optimal  ○ normal  ◐ suboptimal  ▲ high  ▼ low  · no draw

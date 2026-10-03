@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Stand-in for the biomarker CLI in tests: answers from the JSON fixtures.
+# FAKE_BIOMARKER_LOG  file to append the received arguments to (one line)
+# FAKE_BIOMARKER_FAIL non-empty: print an error on stderr and exit 2
+set -eu
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -n "${FAKE_BIOMARKER_LOG:-}" ]; then echo "$*" >> "$FAKE_BIOMARKER_LOG"; fi
+if [ -n "${FAKE_BIOMARKER_FAIL:-}" ]; then echo "error: database is locked" >&2; exit 2; fi
+cmd=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --db) shift 2 ;;
+    query|trend|latest|flag) cmd="$1"; shift ;;
+    *) shift ;;
+  esac
+done
+case "$cmd" in
+  latest) cat "$here/biomarker-latest.json" ;;
+  query|trend) cat "$here/biomarker-query.json" ;;
+  flag) echo '{"schema":"biomarker/v1","measurements":[]}' ;;
+  *) echo "usage: biomarker COMMAND" >&2; exit 64 ;;
+esac
