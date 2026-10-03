@@ -1,0 +1,566 @@
+{
+ "records": [
+  {
+   "ref": {
+    "kind": "indicator",
+    "id": "health.biomarker.latest"
+   },
+   "name": "Latest biomarker value",
+   "revision": "1.0.0",
+   "attributes": {
+    "description": "Synthetic test record: Latest biomarker value",
+    "owner": "example-owner",
+    "tags": [
+     "health",
+     "biomarker"
+    ],
+    "parameters": {
+     "marker": {
+      "type": "string"
+     }
+    },
+    "value": {
+     "type": "number",
+     "unit": null,
+     "scale": "linear"
+    },
+    "semantics": {
+     "measure": "latest",
+     "subject": {
+      "kind": "biomarker",
+      "key": null
+     },
+     "time_basis": "draw",
+     "direction": "target_range"
+    },
+    "recipe": {
+     "source": "biomarker-cli",
+     "steps": [
+      {
+       "op": "latest"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "ref": {
+    "kind": "indicator",
+    "id": "health.biomarker.series"
+   },
+   "name": "Biomarker series",
+   "revision": "1.0.0",
+   "attributes": {
+    "description": "Synthetic test record: Biomarker series",
+    "owner": "example-owner",
+    "tags": [
+     "health",
+     "biomarker"
+    ],
+    "parameters": {
+     "marker": {
+      "type": "string"
+     }
+    },
+    "value": {
+     "type": "array",
+     "unit": null,
+     "scale": "linear"
+    },
+    "semantics": {
+     "measure": "series",
+     "subject": {
+      "kind": "biomarker",
+      "key": null
+     },
+     "time_basis": "draw",
+     "direction": "target_range"
+    },
+    "recipe": {
+     "source": "biomarker-cli",
+     "steps": [
+      {
+       "op": "series"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "ref": {
+    "kind": "indicator",
+    "id": "health.biomarker.status"
+   },
+   "name": "Biomarker status",
+   "revision": "1.0.0",
+   "attributes": {
+    "description": "Synthetic test record: Biomarker status",
+    "owner": "example-owner",
+    "tags": [
+     "health",
+     "biomarker"
+    ],
+    "parameters": {
+     "marker": {
+      "type": "string"
+     }
+    },
+    "value": {
+     "type": "string",
+     "unit": null,
+     "scale": "linear"
+    },
+    "semantics": {
+     "measure": "status",
+     "subject": {
+      "kind": "biomarker",
+      "key": null
+     },
+     "time_basis": "draw",
+     "direction": "target_range"
+    },
+    "recipe": {
+     "source": "biomarker-cli",
+     "steps": [
+      {
+       "op": "status"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "ref": {
+    "kind": "indicator",
+    "id": "health.biomarker.range-position"
+   },
+   "name": "Position in reference range",
+   "revision": "1.0.0",
+   "attributes": {
+    "description": "Synthetic test record: Position in reference range",
+    "owner": "example-owner",
+    "tags": [
+     "health",
+     "biomarker"
+    ],
+    "parameters": {
+     "marker": {
+      "type": "string"
+     }
+    },
+    "value": {
+     "type": "number",
+     "unit": "1",
+     "scale": "linear",
+     "bounds": {
+      "min": 0,
+      "max": 1
+     }
+    },
+    "semantics": {
+     "measure": "range_position",
+     "subject": {
+      "kind": "biomarker",
+      "key": null
+     },
+     "time_basis": "draw",
+     "direction": "target_range"
+    },
+    "recipe": {
+     "source": "biomarker-cli",
+     "steps": [
+      {
+       "op": "range_position"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "ref": {
+    "kind": "indicator",
+    "id": "health.biomarker.trend-slope"
+   },
+   "name": "Biomarker trend slope",
+   "revision": "1.0.0",
+   "attributes": {
+    "description": "Synthetic test record: Biomarker trend slope",
+    "owner": "example-owner",
+    "tags": [
+     "health",
+     "biomarker"
+    ],
+    "parameters": {
+     "marker": {
+      "type": "string"
+     }
+    },
+    "value": {
+     "type": "number",
+     "unit": "unit/yr",
+     "scale": "linear"
+    },
+    "semantics": {
+     "measure": "trend_slope",
+     "subject": {
+      "kind": "biomarker",
+      "key": null
+     },
+     "time_basis": "draw",
+     "direction": "neutral"
+    },
+    "recipe": {
+     "source": "biomarker-cli",
+     "steps": [
+      {
+       "op": "trend_slope"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "ref": {
+    "kind": "indicator",
+    "id": "health.biomarker.days-since-draw"
+   },
+   "name": "Days since draw",
+   "revision": "1.0.0",
+   "attributes": {
+    "description": "Synthetic test record: Days since draw",
+    "owner": "example-owner",
+    "tags": [
+     "health",
+     "biomarker",
+     "freshness"
+    ],
+    "parameters": {
+     "marker": {
+      "type": "string"
+     }
+    },
+    "value": {
+     "type": "number",
+     "unit": "d",
+     "scale": "linear",
+     "bounds": {
+      "min": 0,
+      "max": 180
+     }
+    },
+    "semantics": {
+     "measure": "days_since_draw",
+     "subject": {
+      "kind": "biomarker",
+      "key": null
+     },
+     "time_basis": "draw",
+     "direction": "lower_is_better"
+    },
+    "recipe": {
+     "source": "biomarker-cli",
+     "steps": [
+      {
+       "op": "days_since_draw"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "ref": {
+    "kind": "indicator",
+    "id": "health.panel.out-of-range-count"
+   },
+   "name": "Markers out of range",
+   "revision": "1.0.0",
+   "attributes": {
+    "description": "Synthetic test record: Markers out of range",
+    "owner": "example-owner",
+    "tags": [
+     "health",
+     "panel"
+    ],
+    "parameters": {},
+    "value": {
+     "type": "number",
+     "unit": "count",
+     "scale": "linear",
+     "bounds": {
+      "min": 0,
+      "max": 0
+     }
+    },
+    "semantics": {
+     "measure": "out_of_range_count",
+     "subject": {
+      "kind": "panel",
+      "key": "panel"
+     },
+     "time_basis": "draw",
+     "direction": "lower_is_better"
+    },
+    "recipe": {
+     "source": "biomarker-cli",
+     "steps": [
+      {
+       "op": "out_of_range_count"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "ref": {
+    "kind": "indicator",
+    "id": "health.cardio.apob"
+   },
+   "name": "Apolipoprotein B",
+   "revision": "1.0.0",
+   "attributes": {
+    "description": "Synthetic test record: Apolipoprotein B",
+    "owner": "example-owner",
+    "tags": [
+     "health",
+     "cardio"
+    ],
+    "parameters": {},
+    "value": {
+     "type": "number",
+     "unit": "mg/dL",
+     "scale": "linear",
+     "bounds": {
+      "min": null,
+      "max": 90
+     }
+    },
+    "semantics": {
+     "measure": "latest",
+     "subject": {
+      "kind": "biomarker",
+      "key": "apob"
+     },
+     "time_basis": "draw",
+     "direction": "lower_is_better"
+    },
+    "recipe": {
+     "source": "biomarker-cli",
+     "steps": [
+      {
+       "op": "latest"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "ref": {
+    "kind": "indicator",
+    "id": "health.cardio.lp-a"
+   },
+   "name": "Lipoprotein(a)",
+   "revision": "1.0.0",
+   "attributes": {
+    "description": "Synthetic test record: Lipoprotein(a)",
+    "owner": "example-owner",
+    "tags": [
+     "health",
+     "cardio"
+    ],
+    "parameters": {},
+    "value": {
+     "type": "number",
+     "unit": "nmol/L",
+     "scale": "linear",
+     "bounds": {
+      "min": null,
+      "max": 75
+     }
+    },
+    "semantics": {
+     "measure": "latest",
+     "subject": {
+      "kind": "biomarker",
+      "key": "lpa"
+     },
+     "time_basis": "draw",
+     "direction": "lower_is_better"
+    },
+    "recipe": {
+     "source": "biomarker-cli",
+     "steps": [
+      {
+       "op": "latest"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "ref": {
+    "kind": "indicator",
+    "id": "health.metabolic.hba1c"
+   },
+   "name": "Hemoglobin A1c",
+   "revision": "1.0.0",
+   "attributes": {
+    "description": "Synthetic test record: Hemoglobin A1c",
+    "owner": "example-owner",
+    "tags": [
+     "health",
+     "metabolic"
+    ],
+    "parameters": {},
+    "value": {
+     "type": "number",
+     "unit": "%",
+     "scale": "linear",
+     "bounds": {
+      "min": null,
+      "max": 5.7
+     }
+    },
+    "semantics": {
+     "measure": "latest",
+     "subject": {
+      "kind": "biomarker",
+      "key": "hba1c"
+     },
+     "time_basis": "draw",
+     "direction": "lower_is_better"
+    },
+    "recipe": {
+     "source": "biomarker-cli",
+     "steps": [
+      {
+       "op": "latest"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "ref": {
+    "kind": "indicator",
+    "id": "health.inflammation.hs-crp"
+   },
+   "name": "High-sensitivity CRP",
+   "revision": "1.0.0",
+   "attributes": {
+    "description": "Synthetic test record: High-sensitivity CRP",
+    "owner": "example-owner",
+    "tags": [
+     "health",
+     "inflammation"
+    ],
+    "parameters": {},
+    "value": {
+     "type": "number",
+     "unit": "mg/L",
+     "scale": "linear",
+     "bounds": {
+      "min": null,
+      "max": 3
+     }
+    },
+    "semantics": {
+     "measure": "latest",
+     "subject": {
+      "kind": "biomarker",
+      "key": "hs_crp"
+     },
+     "time_basis": "draw",
+     "direction": "lower_is_better"
+    },
+    "recipe": {
+     "source": "biomarker-cli",
+     "steps": [
+      {
+       "op": "latest"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "ref": {
+    "kind": "indicator",
+    "id": "health.vitamin-d"
+   },
+   "name": "25-hydroxy vitamin D",
+   "revision": "1.0.0",
+   "attributes": {
+    "description": "Synthetic test record: 25-hydroxy vitamin D",
+    "owner": "example-owner",
+    "tags": [
+     "health",
+     "vitamins"
+    ],
+    "parameters": {},
+    "value": {
+     "type": "number",
+     "unit": "ng/mL",
+     "scale": "linear",
+     "bounds": {
+      "min": 30,
+      "max": 100
+     }
+    },
+    "semantics": {
+     "measure": "latest",
+     "subject": {
+      "kind": "biomarker",
+      "key": "vitamin_d"
+     },
+     "time_basis": "draw",
+     "direction": "target_range"
+    },
+    "recipe": {
+     "source": "biomarker-cli",
+     "steps": [
+      {
+       "op": "latest"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "ref": {
+    "kind": "indicator",
+    "id": "finance.market.rsi-14"
+   },
+   "name": "Synthetic 14-period RSI",
+   "revision": "1.0.0",
+   "attributes": {
+    "description": "Synthetic non-health record",
+    "owner": "example-owner",
+    "tags": [
+     "finance",
+     "oscillator"
+    ],
+    "value": {
+     "type": "array",
+     "unit": "1",
+     "scale": "linear",
+     "bounds": {
+      "min": 0,
+      "max": 100
+     }
+    },
+    "semantics": {
+     "measure": "rsi",
+     "subject": {
+      "kind": "instrument",
+      "key": "EXAMPLE"
+     },
+     "time_basis": "bar",
+     "direction": "neutral"
+    },
+    "recipe": {
+     "steps": []
+    }
+   }
+  }
+ ]
+}

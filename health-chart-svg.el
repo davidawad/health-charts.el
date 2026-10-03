@@ -527,5 +527,192 @@ WIDTH and TITLE are among PROPS."
         (health-chart-svg--spark svg values 3 3 (- width 6) (- height 6) (health-chart-svg--c 'normal))
         (health-chart-svg--string svg)))))
 
+;; -----------------------------------------------------------------------
+;; Indicators: scorecard, cohort panel, staleness
+;; -----------------------------------------------------------------------
+
+(defun health-chart-svg--indicator-value (row)
+  "ROW's value with its unit, or \"n/a\" when missing."
+  (if (numberp (plist-get row :value))
+      (string-trim (format "%s %s" (health-chart-fmt (plist-get row :value)) (or (plist-get row :unit) "")))
+    "n/a"))
+
+(defun health-chart-svg--trend-color (verdict)
+  "Color for trend VERDICT."
+  (health-chart-svg--c (pcase verdict ('improved 'good) ('worsened 'critical) (_ 'secondary))))
+
+(defun health-chart-svg--indicator-hover (row)
+  "Hover text for indicator ROW."
+  (format "%s: %s%s, %s%s" (plist-get row :label) (health-chart-svg--indicator-value row)
+          (if (plist-get row :date) (format " on %s" (plist-get row :date)) "")
+          (health-chart-status-label (plist-get row :status))
+          (if (plist-get row :trend)
+              (format ", trend %s" (health-chart-indicator-trend-label (plist-get row :trend)
+                                                                       (plist-get row :series)))
+            "")))
+
+(cl-defun health-chart-svg-scorecard (values &rest props &key width title &allow-other-keys)
+  "SVG indicator scorecard of VALUES: indicator | value | unit | status | trend.
+WIDTH and TITLE are among PROPS."
+  (let* ((rows (apply #'health-chart-model-scorecard values props))
+         (width (or width health-chart-svg-width))
+         (row-h 26) (top 58)
+         (height (+ top (* row-h (length rows)) 10))
+         (cols (list 12 (* width 0.36) (* width 0.38) (* width 0.52) (* width 0.70))))
+    (when rows
+      (let ((svg (health-chart-svg--canvas
+                  width height (or title (health-chart-model-indicator-title values "Indicators")))))
+        (cl-loop for label in '("Indicator" "Value" "Unit" "Status" "Trend") for x in cols
+                 do (health-chart-svg--text svg label (if (equal label "Value") (- x 8) x) (- top 10)
+                                            :anchor (if (equal label "Value") "end" "start")
+                                            :color (health-chart-svg--c 'muted)))
+        (cl-loop
+         for r in rows for i from 0
+         for y = (+ top (* i row-h))
+         for status = (plist-get r :status)
+         for spark-w = (max 20 (* width 0.10))
+         do (svg-line svg 12 y (- width 12) y :stroke (health-chart-svg--c 'grid))
+         do (let ((g (health-chart-svg--group svg (health-chart-svg--indicator-hover r))))
+              (health-chart-svg--text g (plist-get r :label) (nth 0 cols) (+ y 17))
+              (health-chart-svg--text g (if (numberp (plist-get r :value))
+                                            (health-chart-fmt (plist-get r :value)) "n/a")
+                                      (- (nth 1 cols) 8) (+ y 17) :anchor "end" :weight "bold")
+              (health-chart-svg--text g (or (plist-get r :unit) "") (nth 2 cols) (+ y 17)
+                                      :color (health-chart-svg--c 'secondary))
+              (svg-circle g (+ (nth 3 cols) 5) (+ y 13) 5 :fill (health-chart-svg--status-color status))
+              (health-chart-svg--text g (health-chart-status-label status) (+ (nth 3 cols) 15) (+ y 17))
+              (health-chart-svg--spark g (seq-filter #'numberp (plist-get r :series))
+                                       (nth 4 cols) (+ y 6) spark-w (- row-h 12)
+                                       (health-chart-svg--c 'normal))
+              (health-chart-svg--text g (health-chart-indicator-trend-label (plist-get r :trend)
+                                                                            (plist-get r :series))
+                                      (+ (nth 4 cols) spark-w 10) (+ y 17)
+                                      :color (health-chart-svg--trend-color (plist-get r :trend)))))
+        (health-chart-svg--string svg)))))
+
+(defun health-chart-svg--track (svg card x y w)
+  "Draw cohort CARD's range track into SVG at X,Y, W wide, 12 high."
+  (pcase-let* ((`(,lo . ,hi) (plist-get card :domain))
+               (sx (lambda (v) (health-chart-svg--n (+ x (* w (/ (- (max lo (min hi v)) lo)
+                                                                 (float (- hi lo)))))))))
+    (svg-rectangle svg x y w 12 :fill (health-chart-svg--c 'grid) :rx 2)
+    (dolist (band (list (cons (plist-get card :ref) (cons (health-chart-svg--c 'ref-band) 1))
+                        (cons (plist-get card :opt) (cons (health-chart-svg--c 'opt-band) 0.35))))
+      (when-let* ((b (car band)))
+        (let ((x0 (funcall sx (or (car b) lo))) (x1 (funcall sx (or (cdr b) hi))))
+          (when (> x1 x0)
+            (svg-rectangle svg x0 y (health-chart-svg--n (- x1 x0)) 12
+                           :fill (cadr band) :fill-opacity (cddr band))))))
+    (svg-rectangle svg (- (funcall sx (plist-get card :value)) 2) (- y 4) 4 20 :rx 2
+                   :fill (health-chart-svg--status-color (plist-get card :status))
+                   :stroke (health-chart-svg--c 'surface) :stroke-width 1)))
+
+(cl-defun health-chart-svg-cohort (values &rest props &key width columns title &allow-other-keys)
+  "SVG cohort panel of indicator VALUES: a card per indicator, in a grid.
+WIDTH, COLUMNS and TITLE are among PROPS."
+  (let* ((cards (apply #'health-chart-model-cohort values props))
+         (width (or width health-chart-svg-width))
+         (columns (max 1 (or columns (max 1 (/ width 300)))))
+         (cell-w (/ width (float columns)))
+         (cell-h 100)
+         (height (+ 40 (* (ceiling (length cards) (float columns)) cell-h) 22)))
+    (when cards
+      (let ((svg (health-chart-svg--canvas
+                  width height (or title (health-chart-model-indicator-title values "Cohort")))))
+        (cl-loop
+         for c in cards for i from 0
+         for cx = (* cell-w (mod i columns))
+         for cy = (+ 40 (* cell-h (/ i columns)))
+         for status = (plist-get c :status)
+         for inner = (- cell-w 24)
+         do (let ((g (health-chart-svg--group svg (health-chart-svg--indicator-hover c))))
+              (svg-rectangle g (+ cx 6) (+ cy 2) (- cell-w 12) (- cell-h 8) :rx 6
+                             :fill "none" :stroke (health-chart-svg--c 'grid))
+              (health-chart-svg--text g (plist-get c :label) (+ cx 12) (+ cy 20) :weight "bold")
+              (svg-circle g (- (+ cx cell-w) (* 0.6 health-chart-svg-font-size
+                                                (string-width (health-chart-status-label status)))
+                               26)
+                          (+ cy 16) 5 :fill (health-chart-svg--status-color status))
+              (health-chart-svg--text g (health-chart-status-label status) (- (+ cx cell-w) 14) (+ cy 20)
+                                      :anchor "end")
+              (health-chart-svg--text g (concat (health-chart-svg--indicator-value c)
+                                                (if (plist-get c :date) (format " · %s" (plist-get c :date))
+                                                  " · no draw"))
+                                      (+ cx 12) (+ cy 40) :color (health-chart-svg--c 'secondary))
+              (if (plist-get c :domain)
+                  (health-chart-svg--track g c (+ cx 12) (+ cy 50) inner)
+                (health-chart-svg--text g "no range to place it in" (+ cx 12) (+ cy 60)
+                                        :color (health-chart-svg--c 'muted)
+                                        :size (1- health-chart-svg-font-size)))
+              (let ((nums (seq-filter #'numberp (plist-get c :series))))
+                (when nums
+                  (health-chart-svg--spark g nums (+ cx 12) (+ cy 70) (* inner 0.45) 16
+                                           (health-chart-svg--c 'normal))
+                  (health-chart-svg--text g (health-chart-indicator-trend-label (plist-get c :trend) nums)
+                                          (+ cx 20 (* inner 0.45)) (+ cy 84)
+                                          :color (health-chart-svg--trend-color (plist-get c :trend))
+                                          :size (1- health-chart-svg-font-size))))))
+        (health-chart-svg--text svg (string-join
+                                     (delq nil (list "bar = value"
+                                                     (when (seq-some (lambda (c) (plist-get c :opt)) cards)
+                                                       "green = optimal")
+                                                     (when (seq-some (lambda (c) (plist-get c :ref)) cards)
+                                                       "gray = reference or bounds")))
+                                     "   ")
+                                12 (- height 8) :color (health-chart-svg--c 'muted)
+                                :size (1- health-chart-svg-font-size))
+        (health-chart-svg--string svg)))))
+
+(defun health-chart-svg--staleness-color (state)
+  "Fill color for freshness STATE."
+  (health-chart-svg--c (pcase state ('fresh 'good) ('due 'warning) ('stale 'critical) (_ 'muted))))
+
+(cl-defun health-chart-svg-staleness (values &rest props &key width title &allow-other-keys)
+  "SVG days since each indicator in VALUES was drawn, with due and stale lines.
+WIDTH and TITLE are among PROPS (also :as-of :due-days :stale-days)."
+  (let* ((model (apply #'health-chart-model-staleness values props))
+         (rows (plist-get model :rows))
+         (width (or width health-chart-svg-width))
+         (row-h 26) (top 50)
+         (height (+ top (* row-h (length rows)) 26))
+         (tx 230) (tw (max 40 (- width tx 170)))
+         (scale (float (plist-get model :scale)))
+         (sx (lambda (d) (health-chart-svg--n (+ tx (* tw (/ (min d scale) scale)))))))
+    (when rows
+      (let ((svg (health-chart-svg--canvas
+                  width height (or title (format "%s · as of %s"
+                                                 (health-chart-model-indicator-title values "Days since draw")
+                                                 (plist-get model :as-of))))))
+        (cl-loop
+         for r in rows for i from 0
+         for y = (+ top (* i row-h))
+         for days = (plist-get r :days)
+         for state = (plist-get r :state)
+         do (let ((g (health-chart-svg--group
+                      svg (format "%s: drawn %s, %s, %s" (plist-get r :label) (or (plist-get r :date) "never")
+                                  (if days (format "%d days ago" days) "no date")
+                                  (health-chart-staleness-label state)))))
+              (health-chart-svg--text g (plist-get r :label) 12 (+ y 17))
+              (health-chart-svg--text g (or (plist-get r :date) "no draw") 140 (+ y 17)
+                                      :color (health-chart-svg--c 'secondary))
+              (svg-rectangle g tx (+ y 7) tw 12 :fill (health-chart-svg--c 'grid) :rx 2)
+              (when days
+                (svg-rectangle g tx (+ y 7) (health-chart-svg--n (max 2 (- (funcall sx days) tx))) 12
+                               :rx 2 :fill (health-chart-svg--staleness-color state)))
+              (health-chart-svg--text g (if days (format "%d d" days) "–") (+ tx tw 50) (+ y 17)
+                                      :anchor "end" :weight "bold")
+              (health-chart-svg--text g (health-chart-staleness-label state) (+ tx tw 60) (+ y 17))))
+        (dolist (line (list (cons (plist-get model :due) "4 3") (cons (plist-get model :stale) nil)))
+          (let ((x (funcall sx (car line))))
+            (apply #'svg-line svg x (- top 4) x (+ top (* row-h (length rows)))
+                   :stroke (health-chart-svg--c 'ink) :stroke-width 1
+                   (when (cdr line) (list :stroke-dasharray (cdr line))))))
+        (health-chart-svg--text svg (format "dashed = due after %d d   solid = stale after %d d   %s"
+                                            (plist-get model :due) (plist-get model :stale)
+                                            (mapconcat #'health-chart-staleness-label '(fresh due stale) "  "))
+                                12 (- height 8) :color (health-chart-svg--c 'muted)
+                                :size (1- health-chart-svg-font-size))
+        (health-chart-svg--string svg)))))
+
 (provide 'health-chart-svg)
 ;;; health-chart-svg.el ends here

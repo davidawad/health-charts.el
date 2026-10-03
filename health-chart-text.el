@@ -494,5 +494,200 @@ PROPS: :person :from :to :marker, WIDTH and TITLE."
             'health-chart-person (plist-get model :person)))))
        "\n"))))
 
+;; -----------------------------------------------------------------------
+;; Indicators: scorecard, cohort panel, staleness
+;; -----------------------------------------------------------------------
+
+(defun health-chart-text--indicator-value (row)
+  "ROW's value formatted, or \"n/a\" when missing."
+  (if (numberp (plist-get row :value)) (health-chart-fmt (plist-get row :value)) "n/a"))
+
+(defun health-chart-text--trend (row width)
+  "ROW's sparkline, at most WIDTH wide, and trend word."
+  (let ((spark (health-chart-text-sparkline (plist-get row :series) :width width))
+        (verdict (plist-get row :trend)))
+    (string-trim-right
+     (concat (health-chart-pad spark width) " "
+             (health-chart-text--p (health-chart-indicator-trend-label verdict (plist-get row :series))
+                                   (health-chart-trend-face verdict))))))
+
+(defun health-chart-text--indicator-row (row text)
+  "TEXT carrying ROW's marker, person and indicator text properties."
+  (propertize text
+              'health-chart-marker (plist-get row :marker)
+              'health-chart-person (plist-get row :person)
+              'health-chart-indicator (plist-get row :id)))
+
+(cl-defun health-chart-text-scorecard (values &rest props &key title &allow-other-keys)
+  "Indicator scorecard of VALUES: indicator | value | unit | status | trend.
+Rows carry `health-chart-marker', `health-chart-person' and
+`health-chart-indicator' text properties.  PROPS: :sparkline-width and
+TITLE."
+  (let* ((rows (apply #'health-chart-model-scorecard values props))
+         (spark-w (or (plist-get props :sparkline-width) health-chart-sparkline-width))
+         (width-of (lambda (fn min) (max min (apply #'max 0 (mapcar (lambda (r) (string-width (funcall fn r)))
+                                                                    rows)))))
+         (label-w (funcall width-of (lambda (r) (plist-get r :label)) 9))
+         (value-w (funcall width-of #'health-chart-text--indicator-value 5))
+         (unit-w (funcall width-of (lambda (r) (or (plist-get r :unit) "")) 4))
+         (status-w 12))
+    (when rows
+      (string-join
+       (append
+        (list (health-chart-text--p (or title (health-chart-model-indicator-title values "Indicators"))
+                                    'health-chart-header)
+              (health-chart-text--p
+               (concat (health-chart-pad "Indicator" label-w) "  "
+                       (health-chart-pad "Value" value-w t) "  "
+                       (health-chart-pad "Unit" unit-w) "  "
+                       (health-chart-pad "Status" status-w) "  Trend")
+               'health-chart-dim))
+        (mapcar
+         (lambda (r)
+           (let ((status (plist-get r :status)))
+             (health-chart-text--indicator-row
+              r (string-trim-right
+                 (concat (health-chart-pad (plist-get r :label) label-w) "  "
+                         (health-chart-text--p (health-chart-pad (health-chart-text--indicator-value r)
+                                                                 value-w t)
+                                               'health-chart-accent)
+                         "  "
+                         (health-chart-text--p (health-chart-pad (or (plist-get r :unit) "") unit-w)
+                                               'health-chart-dim)
+                         "  "
+                         (health-chart-text--p (health-chart-pad (health-chart-status-label status) status-w)
+                                               (health-chart-status-face status))
+                         "  "
+                         (health-chart-text--trend r spark-w))))))
+         rows))
+       "\n"))))
+
+(defun health-chart-text--cohort-card (card width)
+  "Lines of one cohort-panel CARD, each WIDTH columns wide."
+  (let* ((status (plist-get card :status))
+         (state (health-chart-text--p (health-chart-status-label status)
+                                      (health-chart-status-face status)))
+         (label-w (max 4 (- width (string-width state) 1)))
+         (value (if (numberp (plist-get card :value))
+                    (concat (health-chart-text--p
+                             (string-trim (format "%s %s" (health-chart-text--indicator-value card)
+                                                  (or (plist-get card :unit) "")))
+                             'health-chart-accent)
+                            (health-chart-text--p
+                             (if (plist-get card :date) (format " · %s" (plist-get card :date)) "")
+                             'health-chart-dim))
+                  (health-chart-text--p "n/a · no draw" 'health-chart-dim))))
+    (mapcar (lambda (line) (health-chart-pad line width))
+            (list (concat (health-chart-text--p (health-chart-pad (plist-get card :label) label-w)
+                                                'health-chart-header)
+                          " " state)
+                  value
+                  (if (plist-get card :domain)
+                      (health-chart-text--track card width)
+                    (health-chart-text--p "no range to place it in" 'health-chart-dim))
+                  (health-chart-text--trend card (min health-chart-sparkline-width
+                                                      (max 4 (- width 13))))))))
+
+(cl-defun health-chart-text-cohort (values &rest props &key width columns title &allow-other-keys)
+  "Cohort panel of indicator VALUES: a card per indicator, in a grid.
+A card shows the value, its status, a track placing it in its ranges
+\(or bounds) and its trend.  PROPS: :ref :optimal, WIDTH (overall),
+COLUMNS and TITLE."
+  (let* ((cards (apply #'health-chart-model-cohort values props))
+         (width (or width health-chart-width))
+         (gap 3)
+         (columns (max 1 (or columns (max 1 (/ (+ width gap) 34)))))
+         (cell-w (max 20 (/ (- width (* gap (1- columns))) columns)))
+         (blank (make-string cell-w ?\s))
+         (cells (mapcar (lambda (c)
+                          (mapcar (lambda (line) (health-chart-text--indicator-row c line))
+                                  (health-chart-text--cohort-card c cell-w)))
+                        cards))
+         rows)
+    (when cards
+      (while cells
+        (let ((group (seq-take cells columns)))
+          (setq cells (seq-drop cells columns))
+          (push (string-trim-right
+                 (string-join
+                  (cl-loop for i from 0 below (apply #'max (mapcar #'length group))
+                           collect (string-trim-right
+                                    (mapconcat (lambda (cell) (or (nth i cell) blank))
+                                               group (make-string gap ?\s))))
+                  "\n"))
+                rows)))
+      (concat (health-chart-text--p (or title (health-chart-model-indicator-title values "Cohort"))
+                                    'health-chart-header)
+              "\n\n"
+              (string-join (nreverse rows) "\n\n")
+              "\n\n"
+              (health-chart-text--p
+               (string-join
+                (delq nil (list (format "%c value" health-chart-glyph-marker)
+                                (when (seq-some (lambda (c) (plist-get c :opt)) cards)
+                                  (format "%c optimal" health-chart-glyph-optimal-band))
+                                (when (seq-some (lambda (c) (plist-get c :ref)) cards)
+                                  (format "%c reference or bounds" health-chart-glyph-ref-band))
+                                "─ outside"))
+                "   ")
+               'health-chart-dim)))))
+
+(defun health-chart-text--age-bar (row model width)
+  "ROW's days-since-draw bar on MODEL's scale, WIDTH cells wide."
+  (let* ((scale (float (plist-get model :scale)))
+         (days (plist-get row :days))
+         (col (lambda (d) (min (1- width) (floor (* width (/ d scale))))))
+         (due (funcall col (plist-get model :due)))
+         (stale (funcall col (plist-get model :stale)))
+         (face (health-chart-staleness-face (plist-get row :state))))
+    (mapconcat
+     (lambda (c)
+       (cond
+        ((and days (<= (* (+ c 0.5) (/ scale width)) days)) (health-chart-text--p "█" face))
+        ((= c stale) (health-chart-text--p "│" 'health-chart-dim))
+        ((= c due) (health-chart-text--p "┆" 'health-chart-dim))
+        (t (health-chart-text--p "─" 'health-chart-dim))))
+     (number-sequence 0 (1- width)) "")))
+
+(cl-defun health-chart-text-staleness (values &rest props &key width title &allow-other-keys)
+  "Days since each indicator in VALUES was drawn, against due and stale lines.
+PROPS: :as-of :due-days :stale-days, WIDTH and TITLE."
+  (let* ((model (apply #'health-chart-model-staleness values props))
+         (rows (plist-get model :rows))
+         (label-w (max 6 (apply #'max 0 (mapcar (lambda (r) (string-width (plist-get r :label))) rows))))
+         (days-w (max 4 (apply #'max 0 (mapcar (lambda (r) (length (format "%s d" (or (plist-get r :days) "–"))))
+                                               rows))))
+         (bar-w (max 10 (- (or width health-chart-width) label-w days-w 10 22))))
+    (when rows
+      (string-join
+       (append
+        (list (health-chart-text--p
+               (or title (format "%s · as of %s"
+                                 (health-chart-model-indicator-title values "Days since draw")
+                                 (plist-get model :as-of)))
+               'health-chart-header))
+        (mapcar
+         (lambda (r)
+           (health-chart-text--indicator-row
+            r (concat (health-chart-pad (plist-get r :label) label-w) "  "
+                      (health-chart-text--p (health-chart-pad (or (plist-get r :date) "no draw") 10)
+                                            'health-chart-dim)
+                      "  "
+                      (health-chart-text--age-bar r model bar-w) "  "
+                      (health-chart-text--p
+                       (health-chart-pad (if (plist-get r :days) (format "%d d" (plist-get r :days)) "–")
+                                         days-w t)
+                       'health-chart-accent)
+                      "  "
+                      (health-chart-text--p (health-chart-staleness-label (plist-get r :state))
+                                            (health-chart-staleness-face (plist-get r :state))))))
+         rows)
+        (list (health-chart-text--p
+               (format "┆ due after %d d   │ stale after %d d   %s"
+                       (plist-get model :due) (plist-get model :stale)
+                       (mapconcat #'health-chart-staleness-label '(fresh due stale) "  "))
+               'health-chart-dim)))
+       "\n"))))
+
 (provide 'health-chart-text)
 ;;; health-chart-text.el ends here

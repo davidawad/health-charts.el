@@ -38,13 +38,18 @@
 ;;   render     `health-chart-plot' (string), `-plot-insert' (at point),
 ;;              `-plot-view' (buffer), `-plot-spec' (from a spec)
 ;;   fetch      `health-chart-source-query', `-trend', `-latest', `-flag'
+;;   indicators `health-chart-indicator-list' / `-describe' (catalog),
+;;              `health-chart-list-cohorts', `health-chart-describe-cohort',
+;;              `health-chart-cohort-values', `health-chart-cohort-plot';
+;;              each effectful call has a pure `-explain' twin
 ;;   dashboard  `health-charts' (M-x), alias of `health-chart-dashboard'
 ;;   health     `health-chart-doctor' (M-x) / `health-chart-doctor-checks'
 ;;
 ;; Non-Emacs callers use bin/health-chart, which reads a spec as JSON.
 ;; Modules: -core (config, dates, status), -source (biomarker data
-;; layer), -model (what to draw), -text, -svg, -plot (kinds), -dashboard,
-;; -batch (CLI).
+;; layer), -indicator (catalog, indicator values, evaluators), -model
+;; (what to draw), -text, -svg, -plot (kinds), -cohort (named indicator
+;; sets), -dashboard, -batch (CLI).
 
 ;;; Code:
 
@@ -54,29 +59,42 @@
 (require 'health-chart-model)
 (require 'health-chart-text)
 (require 'health-chart-svg)
+(require 'health-chart-indicator)
 (require 'health-chart-plot)
+(require 'health-chart-cohort)
 (require 'health-chart-dashboard)
 
 (defconst health-chart-version "0.1.0"
   "Version of the health-chart package.")
 
 (defconst health-chart-entry-points
-  '((discover health-chart-list-kinds health-chart-describe-kind health-chart-describe)
-    (validate health-chart-validate)
-    (plan health-chart-explain)
+  '((discover health-chart-list-kinds health-chart-describe-kind health-chart-describe
+              health-chart-list-cohorts health-chart-describe-cohort
+              health-chart-indicator-list health-chart-indicator-describe)
+    (validate health-chart-validate health-chart-resolve-cohort)
+    (plan health-chart-explain health-chart-indicator-list-explain
+          health-chart-indicator-describe-explain health-chart-describe-cohort-explain
+          health-chart-cohort-values-explain health-chart-cohort-plot-explain)
     (render health-chart-plot health-chart-plot-spec health-chart-plot-insert
-            health-chart-plot-view health-chart-sparkline health-chart-demo)
+            health-chart-plot-view health-chart-sparkline health-chart-demo
+            health-chart-cohort-plot health-chart-cohort-view)
     (fetch health-chart-source-query health-chart-source-trend health-chart-source-latest
-           health-chart-source-flag health-chart-source-normalize-list)
+           health-chart-source-flag health-chart-source-normalize-list
+           health-chart-cohort-values health-chart-indicator-catalog-get)
+    (evaluate health-chart-indicator-evaluate health-chart-cohort-evaluate
+              health-chart-indicator-status)
     (dashboard health-charts health-chart-dashboard)
-    (extend health-chart-register-kind health-chart-shapes health-chart-source-function)
+    (extend health-chart-register-kind health-chart-shapes health-chart-source-function
+            health-chart-indicator-catalog-function health-chart-indicator-cohorts
+            health-chart-indicator-evaluators health-chart-indicator-measures)
     (health health-chart-doctor health-chart-doctor-checks))
   "Public entry points grouped by what a caller is doing.")
 
 ;;;###autoload
 (defun health-chart-describe ()
   "Describe the whole package as data.
-Version, kinds, shapes, statuses, source and entry points.  Lists are
+Version, kinds, shapes, statuses, indicators, cohorts, source and
+entry points.  Lists are
 vectors, so the result round-trips `json-encode'."
   (list :package "health-chart" :version health-chart-version
         :kinds (health-chart--vec
@@ -90,6 +108,21 @@ vectors, so the result round-trips `json-encode'."
                                            :doc (plist-get (cdr s) :doc)))
                          health-chart-shapes))
         :statuses (health-chart--vec (mapcar #'symbol-name health-chart-statuses))
+        :indicators (list :catalog (format "%s" health-chart-indicator-catalog-function)
+                          :tag health-chart-indicator-tag
+                          :evaluable (health-chart--vec (health-chart-indicator-known-ids))
+                          :measures (health-chart--vec
+                                     (mapcar (lambda (m) (list :measure (symbol-name (car m))
+                                                               :doc (plist-get (cdr m) :doc)))
+                                             health-chart-indicator-measures))
+                          :directions (health-chart--vec (mapcar #'symbol-name
+                                                                 health-chart-indicator-directions)))
+        :cohorts (health-chart--vec
+                  (mapcar (lambda (c)
+                            (list :cohort (symbol-name (car c)) :doc (plist-get (cdr c) :doc)
+                                  :members (plist-get (cdr c) :members)
+                                  :resolvable (plist-get (cdr c) :resolvable)))
+                          (health-chart-list-cohorts)))
         :source (list :function (format "%s" health-chart-source-function)
                       :executable health-chart-source-executable
                       :schema health-chart-source-schema
@@ -105,10 +138,11 @@ vectors, so the result round-trips `json-encode'."
 ;;;###autoload
 (defun health-chart-doctor-checks ()
   "Every package health row: (:name :status :detail :remediation).
-:status is pass, fail or skip.  Covers chart kinds and the data source;
-runs no process."
+:status is pass, fail or skip.  Covers chart kinds, the data source,
+the indicator catalog and cohorts; runs no process and calls no catalog."
   (append (health-chart-plot-doctor-checks)
-          (health-chart-source-doctor-checks)))
+          (health-chart-source-doctor-checks)
+          (health-chart-cohort-doctor-checks)))
 
 ;;;###autoload
 (defun health-chart-doctor ()

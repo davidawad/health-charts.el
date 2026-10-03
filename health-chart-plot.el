@@ -22,6 +22,7 @@
 (require 'subr-x)
 (require 'health-chart-core)
 (require 'health-chart-source)
+(require 'health-chart-indicator)
 (require 'health-chart-model)
 (require 'health-chart-text)
 (require 'health-chart-svg)
@@ -144,6 +145,32 @@ measurements of one marker; pairs and measurements are sorted by date."
            unless (numberp v)
            do (health-chart--invalid i "expected a number, got %S" v)))
 
+;; Synthetic indicator values: alex's example draws through the local
+;; evaluators, judged as of a fixed day so the example never changes.
+(defconst health-chart--example-indicator-members
+  '(("health.cardio.apob") ("health.cardio.lp-a")
+    ("health.biomarker.latest" :marker "ldl_c")
+    ("health.metabolic.hba1c")
+    ("health.biomarker.trend-slope" :marker "glucose")
+    ("health.inflammation.hs-crp")
+    ("health.biomarker.range-position" :marker "crp")
+    ("health.vitamin-d")
+    ("health.panel.out-of-range-count"))
+  "(RECIPE-ID . PARAMS) of the example indicator values.")
+
+(defun health-chart--example-indicator-values ()
+  "Synthetic canonical indicator values for alex, as of 2025-08-01."
+  (let ((ms (health-chart--example-measurements '("alex"))))
+    (mapcar (lambda (member)
+              (apply #'health-chart-indicator-evaluate (car member) ms
+                     :as-of "2025-08-01" :cohort "example" (cdr member)))
+            health-chart--example-indicator-members)))
+
+(defun health-chart--validate-indicators (data)
+  "Signal `health-chart-invalid-data' unless DATA are valid indicator values."
+  (condition-case err (health-chart-indicator-validate-values data)
+    (health-chart-error (signal 'health-chart-invalid-data (cdr err)))))
+
 (defvar health-chart-shapes
   `((measurements
      :doc "biomarker/v1 measurements: plists (:marker :date :value [:person :unit
@@ -157,7 +184,17 @@ envelope {\"schema\":\"biomarker/v1\",\"measurements\":[...]}.  Any order."
      :doc "Numbers oldest first, or (DATE . VALUE) pairs, or measurements."
      :example (131 124 108 96 112 88)
      :normalize health-chart--normalize-series
-     :validator health-chart--validate-series))
+     :validator health-chart--validate-series)
+    (indicators
+     :doc "Indicator values: plists (:id :label :value [:unit :date :as-of :series
+:direction :bounds :ref-low :ref-high :opt-low :opt-high :marker :person
+:cohort :measure :status]), or alists / JSON objects with the same members
+\(snake_case accepted).  :direction is lower-better, higher-better,
+in-range or neutral; :bounds is (LO HI) or {\"min\":LO,\"max\":HI}.
+`health-chart-indicator-evaluate' and `health-chart-cohort-values' make them."
+     :example ,(health-chart--example-indicator-values)
+     :normalize health-chart-indicator-normalize-values
+     :validator health-chart--validate-indicators))
   "Data shapes: (SHAPE :doc :example :normalize FN :validator FN).
 :normalize turns any accepted input into the canonical form (and must be
 idempotent); :validator signals `health-chart-invalid-data' with :index.")
@@ -181,7 +218,14 @@ idempotent); :validator signals `health-chart-invalid-data' with :index.")
            :check health-chart--check-delta
            :doc "Percent change per marker between two draws, toward or away from target.")
     (sparkline :shape series :text health-chart-text-sparkline :svg health-chart-svg-sparkline
-               :doc "One-row sparkline of plain numbers, for tables and mode lines."))
+               :doc "One-row sparkline of plain numbers, for tables and mode lines.")
+    (scorecard :shape indicators :text health-chart-text-scorecard :svg health-chart-svg-scorecard
+               :doc "Indicator scorecard: indicator | value | unit | status | trend sparkline.")
+    (cohort :shape indicators :text health-chart-text-cohort :svg health-chart-svg-cohort
+            :doc "Cohort panel: a card per indicator with value, status, range track and trend.")
+    (staleness :shape indicators :text health-chart-text-staleness :svg health-chart-svg-staleness
+               :check health-chart--check-staleness
+               :doc "Days since each indicator's draw, against due and stale thresholds."))
   "Chart kinds: (KIND :shape SHAPE :text FN :svg FN :doc STRING [:check FN]).
 Renderers are called as (FN DATA &rest PROPS) with normalized DATA and
 return a string, or nil when there is nothing to draw.  :check (DATA
@@ -205,6 +249,19 @@ PROPS) validates props that select from DATA.")
                 (list (format "%s %S is not a draw date; dates present: %s" key d
                               (string-join (health-chart-dates data) ", "))
                       :code "unknown_date" :date d))))))
+
+(defun health-chart--check-staleness (_data props)
+  "Signal unless PROPS' :as-of is a date and :due-days / :stale-days numbers."
+  (when-let* ((d (plist-get props :as-of)))
+    (unless (health-chart-date-p d)
+      (signal 'health-chart-invalid-data
+              (list (format ":as-of must be YYYY-MM-DD, got %S" d) :code "invalid_prop"))))
+  (dolist (key '(:due-days :stale-days))
+    (when-let* ((n (plist-get props key)))
+      (unless (natnump n)
+        (signal 'health-chart-invalid-data
+                (list (format "%s must be a whole number of days, got %S" key n)
+                      :code "invalid_prop"))))))
 
 (defun health-chart-register-kind (kind &rest spec)
   "Register (or replace) chart KIND with SPEC (:shape :text :svg :doc [:check]).
@@ -297,15 +354,26 @@ Empty DATA is valid: it renders as nothing."
 
 (defun health-chart--data-summary (kind data)
   "Counts describing normalized DATA for KIND, for explain and provenance."
-  (if (eq (plist-get (health-chart--kind kind) :shape) 'series)
-      (append (list :points (length data))
-              (when data (list :min (apply #'min data) :max (apply #'max data))))
-    (let ((dates (health-chart-dates data)))
+  (pcase (plist-get (health-chart--kind kind) :shape)
+    ('series
+     (append (list :points (length data))
+             (when data (list :min (apply #'min data) :max (apply #'max data)))))
+    ('indicators
+     (let ((dates (health-chart-dates data)))
+       (list :points (length data)
+             :indicators (health-chart--vec (health-chart-distinct :id data))
+             :cohorts (health-chart--vec (health-chart-distinct :cohort data))
+             :persons (health-chart--vec (health-chart-persons data))
+             :from (car dates) :to (car (last dates))
+             :out-of-range (seq-count (lambda (v) (memq (health-chart-indicator-status v) '(low high)))
+                                      data))))
+    (_
+     (let ((dates (health-chart-dates data)))
       (list :points (length data)
             :markers (health-chart--vec (health-chart-markers data))
             :persons (health-chart--vec (health-chart-persons data))
             :from (car dates) :to (car (last dates))
-            :out-of-range (seq-count #'health-chart-out-of-range-p data)))))
+            :out-of-range (seq-count #'health-chart-out-of-range-p data))))))
 
 ;;;###autoload
 (defun health-chart-explain (kind data &rest props)
@@ -337,7 +405,8 @@ bad DATA."
          (title (replace-regexp-in-string
                  "[[:cntrl:]]" "" (format "%s" (or (plist-get props :title) (format "%s chart" kind))) t t))
          (desc (format "health-chart %s: %d %s%s" kind (plist-get summary :points)
-                       (if (eq (plist-get (health-chart--kind kind) :shape) 'series) "points" "measurements")
+                       (pcase (plist-get (health-chart--kind kind) :shape)
+                         ('series "points") ('indicators "indicator values") (_ "measurements"))
                        (if (plist-get summary :from)
                            (format ", %s to %s" (plist-get summary :from) (plist-get summary :to))
                          "")))
@@ -524,6 +593,9 @@ PROPS as in `health-chart-plot', plus :buffer (name, default
                         (heatmap :person "alex") (delta :person "alex")
                         (panel :person "alex" :marker ("ldl_c" "apob" "glucose" "crp"))))
           (apply #'health-chart-plot-insert (car spec) ms (cdr spec))
+          (insert "\n\n"))
+        (dolist (kind '(scorecard cohort staleness))
+          (health-chart-plot-insert kind (health-chart--example-indicator-values))
           (insert "\n\n"))
         (goto-char (point-min))))
     (unless noninteractive (pop-to-buffer buf))

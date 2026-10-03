@@ -119,4 +119,17 @@
                   (push s strays))))
     (should-not strays)))
 
+(ert-deftest health-chart-core-test-marker-spellings-match ()
+  ;; biomarker-cli slugs vs this package's ids.
+  (should (health-chart-marker-equal "ldl-c" "ldl_c"))
+  (should (health-chart-marker-equal "hscrp" "hs_crp"))
+  (should (health-chart-marker-equal "vitamin-d" 'vitamin_d))
+  (should-not (health-chart-marker-equal "ldl-c" "hdl-c"))
+  (let ((ms (list (list :person "alex" :marker "vitamin-d" :value 34 :date "2024-01-01")
+                  (list :person "alex" :marker "hscrp" :value 0.5 :date "2024-01-01"))))
+    (should (= 1 (length (health-chart-filter ms :marker "vitamin_d"))))
+    (should (= 1 (length (health-chart-filter ms :marker '("hs_crp" "crp")))))
+    (should (equal (health-chart-marker-category "vitamin-d")
+                   (health-chart-marker-category "vitamin_d")))))
+
 ;;; health-chart-core-test.el ends here

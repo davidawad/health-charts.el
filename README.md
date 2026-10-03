@@ -109,6 +109,12 @@ renderer.
 | `compare` | one marker over time for several people, one glyph/color each |
 | `delta` | percent change per marker between two draws, judged against target |
 | `sparkline` | one-row sparkline of plain numbers |
+| `scorecard` | indicator values: indicator, value, unit, status, trend sparkline |
+| `cohort` | cohort panel: a card per indicator with value, status, range track, trend |
+| `staleness` | days since each indicator's draw, against due and stale lines |
+
+The last three take indicator values, not measurements; see
+[Indicators and cohorts](#indicators-and-cohorts).
 
 `table`:
 
@@ -182,6 +188,8 @@ heatmap by default).
 | `m` | compare the marker at point across every person |
 | `s` | select person |
 | `c` | filter by category (`health-chart-marker-categories`) |
+| `C` | select an indicator cohort (or `none`); its scorecard is drawn below the table |
+| `K` | open the selected cohort as a cohort panel |
 | `v` | small-multiples panel of the visible markers |
 | `d` | change between the two latest draws |
 | `g` | refetch from the source and redraw |
@@ -193,6 +201,122 @@ heatmap by default).
 Chart buffers opened from it (`health-chart-plot-mode`) have `g`
 (redraw), `t`, `r` and `o` too. Source errors are shown in the buffer
 with the fix, never swallowed.
+
+## Indicators and cohorts
+
+An **indicator** is a named recipe — "latest ApoB", "days since the last
+draw", "markers out of range" — described by an external catalog and
+evaluated here over measurements. A **cohort** is a named set of
+indicators (`cardio`, `metabolic`, `inflammation`, `vitamins`,
+`overview`), kept as data in `health-chart-indicator-cohorts`.
+
+```elisp
+(health-chart-list-cohorts)                  ; summary per cohort, pure
+(health-chart-describe-cohort 'cardio)       ; does each member resolve? is it in the catalog?
+(health-chart-cohort-values 'cardio :person "alex")    ; fetch + evaluate -> indicator values
+(health-chart-cohort-plot 'cardio :person "alex" :kind 'scorecard :backend 'text)
+(health-chart-cohort-view 'vitamins 'staleness)        ; M-x health-chart-cohort-view
+```
+
+```
+Indicators · cardio
+Indicator        Value  Unit      Status        Trend
+ApoB                84  mg/dL     ◐ suboptimal  █▆▃▂▄▁       ↘ improved
+Lp(a)              140  nmol/L    ▲ high        ▁█           ↗ worsened
+HbA1c              5.4  %         ○ normal      █▅▁          ↘ improved
+Vitamin D           26  ng/mL     ▼ low         █▄▁          ↘ worsened
+Ferritin           n/a  ng/mL     ? n/a
+```
+
+```
+Days since draw · cardio · as of 2025-08-01
+Lp(a)            2024-02-12  ████████████████████  536 d  ▲ stale
+Vitamin D        2024-11-18  ██████████───│──────  256 d  ◐ due
+ApoB             2025-06-02  ██──┆────────│──────   60 d  ● fresh
+Ferritin         no draw     ────┆────────│──────      –  ? undated
+┆ due after 120 d   │ stale after 365 d   ● fresh  ◐ due  ▲ stale
+```
+
+**The catalog.** `health-chart-indicator-catalog-function` (nil by
+default) is a function called as `(FN RECIPE-ID)` → that indicator's
+record, or nil, and as `(FN nil)` → every record (when it returns nil,
+listing probes each known id instead). A record is the resource-catalog
+object
+
+```json
+{"ref": {"kind": "indicator", "id": "health.cardio.apob"},
+ "name": "Apolipoprotein B", "revision": "1.0.0",
+ "attributes": {"description": "...", "owner": "...", "tags": ["health", "cardio"],
+                "parameters": {}, "recipe": {...},
+                "value": {"type": "number", "unit": "mg/dL", "scale": "linear",
+                          "bounds": {"min": null, "max": 90}},
+                "semantics": {"measure": "latest", "subject": {"kind": "biomarker", "key": "apob"},
+                              "time_basis": "draw", "direction": "lower_is_better"}}}
+```
+
+as an alist, hash table or plist; its member names live only in
+`health-chart-indicator-record-paths`. Without a catalog everything
+still works from the local evaluator table; with one, cohort members are
+checked against it and their records supply direction, bounds and unit.
+To work without an external catalog, serve records from Lisp:
+
+```elisp
+(setq health-chart-indicator-catalog-function #'health-chart-indicator-catalog-static
+      health-chart-indicator-catalog-static-data my-records)
+(health-chart-indicator-list)               ; records tagged "health" (health-chart-indicator-tag)
+(health-chart-indicator-list :tag nil)      ; every record
+(health-chart-indicator-describe "health.vitamin-d")
+```
+
+**Evaluation.** A catalog recipe is a DAG, not elisp, so
+`health-chart-indicator-evaluators` maps each recipe id to a local
+measure (`latest`, `series`, `status`, `range-position`, `trend-slope`,
+`days-since-draw`, `out-of-range-count`; see
+`health-chart-indicator-measures`) and a marker — or a list of candidate
+markers, the first present winning. An id without an entry is reported
+unresolvable, never dropped; supporting a recipe is one data entry.
+`health-chart-indicator-evaluate` and `health-chart-cohort-evaluate` are
+pure over measurements you already hold.
+
+**Status.** A value with reference or optimal ranges is judged like a
+measurement. Otherwise its `direction` and `bounds` decide:
+`lower-better` is `▲ high` above the max and `● optimal` below the min,
+`higher-better` the mirror image, `in-range`/`neutral` `▼ low`/`▲ high`
+outside; inside is `○ normal`. The trend word compares the series' ends
+the same way: `improved`, `worsened`, `on-target`, `steady`, or `rising`
+/ `falling` when the direction is neutral. Freshness is `● fresh`, `◐
+due` (past `health-chart-indicator-due-days`, 120) or `▲ stale` (past
+`health-chart-indicator-stale-days`, 365), counted to `:as-of` (default
+the values' own as-of date, else today).
+
+**Indicator values** — the data of the three indicator kinds — are
+plists or JSON objects:
+
+```json
+{"id": "health.cardio.apob", "label": "ApoB", "cohort": "cardio", "value": 84,
+ "unit": "mg/dL", "date": "2025-06-02", "as_of": "2025-08-01",
+ "series": [104, 99, 91, 86, 93, 84], "direction": "lower_is_better",
+ "bounds": {"min": null, "max": 90}, "ref_low": 0, "ref_high": 90, "opt_high": 80}
+```
+
+**Plans.** Every effectful call has a pure twin that names the calls it
+would make and makes none:
+
+| call | pure twin |
+|---|---|
+| `health-chart-indicator-list` | `health-chart-indicator-list-explain` |
+| `health-chart-indicator-describe` | `health-chart-indicator-describe-explain` |
+| `health-chart-describe-cohort` | `health-chart-describe-cohort-explain` |
+| `health-chart-cohort-values` | `health-chart-cohort-values-explain` (incl. the biomarker argv) |
+| `health-chart-cohort-plot` | `health-chart-cohort-plot-explain` (plus `health-chart-explain`) |
+
+Errors: `health-chart-unresolvable-cohort` (`unknown_cohort`,
+`unresolvable_cohort`), `health-chart-unknown-indicator`
+(`unknown_indicator`, `unknown_measure`, `missing_marker`) and
+`health-chart-catalog-error` (`catalog_missing`, `catalog_failed`), all
+under `health-chart-error`. The doctor adds `indicator-catalog`,
+`indicator-evaluators` and one `cohort:NAME` row per cohort; it never
+calls the catalog.
 
 ## Data: plain Lisp
 
@@ -290,7 +414,7 @@ To use another source, set the function:
 Ask the package; don't read source to learn its state.
 
 ```elisp
-(health-chart-describe)              ; kinds, shapes, statuses, source, entry points (JSON-able)
+(health-chart-describe)              ; kinds, shapes, statuses, indicators, cohorts, source, entry points
 (health-chart-describe-kind 'bullet) ; doc, shape doc, example data, renderers
 (health-chart-validate 'table DATA)  ; t, or a typed error with :index
 (health-chart-explain 'timeseries DATA :marker "ldl_c" :backend 'text)
@@ -333,6 +457,9 @@ bin/health-chart explain spec.json
 bin/health-chart validate spec.json              # {"ok":true} or the error envelope
 bin/health-chart describe
 bin/health-chart doctor
+bin/health-chart cohorts
+bin/health-chart cohort cardio '{"person":"alex","kind":"staleness"}'
+bin/health-chart cohort-explain cardio '{"person":"alex"}'   # the plan, no I/O
 
 # biomarker output straight in:
 biomarker trend --marker ldl_c --format json | bin/health-chart pipe timeseries
@@ -362,6 +489,11 @@ and exit 1. Set `EMACS` to choose the Emacs binary.
 | `health-chart-default-person` | nil (everyone / the first person) |
 | `health-chart-source-function` | `health-chart-source-cli` |
 | `health-chart-dashboard-sections`, `-backend` | `(bullet heatmap)`, `text` |
+| `health-chart-indicator-catalog-function` | nil (no catalog) |
+| `health-chart-indicator-cohorts`, `-evaluators` | cardio, metabolic, …; the `health.*` recipe ids |
+| `health-chart-indicator-tag` | `"health"` |
+| `health-chart-indicator-due-days`, `-stale-days` | 120, 365 |
+| `health-chart-dashboard-cohort`, `-cohort-sections` | nil, `(scorecard)` |
 
 Faces: `health-chart-optimal`, `-normal`, `-suboptimal`,
 `-out-of-range`, `-ref-band`, `-optimal-band`, `-improved`, `-worsened`,
@@ -374,6 +506,8 @@ Faces: `health-chart-optimal`, `-normal`, `-suboptimal`,
 | `health-chart.el` | entry point: `describe`, doctor, entry points |
 | `health-chart-core.el` | customize group, faces, glyphs, dates, numbers, status, collection helpers |
 | `health-chart-source.el` | the biomarker wire format, normalization, CLI and static sources |
+| `health-chart-indicator.el` | indicator catalog hook and record format, indicator values, status, evaluators |
+| `health-chart-cohort.el` | named indicator cohorts: resolve, describe, evaluate, fetch, plot, explain twins |
 | `health-chart-model.el` | per-kind models both renderers draw from |
 | `health-chart-text.el` | unicode renderers |
 | `health-chart-svg.el` | SVG renderers |

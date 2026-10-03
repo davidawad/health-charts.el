@@ -18,6 +18,7 @@
 ;;   RET  open the marker at point as a time series
 ;;   m    compare the marker at point across every person
 ;;   s    select person          c    filter by category
+;;   C    select indicator cohort K    cohort panel
 ;;   v    small-multiples panel  d    change between the last two draws
 ;;   g    refetch and redraw     t    toggle text / SVG
 ;;   r    toggle reference band  o    toggle optimal band
@@ -32,6 +33,7 @@
 (require 'health-chart-core)
 (require 'health-chart-source)
 (require 'health-chart-plot)
+(require 'health-chart-cohort)
 
 (defcustom health-chart-dashboard-buffer-name "*health-charts*"
   "Name of the dashboard buffer."
@@ -43,6 +45,18 @@
   :type '(repeat (choice (const bullet) (const heatmap) (const delta) (const panel)))
   :group 'health-charts)
 
+(defcustom health-chart-dashboard-cohort nil
+  "Indicator cohort the dashboard starts with, or nil for none.
+A name of `health-chart-indicator-cohorts'; change it in the dashboard
+with \<health-chart-dashboard-mode-map>\[health-chart-dashboard-select-cohort]."
+  :type '(choice (const :tag "None" nil) symbol)
+  :group 'health-charts)
+
+(defcustom health-chart-dashboard-cohort-sections '(scorecard)
+  "Indicator chart kinds drawn for the selected cohort, in order."
+  :type '(repeat (choice (const scorecard) (const cohort) (const staleness)))
+  :group 'health-charts)
+
 (defcustom health-chart-dashboard-backend 'text
   "Backend the dashboard starts with for its sections: `text', `svg' or `auto'.
 The sparkline table is always text, so RET works on its rows."
@@ -51,6 +65,7 @@ The sparkline table is always text, so RET works on its rows."
 
 (defvar-local health-chart-dashboard--person nil "Person shown.")
 (defvar-local health-chart-dashboard--category nil "Category filter, nil for all.")
+(defvar-local health-chart-dashboard--cohort nil "Indicator cohort shown, or nil.")
 (defvar-local health-chart-dashboard--backend nil "Backend for the sections.")
 (defvar-local health-chart-dashboard--ref nil "Whether the reference band shows.")
 (defvar-local health-chart-dashboard--optimal nil "Whether the optimal band shows.")
@@ -64,6 +79,8 @@ The sparkline table is always text, so RET works on its rows."
     (define-key m (kbd "m") #'health-chart-dashboard-compare)
     (define-key m (kbd "s") #'health-chart-dashboard-select-person)
     (define-key m (kbd "c") #'health-chart-dashboard-select-category)
+    (define-key m (kbd "C") #'health-chart-dashboard-select-cohort)
+    (define-key m (kbd "K") #'health-chart-dashboard-cohort-panel)
     (define-key m (kbd "v") #'health-chart-dashboard-panel)
     (define-key m (kbd "d") #'health-chart-dashboard-delta)
     (define-key m (kbd "g") #'health-chart-dashboard-refresh)
@@ -120,9 +137,10 @@ The sparkline table is always text, so RET works on its rows."
   (concat
    (propertize "Health charts" 'face 'health-chart-header)
    (propertize
-    (format " · %s · category: %s · %s · bands: %s\n"
+    (format " · %s · category: %s · cohort: %s · %s · bands: %s\n"
             (or health-chart-dashboard--person "everyone")
             (or health-chart-dashboard--category "all")
+            (or health-chart-dashboard--cohort "none")
             (health-chart--usable-backend health-chart-dashboard--backend)
             (string-join (delq nil (list (and health-chart-dashboard--ref "reference")
                                          (and health-chart-dashboard--optimal "optimal")))
@@ -132,7 +150,8 @@ The sparkline table is always text, so RET works on its rows."
     (substitute-command-keys
      "\\<health-chart-dashboard-mode-map>\\[health-chart-dashboard-open] open  \
 \\[health-chart-dashboard-compare] compare  \\[health-chart-dashboard-select-person] person  \
-\\[health-chart-dashboard-select-category] category  \\[health-chart-dashboard-panel] panel  \
+\\[health-chart-dashboard-select-category] category  \\[health-chart-dashboard-select-cohort] cohort  \
+\\[health-chart-dashboard-cohort-panel] cohort panel  \\[health-chart-dashboard-panel] panel  \
 \\[health-chart-dashboard-delta] change  \\[health-chart-dashboard-refresh] refresh  \
 \\[health-chart-dashboard-toggle-backend] text/svg  \\[health-chart-dashboard-toggle-ref] ref  \
 \\[health-chart-dashboard-toggle-optimal] optimal  \\[quit-window] quit\n\n")
@@ -164,6 +183,7 @@ The sparkline table is always text, so RET works on its rows."
      (t
       (insert (health-chart-plot 'table ms :backend 'text :person health-chart-dashboard--person)
               "\n")
+      (health-chart-dashboard--insert-cohort props)
       (dolist (kind health-chart-dashboard-sections)
         (insert "\n")
         (apply #'health-chart-plot-insert kind ms
@@ -172,6 +192,25 @@ The sparkline table is always text, so RET works on its rows."
     (goto-char (point-min))
     (when-let* ((pos (and marker (health-chart-dashboard--find-marker marker))))
       (goto-char pos))))
+
+(defun health-chart-dashboard--cohort-values ()
+  "The selected cohort evaluated over the fetched data (no extra fetch)."
+  (health-chart-cohort-evaluate health-chart-dashboard--cohort health-chart-dashboard--data
+                                :person health-chart-dashboard--person))
+
+(defun health-chart-dashboard--insert-cohort (props)
+  "Insert the selected cohort's sections with chart PROPS, or its error."
+  (when health-chart-dashboard--cohort
+    (condition-case err
+        (let ((values (health-chart-dashboard--cohort-values)))
+          (dolist (kind health-chart-dashboard-cohort-sections)
+            (insert "\n")
+            (apply #'health-chart-plot-insert kind values
+                   :width (max 60 (min 110 (- (window-body-width) 2))) props)
+            (insert "\n")))
+      (health-chart-error
+       (insert "\n" (propertize (format "Cohort error: %s\n" (cadr err))
+                                'face 'health-chart-out-of-range))))))
 
 ;; -----------------------------------------------------------------------
 ;; Commands
@@ -189,6 +228,7 @@ Interactively, a prefix argument prompts for the person."
       (unless (derived-mode-p 'health-chart-dashboard-mode)
         (health-chart-dashboard-mode)
         (setq health-chart-dashboard--backend health-chart-dashboard-backend
+              health-chart-dashboard--cohort health-chart-dashboard-cohort
               health-chart-dashboard--ref health-chart-show-ref-range
               health-chart-dashboard--optimal health-chart-show-optimal-range))
       (when (and person (not (string-empty-p person)))
@@ -227,6 +267,29 @@ Interactively, a prefix argument prompts for the person."
                           nil t nil nil "all")))
   (setq health-chart-dashboard--category (unless (member category '("all" "")) category))
   (health-chart-dashboard--render))
+
+(defun health-chart-dashboard-select-cohort (cohort)
+  "Show indicator COHORT below the table (\"none\" to hide it).
+COHORT names an entry of `health-chart-indicator-cohorts'."
+  (interactive
+   (list (completing-read "Cohort: " (cons "none" (mapcar #'symbol-name (health-chart-cohort-names)))
+                          nil t nil nil (if health-chart-dashboard--cohort
+                                            (symbol-name health-chart-dashboard--cohort)
+                                          "none"))))
+  (let ((name (unless (member (format "%s" cohort) '("none" ""))
+                (health-chart--cohort-symbol cohort))))
+    (when name (health-chart--cohort name))
+    (setq health-chart-dashboard--cohort name))
+  (health-chart-dashboard--render))
+
+(defun health-chart-dashboard-cohort-panel ()
+  "Show the selected cohort as a cohort panel in its own buffer."
+  (interactive)
+  (unless health-chart-dashboard--cohort
+    (user-error "No cohort selected; press %s to pick one"
+                (substitute-command-keys "\\<health-chart-dashboard-mode-map>\\[health-chart-dashboard-select-cohort]")))
+  (health-chart-dashboard--view 'cohort (health-chart-dashboard--cohort-values)
+                                :buffer (format "*health-chart: %s*" health-chart-dashboard--cohort)))
 
 (defun health-chart-dashboard-toggle-backend ()
   "Flip the dashboard sections between text and SVG."
