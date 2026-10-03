@@ -224,7 +224,7 @@ Each line is WIDTH columns wide."
                        " "
                        (health-chart-text--p (health-chart-fmt-value latest) 'health-chart-accent)
                        " "
-                       (health-chart-text--p (health-chart-status-glyph status)
+                       (health-chart-text--p (health-chart-status-label status)
                                              (health-chart-status-face status)))))
     (mapcar (lambda (line) (health-chart-pad line width))
             (cons head (health-chart-text--grid model width height t)))))
