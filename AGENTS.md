@@ -34,7 +34,8 @@ Ask the package; don't read source to learn its state.
    `-cohort-plot-explain` (every effectful indicator call has an
    `-explain` twin).
 7. Reports: Org dynamic blocks (`health-chart`, `health-table`,
-   `health-scorecard`, `health-flags`, `health-genetics`) and
+   `health-scorecard`, `health-flags`, `health-genetics`,
+   `health-genetics-labs`) and
    templates/org; plan a block with `(health-chart-org-explain NAME
    PARAMS)`, a report with `health-chart-org-new-report-explain`.
 8. Health: `(health-chart-doctor-checks)` — rows
@@ -60,7 +61,10 @@ Ask the package; don't read source to learn its state.
   (`health-chart-source-fields`, `-list-keys`, `-cli-args`). Nothing
   else may know JSON member names or CLI flags.  Likewise the indicator
   catalog record format lives only in health-chart-indicator.el
-  (`health-chart-indicator-record-paths`).
+  (`health-chart-indicator-record-paths`).  genetics.el is a soft
+  dependency reached only through `health-chart-genetics-functions`
+  (never `require` it); gene-to-lab links are data in
+  `health-chart-gene-lab-links` (docs/gene-lab-links.md).
 - Cohorts and recipe support are data: `health-chart-indicator-cohorts`
   and `health-chart-indicator-evaluators`.  An effectful call gets a pure
   `-explain` twin.

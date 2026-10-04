@@ -389,6 +389,7 @@ use; plain charts never load Org.
 | `health-scorecard` | a cohort's indicator values with status and trend words |
 | `health-flags` | the markers whose latest value is out of range, as a list |
 | `health-genetics` | genetics.el's `genetics-summary`, `genetics-hits` or `genetics-apoe` block (`:section summary\|hits\|apoe`, `:kit NAME` or `:file KIT`) when genetics.el is loaded; never loads it, and writes a one-line note without it |
+| `health-genetics-labs` | per gene in `health-chart-gene-lab-links` (`:genes` picks some): the genotype or APOE haplotype and its call source (observed or inferred reference) from genetics.el, then the linked markers' latest values with status words and a small time series each (`:charts nil` drops them). Genes with no linked lab get one informational line; a missing genetics.el or call becomes a one-line note; always ends with "informational only, not medical advice". See [docs/gene-lab-links.md](docs/gene-lab-links.md) |
 
 Params: `:person :marker :markers :category :cohort :since :until
 :as-of` select the data (`:cohort` takes one name or a list);
@@ -423,7 +424,7 @@ Each block has a pure explain twin that returns the data query (the
 source call or cohort plans, the local filter) and the output path
 without fetching or drawing: `health-chart-org-chart-explain`,
 `-table-explain`, `-scorecard-explain`, `-flags-explain`,
-`-genetics-explain`; `(health-chart-org-explain "health-chart" PARAMS
+`-genetics-explain`, `-genetics-labs-explain`; `(health-chart-org-explain "health-chart" PARAMS
 [ORG-FILE])` dispatches by name and `M-x health-chart-org-explain-block`
 explains the block at point.
 
@@ -434,9 +435,9 @@ explains the block at point.
 |---|---|
 | `lab-draw` | one draw: flags, results table, bullet chart, per-category panels |
 | `annual-review` | a year: panel, heatmap, delta vs the year before, cohort scorecards, due tests (staleness), remaining flags |
-| `cardiometabolic` | the cardio and metabolic cohorts, a time series per marker, the latest values |
+| `cardiometabolic` | the cardio and metabolic cohorts, a time series per marker, APOE and MTHFR next to their labs, the latest values |
 | `genetics-summary` | genetics.el blocks only |
-| `full-health-report` | labs and genetics composed |
+| `full-health-report` | labs and genetics composed, ending with every linked gene next to its labs |
 
 They use the chart templates' placeholder syntax, filled once at stamp
 time: `{{person}}`, `{{date}}`, `{{since}}`, `{{until}}`, `{{period}}`

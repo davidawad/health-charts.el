@@ -1,0 +1,14 @@
+# Synthetic 23andMe-format genotype file for health-chart tests.
+# Not from any person: genotypes were chosen by hand to exercise the
+# genetics-to-labs block (an APOE e3/e4 pair, one SNP absent, one no-call).
+# Positions are illustrative.
+# rsid	chromosome	position	genotype
+rs4477212	1	82154	AA
+rs1801133	1	11856378	AG
+rs6025	1	169519049	--
+rs4988235	2	136608646	AG
+rs1800562	6	26093141	GG
+rs1799945	6	26091179	CG
+rs4244285	10	96541616	GG
+rs429358	19	45411941	TC
+rs7412	19	45412079	CC

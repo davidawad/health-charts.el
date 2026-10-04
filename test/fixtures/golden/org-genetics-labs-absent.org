@@ -1,0 +1,15 @@
+* Genetics and labs
+#+BEGIN: health-genetics-labs :person "alex" :kit "demo" :file "kit.txt" :until "2025-09-30" :backend text :genes ("HFE" "LCT") :charts nil
+/Genotypes not shown: genetics.el is not loaded (health-chart-genetics-test--no-kit and health-chart-genetics-test--no-call are undefined); load it, or set =health-chart-genetics-functions=, and refresh this block./
+
+*HFE* (rs1800562, rs1799945). HFE helps regulate iron uptake; C282Y (rs1800562) and H63D (rs1799945) are associated with higher iron stores, which ferritin, serum iron and transferrin saturation describe. [[https://medlineplus.gov/genetics/gene/hfe/][MedlinePlus Genetics: HFE]]
+
+- ◐ suboptimal · *Ferritin* 154 ng/mL (2025-09-15), reference 30–400
+- *Iron*: no results on file.
+- *Transferrin sat.*: no results on file.
+
+*LCT* (rs4988235). rs4988235, upstream of LCT, is associated with lactase persistence into adulthood. Relevant to dietary lactose tolerance only; no standard lab marker is linked. [[https://medlineplus.gov/genetics/condition/lactose-intolerance/][MedlinePlus Genetics: lactose intolerance]]
+
+/Informational only, not medical advice: these links show which lab markers are commonly read next to a gene; discuss results with a clinician./
+#+END:
+after

@@ -8,57 +8,9 @@
 
 ;;; Code:
 
-(require 'health-chart-test-helpers)
-(require 'health-chart-org)
+(require 'health-chart-org-test-helpers)
 (require 'ox-html)
 (require 'ox-latex)
-
-(defconst health-chart-org-test--sample
-  (expand-file-name "../examples/sample-panel.json" health-chart-test-dir)
-  "The synthetic sample panel.")
-
-(defun health-chart-org-test-sample ()
-  "The sample panel as canonical measurements."
-  (health-chart-source-parse
-   (with-temp-buffer
-     (let ((coding-system-for-read 'utf-8-unix))
-       (insert-file-contents health-chart-org-test--sample))
-     (buffer-string))))
-
-(defvar health-chart-org-test-calls nil
-  "Source calls made inside `health-chart-org-test-env'.")
-
-(defmacro health-chart-org-test-env (&rest body)
-  "Run BODY in a temporary directory with the sample panel as the source.
-`health-chart-org-test-calls' collects every source call."
-  (declare (indent 0) (debug t))
-  `(health-chart-test-env
-     (let* ((dir (make-temp-file "hc-org" t))
-            (default-directory (file-name-as-directory dir))
-            (sample (health-chart-org-test-sample))
-            (health-chart-org-test-calls nil)
-            (health-chart-source-function
-             (lambda (command &rest args)
-               (push (cons command args) health-chart-org-test-calls)
-               (let ((health-chart-source-static-data sample))
-                 (apply #'health-chart-source-static command args))))
-            (health-chart-org-template-directories nil)
-            (health-chart-org-image-format 'svg)
-            (health-chart-org-asset-directory "%s-assets"))
-       (ignore health-chart-org-test-calls)
-       (unwind-protect (progn ,@body)
-         (delete-directory dir t)))))
-
-(defun health-chart-org-test-update (text)
-  "TEXT as an Org file in the current directory, every health block refreshed."
-  (let ((file (expand-file-name "report.org")))
-    (with-temp-file file (insert text))
-    (with-current-buffer (find-file-noselect file)
-      (unwind-protect
-          (progn (health-chart-org-update)
-                 (buffer-substring-no-properties (point-min) (point-max)))
-        (set-buffer-modified-p nil)
-        (kill-buffer)))))
 
 (defconst health-chart-org-test--doc
   "* Report

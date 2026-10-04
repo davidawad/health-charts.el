@@ -44,7 +44,8 @@
 ;;              each effectful call has a pure `-explain' twin
 ;;   dashboard  `health-charts' (M-x), alias of `health-chart-dashboard'
 ;;   reports    Org dynamic blocks (#+BEGIN: health-chart, health-table,
-;;              health-scorecard, health-flags, health-genetics) and
+;;              health-scorecard, health-flags, health-genetics,
+;;              health-genetics-labs) and
 ;;              report templates: `health-chart-org-new-report',
 ;;              `health-chart-org-update', `health-chart-org-templates';
 ;;              plans from `health-chart-org-explain'
@@ -73,6 +74,7 @@
 (require 'health-chart-plot)
 (require 'health-chart-cohort)
 (require 'health-chart-dashboard)
+(require 'health-chart-genetics)
 
 ;; The Org report layer loads on first use (it requires Org).
 (dolist (fn '(health-chart-org-new-report health-chart-org-update health-chart-org-templates))
@@ -81,7 +83,7 @@
               health-chart-org-stamp health-chart-org-context health-chart-org-template-list
               org-dblock-write:health-chart org-dblock-write:health-table
               org-dblock-write:health-scorecard org-dblock-write:health-flags
-              org-dblock-write:health-genetics))
+              org-dblock-write:health-genetics org-dblock-write:health-genetics-labs))
   (autoload fn "health-chart-org"))
 
 (defconst health-chart-version "0.2.0"
@@ -110,6 +112,9 @@
     (report health-chart-org-new-report health-chart-org-update health-chart-org-templates
             health-chart-org-explain health-chart-org-new-report-explain
             health-chart-org-stamp health-chart-org-template-list)
+    (genetics health-chart-gene-lab-links health-chart-genetics-links
+              health-chart-genetics-calls health-chart-genetics-calls-explain
+              health-chart-genetics-functions)
     (extend health-chart-register-kind health-chart-shapes health-chart-backends
             health-chart-template-directories health-chart-source-function
             health-chart-indicator-catalog-function health-chart-indicator-cohorts
@@ -190,7 +195,8 @@ no process and calls no catalog."
   (append (health-chart-plot-doctor-checks)
           (health-chart-render-doctor-checks)
           (health-chart-source-doctor-checks)
-          (health-chart-cohort-doctor-checks)))
+          (health-chart-cohort-doctor-checks)
+          (health-chart-genetics-doctor-checks)))
 
 ;;;###autoload
 (defun health-chart-doctor ()
