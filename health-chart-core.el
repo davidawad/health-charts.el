@@ -86,7 +86,10 @@ times, so no time zone is involved)."
     ("crp" . "hs-CRP") ("hs_crp" . "hs-CRP") ("vitamin_d" . "Vitamin D")
     ("tsh" . "TSH") ("ferritin" . "Ferritin") ("alt" . "ALT") ("ast" . "AST")
     ("creatinine" . "Creatinine") ("egfr" . "eGFR") ("testosterone" . "Testosterone")
-    ("testosterone_total" . "Testosterone") ("hscrp" . "hs-CRP"))
+    ("testosterone_total" . "Testosterone") ("hscrp" . "hs-CRP")
+    ("homocysteine" . "Homocysteine") ("folate" . "Folate") ("b12" . "Vitamin B12")
+    ("vitamin_b12" . "Vitamin B12") ("iron" . "Iron")
+    ("transferrin_saturation" . "Transferrin sat."))
   "Display label for each marker id.
 A marker without an entry is shown as its id with underscores as spaces."
   :type '(alist :key-type string :value-type string)

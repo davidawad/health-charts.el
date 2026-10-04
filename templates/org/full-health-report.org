@@ -5,7 +5,8 @@
 #+STARTUP: showall
 
 Labs and genetics together: the latest draw, the year's trends, the
-cohorts and, when genetics.el is loaded, the genetic summary.
+cohorts and, when genetics.el is loaded, the genetic summary and each
+linked gene's call next to its lab markers.
 
 * Labs
 ** Out of range
@@ -43,4 +44,10 @@ cohorts and, when genetics.el is loaded, the genetic summary.
 
 ** APOE
 #+BEGIN: health-genetics :section apoe :kit "{{person}}"
+#+END:
+
+* Genetics and labs
+Each linked gene's call next to the lab markers commonly read with it.
+
+#+BEGIN: health-genetics-labs :person "{{person}}" :kit "{{person}}" :since "{{since}}" :until "{{until}}"
 #+END:

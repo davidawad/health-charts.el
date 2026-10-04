@@ -33,6 +33,13 @@ marker's history.
 #+BEGIN: health-chart :kind timeseries :person "{{person}}" :marker "glucose" :until "{{until}}" :caption "Fasting glucose"
 #+END:
 
+* Genetics and labs
+APOE and MTHFR calls next to the lipid and homocysteine markers commonly
+read with them.
+
+#+BEGIN: health-genetics-labs :person "{{person}}" :kit "{{person}}" :genes ("APOE" "MTHFR") :until "{{until}}"
+#+END:
+
 * Latest values
 #+BEGIN: health-table :person "{{person}}" :markers ("apob" "ldl-c" "hdl-c" "lpa" "triglycerides" "hba1c" "glucose") :until "{{until}}"
 #+END:

@@ -61,6 +61,41 @@ marker's history.
 [[file:cardiometabolic-assets/timeseries-alex-glucose-dce1b947.svg]]
 #+END:
 
+* Genetics and labs
+APOE and MTHFR calls next to the lipid and homocysteine markers commonly
+read with them.
+
+#+BEGIN: health-genetics-labs :person "alex" :kit "alex" :genes ("APOE" "MTHFR") :until "2025-09-30"
+/Genotypes not shown: genetics.el is not loaded (genetics-kit and genetics-genotype are undefined); load it, or set =health-chart-genetics-functions=, and refresh this block./
+
+*APOE* (rs429358, rs7412). APOE carries cholesterol in the blood; its ε2/ε3/ε4 alleles (rs429358, rs7412) are associated with differences in LDL-C and ApoB, so the lipid markers are often read alongside it. [[https://medlineplus.gov/genetics/gene/apoe/][MedlinePlus Genetics: APOE]]
+
+- ◐ suboptimal · *LDL-C* 76 mg/dL (2025-09-15), reference 0–100
+- ● optimal · *ApoB* 72 mg/dL (2025-09-15), reference 0–90
+- ▲ high · *Lp(a)* 144 nmol/L (2025-09-15), reference 0–75
+- *Total chol*: no results on file.
+
+#+CAPTION: LDL-C
+#+ATTR_HTML: :alt LDL-C
+[[file:cardiometabolic-assets/timeseries-alex-ldl-c-f787a638.svg]]
+
+#+CAPTION: ApoB
+#+ATTR_HTML: :alt ApoB
+[[file:cardiometabolic-assets/timeseries-alex-apob-3b602196.svg]]
+
+#+CAPTION: Lp(a)
+#+ATTR_HTML: :alt Lp(a)
+[[file:cardiometabolic-assets/timeseries-alex-lpa-6a36daf7.svg]]
+
+*MTHFR* (rs1801133, rs1801131). MTHFR helps process folate; the common C677T (rs1801133) and A1298C (rs1801131) variants lower enzyme activity and are associated with higher homocysteine when folate or B12 is low. [[https://medlineplus.gov/genetics/gene/mthfr/][MedlinePlus Genetics: MTHFR]]
+
+- *Homocysteine*: no results on file.
+- *Folate*: no results on file.
+- *Vitamin B12*: no results on file.
+
+/Informational only, not medical advice: these links show which lab markers are commonly read next to a gene; discuss results with a clinician./
+#+END:
+
 * Latest values
 #+BEGIN: health-table :person "alex" :markers ("apob" "ldl-c" "hdl-c" "lpa" "triglycerides" "hba1c" "glucose") :until "2025-09-30"
 #+PLOT: title:"Latest values · alex" ind:1 deps:(2) type:2d with:histograms set:"style fill solid 0.6" set:"xtics rotate by -45"
