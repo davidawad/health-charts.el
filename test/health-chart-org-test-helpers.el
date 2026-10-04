@@ -74,7 +74,8 @@ is hidden unless `health-chart-org-test-real-genetics' is non-nil."
   (let ((file (expand-file-name "report.org")))
     (let ((coding-system-for-write 'utf-8-unix))
       (with-temp-file file (insert text)))
-    (with-current-buffer (find-file-noselect file)
+    (with-current-buffer (let ((coding-system-for-read 'utf-8-unix))
+                           (find-file-noselect file))
       (unwind-protect
           (progn (health-chart-org-update)
                  (buffer-substring-no-properties (point-min) (point-max)))

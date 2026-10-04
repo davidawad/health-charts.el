@@ -495,6 +495,28 @@ On Windows it is a .cmd file, as npm's shims are."
                      (health-chart--read-bytes (expand-file-name "ts.png" dir)))))
         (delete-directory dir t)))))
 
+(ert-deftest health-chart-backend-test-auto-png-falls-back-to-gnuplot ()
+  ;; Windows: vl2svg works, but neither vl2png nor rsvg-convert does
+  (skip-unless (health-chart-gnuplot-available-p))
+  (health-chart-test-env
+    (let* ((dir (make-temp-file "hc-tools" t))
+           (health-chart-tool-directories (list dir))
+           (health-chart-vl2svg-command
+            (list (health-chart-backend-test--fake-tool dir "hc-fake-vl2svg")))
+           (health-chart-vl2png-command '("hc-no-such-vl2png"))
+           (health-chart-rsvg-convert-command '("hc-no-such-rsvg-convert"))
+           (health-chart-vega-lite-raster 'auto)
+           (health-chart--vl-canvas-broken nil)
+           (health-chart-backend 'auto))
+      (unwind-protect
+          (pcase-let ((`(,backend ,format ,out)
+                       (health-chart-render-string 'bullet (health-chart-backend-test-sample)
+                                                   :format 'png :person "alex")))
+            (should (eq backend 'gnuplot))
+            (should (eq format 'png))
+            (should (health-chart-backend-test--png-p out)))
+        (delete-directory dir t)))))
+
 (ert-deftest health-chart-backend-test-backend-errors-carry-stderr ()
   (skip-unless (health-chart-gnuplot-available-p))
   (health-chart-test-env

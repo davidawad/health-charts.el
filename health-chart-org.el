@@ -545,12 +545,24 @@ Interactively, show it in the echo area."
     (format "# %s%s: %s" block (if code (format " (%s)" code) "")
             (health-chart-org--message err))))
 
+(defun health-chart-org--prefer-utf-8 ()
+  "Make the buffer's undecided file coding UTF-8, keeping its line ends.
+Blocks insert glyphs such as ● that a locale code page cannot encode;
+an ASCII file visited as `undecided' would otherwise make Emacs (and
+org-persist, on killing the buffer) ask for a coding system."
+  (when (and buffer-file-name
+             (eq (coding-system-base buffer-file-coding-system) 'undecided))
+    (set-buffer-file-coding-system
+     (coding-system-change-text-conversion buffer-file-coding-system 'utf-8) nil t)))
+
 (defmacro health-chart-org--guard (block &rest body)
   "Insert BODY's string; on any error insert BLOCK's error comment instead."
   (declare (indent 1) (debug t))
-  `(insert (condition-case err
-               (progn ,@body)
-             (error (health-chart-org--error-line ,block err)))))
+  `(progn
+     (health-chart-org--prefer-utf-8)
+     (insert (condition-case err
+                 (progn ,@body)
+               (error (health-chart-org--error-line ,block err))))))
 
 (defun health-chart-org--render-props (params kind data)
   "Props for `health-chart-write' drawing KIND of DATA under block PARAMS."
@@ -843,6 +855,7 @@ See `health-chart-org-flags-explain' for the plan."
   "Org dynamic block: genetics.el's section for PARAMS, when it is loaded.
 Never loads genetics.el; without it, writes a one-line note.  See
 `health-chart-org-genetics-explain' for the plan."
+  (health-chart-org--prefer-utf-8)
   (let ((plan (health-chart-org-genetics-explain params)))
     (cond
      ((not (eq (plist-get plan :valid) t))

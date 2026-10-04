@@ -676,7 +676,33 @@ with :fallback steps when PNG/PDF may need rsvg-convert."
   "Render KIND of DATA under PROPS; return (BACKEND FORMAT OUTPUT).
 OUTPUT is a string (bytes for png and pdf), or nil when there is
 nothing to draw.  PROPS' :out writes the output to that file instead,
-OUTPUT then being the file name."
+OUTPUT then being the file name.  When the backend is `auto' and the
+chosen one's tools cannot write the format (Vega-Lite PNG with neither
+a working vl2png nor rsvg-convert, as on Windows), the next installed
+backend of `health-chart-graphic-backends' draws it."
+  (condition-case err
+      (apply #'health-chart--render-string kind data props)
+    (health-chart-backend-error
+     (let ((next (and (equal (plist-get (cddr err) :code) "backend_missing")
+                      (health-chart--next-backend kind props))))
+       (if next
+           (apply #'health-chart-render-string kind data :backend next props)
+         (signal (car err) (cdr err)))))))
+
+(defun health-chart--next-backend (kind props)
+  "The installed backend after the one `auto' chose for KIND under PROPS.
+Nil unless PROPS leave the backend to `auto' and set a :format."
+  (let ((format (plist-get props :format)))
+    (when (and format (eq (or (plist-get props :backend) health-chart-backend) 'auto))
+      (let ((tried (car (health-chart-select-backend kind 'auto format))))
+        (seq-find (lambda (b)
+                    (and (assq b health-chart-backends)
+                         (health-chart--supports-p b kind format)
+                         (health-chart-backend-available-p b)))
+                  (cdr (memq tried health-chart-graphic-backends)))))))
+
+(defun health-chart--render-string (kind data &rest props)
+  "`health-chart-render-string' of KIND, DATA and PROPS without the fallback."
   (pcase-let* ((`(,backend ,format ,_reason)
                 (health-chart-select-backend kind (plist-get props :backend) (plist-get props :format)))
                (plist (health-chart--backend backend))
