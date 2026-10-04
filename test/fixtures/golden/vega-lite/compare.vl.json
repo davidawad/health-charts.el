@@ -1,0 +1,91 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "health-chart compare: one marker over time for several people, a line and point shape per person (glyph + name in the legend), reference and optimal bands shaded, each person's latest value annotated.",
+  "width": 720,
+  "height": 360,
+  "autosize": {"type": "fit", "contains": "padding"},
+  "padding": {"left": 12, "right": 20, "top": 12, "bottom": 8},
+  "background": "#fcfcfb",
+  "title": {
+    "text": "Vitamin D · alex vs sam", "subtitle": "latest: alex 55 ng/mL ● optimal · sam 29 ng/mL ▼ low", "anchor": "start", "offset": 12,
+    "fontSize": 17, "subtitleFontSize": 12.5, "color": "#0b0b0b", "subtitleColor": "#52514e"
+  },
+  "config": {
+    "font": "DejaVu Sans",
+    "view": {"stroke": null},
+    "axis": {
+      "labelColor": "#52514e", "titleColor": "#52514e", "labelFontSize": 11.5,
+      "titleFontSize": 11.5, "titleFontWeight": "normal", "gridColor": "#e1e0d9",
+      "domainColor": "#c3c2b7", "tickColor": "#c3c2b7"
+    },
+    "legend": {
+      "labelColor": "#52514e", "labelFontSize": 12, "orient": "bottom",
+      "direction": "horizontal", "title": null, "symbolSize": 110, "columnPadding": 18
+    }
+  },
+  "data": {"values": [{"person":"alex","marker":"vitamin-d","label":"Vitamin D","date":"2021-11-08","value":22,"unit":"ng/mL","value_label":"22 ng/mL","status":"low","glyph":"▼","status_label":"▼ low","color":"#d03b3b","rgb":13646651,"shape":"triangle-down","pt":11,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"alex","series_label":"● alex","series_color":"#2a78d6","latest":0},{"person":"alex","marker":"vitamin-d","label":"Vitamin D","date":"2022-05-16","value":26,"unit":"ng/mL","value_label":"26 ng/mL","status":"low","glyph":"▼","status_label":"▼ low","color":"#d03b3b","rgb":13646651,"shape":"triangle-down","pt":11,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"alex","series_label":"● alex","series_color":"#2a78d6","latest":0},{"person":"alex","marker":"vitamin-d","label":"Vitamin D","date":"2022-11-14","value":34,"unit":"ng/mL","value_label":"34 ng/mL","status":"suboptimal","glyph":"◐","status_label":"◐ suboptimal","color":"#e09a00","rgb":14719488,"shape":"diamond","pt":13,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"alex","series_label":"● alex","series_color":"#2a78d6","latest":0},{"person":"alex","marker":"vitamin-d","label":"Vitamin D","date":"2023-06-05","value":41,"unit":"ng/mL","value_label":"41 ng/mL","status":"optimal","glyph":"●","status_label":"● optimal","color":"#0ca30c","rgb":828172,"shape":"circle","pt":7,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"alex","series_label":"● alex","series_color":"#2a78d6","latest":0},{"person":"alex","marker":"vitamin-d","label":"Vitamin D","date":"2024-01-15","value":38,"unit":"ng/mL","value_label":"38 ng/mL","status":"suboptimal","glyph":"◐","status_label":"◐ suboptimal","color":"#e09a00","rgb":14719488,"shape":"diamond","pt":13,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"alex","series_label":"● alex","series_color":"#2a78d6","latest":0},{"person":"alex","marker":"vitamin-d","label":"Vitamin D","date":"2024-08-12","value":47,"unit":"ng/mL","value_label":"47 ng/mL","status":"optimal","glyph":"●","status_label":"● optimal","color":"#0ca30c","rgb":828172,"shape":"circle","pt":7,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"alex","series_label":"● alex","series_color":"#2a78d6","latest":0},{"person":"alex","marker":"vitamin-d","label":"Vitamin D","date":"2025-03-10","value":52,"unit":"ng/mL","value_label":"52 ng/mL","status":"optimal","glyph":"●","status_label":"● optimal","color":"#0ca30c","rgb":828172,"shape":"circle","pt":7,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"alex","series_label":"● alex","series_color":"#2a78d6","latest":0},{"person":"alex","marker":"vitamin-d","label":"Vitamin D","date":"2025-09-15","value":55,"unit":"ng/mL","value_label":"55 ng/mL","status":"optimal","glyph":"●","status_label":"● optimal","color":"#0ca30c","rgb":828172,"shape":"circle","pt":7,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"alex","series_label":"● alex","series_color":"#2a78d6","latest":1},{"person":"sam","marker":"vitamin-d","label":"Vitamin D","date":"2022-01-24","value":48,"unit":"ng/mL","value_label":"48 ng/mL","status":"optimal","glyph":"●","status_label":"● optimal","color":"#0ca30c","rgb":828172,"shape":"circle","pt":7,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"sam","series_label":"■ sam","series_color":"#eb6834","latest":0},{"person":"sam","marker":"vitamin-d","label":"Vitamin D","date":"2022-08-01","value":44,"unit":"ng/mL","value_label":"44 ng/mL","status":"optimal","glyph":"●","status_label":"● optimal","color":"#0ca30c","rgb":828172,"shape":"circle","pt":7,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"sam","series_label":"■ sam","series_color":"#eb6834","latest":0},{"person":"sam","marker":"vitamin-d","label":"Vitamin D","date":"2023-02-13","value":36,"unit":"ng/mL","value_label":"36 ng/mL","status":"suboptimal","glyph":"◐","status_label":"◐ suboptimal","color":"#e09a00","rgb":14719488,"shape":"diamond","pt":13,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"sam","series_label":"■ sam","series_color":"#eb6834","latest":0},{"person":"sam","marker":"vitamin-d","label":"Vitamin D","date":"2023-09-11","value":31,"unit":"ng/mL","value_label":"31 ng/mL","status":"suboptimal","glyph":"◐","status_label":"◐ suboptimal","color":"#e09a00","rgb":14719488,"shape":"diamond","pt":13,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"sam","series_label":"■ sam","series_color":"#eb6834","latest":0},{"person":"sam","marker":"vitamin-d","label":"Vitamin D","date":"2024-04-08","value":27,"unit":"ng/mL","value_label":"27 ng/mL","status":"low","glyph":"▼","status_label":"▼ low","color":"#d03b3b","rgb":13646651,"shape":"triangle-down","pt":11,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"sam","series_label":"■ sam","series_color":"#eb6834","latest":0},{"person":"sam","marker":"vitamin-d","label":"Vitamin D","date":"2024-11-18","value":24,"unit":"ng/mL","value_label":"24 ng/mL","status":"low","glyph":"▼","status_label":"▼ low","color":"#d03b3b","rgb":13646651,"shape":"triangle-down","pt":11,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"sam","series_label":"■ sam","series_color":"#eb6834","latest":0},{"person":"sam","marker":"vitamin-d","label":"Vitamin D","date":"2025-06-23","value":29,"unit":"ng/mL","value_label":"29 ng/mL","status":"low","glyph":"▼","status_label":"▼ low","color":"#d03b3b","rgb":13646651,"shape":"triangle-down","pt":11,"ref_low":30,"ref_high":100,"opt_low":40,"opt_high":60,"series":"sam","series_label":"■ sam","series_color":"#eb6834","latest":1}]},
+  "encoding": {
+    "x": {
+      "field": "date", "type": "temporal", "title": "",
+      "scale": {"type": "utc", "domain": [1631491200000,1762732800000]},
+      "axis": {"values": [1640995200000,1672531200000,1704067200000,1735689600000], "format": "%Y", "formatType": "utc", "grid": false, "labelPadding": 6}
+    }
+  },
+  "layer": [
+    {
+      "data": {"values": [{"key":"reference","label":"reference 30–100","low":30,"high":100,"y":30,"y2":63.04,"color":"#b8b7ad","opacity":0.28},{"key":"optimal","label":"optimal 40–60","low":40,"high":60,"y":40,"y2":60,"color":"#0ca30c","opacity":0.14}]},
+      "mark": {"type": "rect"},
+      "encoding": {
+        "x": null,
+        "y": {"field": "y", "type": "quantitative", "scale": {"domain": [18.96,63.04], "nice": false, "zero": false}},
+        "y2": {"field": "y2"},
+        "fill": {
+          "field": "label", "type": "nominal",
+          "scale": {"domain": ["reference 30–100","optimal 40–60"], "range": ["#b8b7ad","#0ca30c"]},
+          "legend": {"symbolType": "square", "symbolOpacity": 0.45}
+        },
+        "opacity": {"field": "opacity", "type": "quantitative", "scale": null, "legend": null}
+      }
+    },
+    {
+      "mark": {"type": "line", "strokeWidth": 2, "interpolate": "linear"},
+      "encoding": {
+        "y": {"field": "value", "type": "quantitative", "title": "ng/mL",
+              "scale": {"domain": [18.96,63.04], "nice": false, "zero": false},
+              "axis": {"tickCount": 6, "labelPadding": 4}},
+        "detail": {"field": "series", "type": "nominal"},
+        "color": {"field": "series_label", "type": "nominal", "scale": {"domain": ["● alex","■ sam"], "range": ["#2a78d6","#eb6834"]}}
+      }
+    },
+    {
+      "mark": {"type": "point", "filled": true, "size": 100, "opacity": 1, "stroke": "#fcfcfb", "strokeWidth": 1.5},
+      "encoding": {
+        "y": {"field": "value", "type": "quantitative"},
+        "color": {
+          "field": "series_label", "type": "nominal",
+          "scale": {"domain": ["● alex","■ sam"], "range": ["#2a78d6","#eb6834"]}
+        },
+        "shape": {
+          "field": "series_label", "type": "nominal",
+          "scale": {"domain": ["● alex","■ sam"], "range": ["circle","square"]}
+        },
+        "tooltip": [
+          {"field": "series", "title": "person"},
+          {"field": "date", "type": "temporal", "format": "%Y-%m-%d", "formatType": "utc"},
+          {"field": "value_label", "title": "value"},
+          {"field": "status_label", "title": "status"}
+        ]
+      }
+    },
+    {
+      "data": {"values": [{"date":"2025-09-15","value":55,"text":"alex 55 ng/mL","status_label":"● optimal","color":"#0ca30c","label_y":59.64,"series":"alex","series_label":"● alex","series_color":"#2a78d6"},{"date":"2025-06-23","value":29,"text":"sam 29 ng/mL","status_label":"▼ low","color":"#d03b3b","label_y":33.64,"series":"sam","series_label":"■ sam","series_color":"#eb6834"}]},
+      "mark": {"type": "text", "align": "right", "baseline": "middle", "dx": -8,
+               "fontSize": 12.5, "fontWeight": "bold"},
+      "encoding": {
+        "y": {"field": "label_y", "type": "quantitative"},
+        "text": {"field": "text"},
+        "color": {"field": "series_label", "type": "nominal", "scale": {"domain": ["● alex","■ sam"], "range": ["#2a78d6","#eb6834"]}}
+      }
+    }
+  ]
+}

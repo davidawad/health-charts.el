@@ -60,22 +60,29 @@
 (require 'health-chart-text)
 (require 'health-chart-svg)
 (require 'health-chart-indicator)
+(require 'health-chart-kind)
+(require 'health-chart-spec)
+(require 'health-chart-template)
+(require 'health-chart-render)
 (require 'health-chart-plot)
 (require 'health-chart-cohort)
 (require 'health-chart-dashboard)
 
-(defconst health-chart-version "0.1.0"
+(defconst health-chart-version "0.2.0"
   "Version of the health-chart package.")
 
 (defconst health-chart-entry-points
   '((discover health-chart-list-kinds health-chart-describe-kind health-chart-describe
               health-chart-list-cohorts health-chart-describe-cohort
-              health-chart-indicator-list health-chart-indicator-describe)
+              health-chart-indicator-list health-chart-indicator-describe
+              health-chart-templates)
     (validate health-chart-validate health-chart-resolve-cohort)
-    (plan health-chart-explain health-chart-indicator-list-explain
+    (plan health-chart-explain health-chart-render-explain health-chart-spec
+          health-chart-indicator-list-explain
           health-chart-indicator-describe-explain health-chart-describe-cohort-explain
           health-chart-cohort-values-explain health-chart-cohort-plot-explain)
-    (render health-chart-plot health-chart-plot-spec health-chart-plot-insert
+    (render health-chart-render health-chart-write health-chart-plot
+            health-chart-plot-spec health-chart-plot-insert
             health-chart-plot-view health-chart-sparkline health-chart-demo
             health-chart-cohort-plot health-chart-cohort-view)
     (fetch health-chart-source-query health-chart-source-trend health-chart-source-latest
@@ -84,7 +91,8 @@
     (evaluate health-chart-indicator-evaluate health-chart-cohort-evaluate
               health-chart-indicator-status)
     (dashboard health-charts health-chart-dashboard)
-    (extend health-chart-register-kind health-chart-shapes health-chart-source-function
+    (extend health-chart-register-kind health-chart-shapes health-chart-backends
+            health-chart-template-directories health-chart-source-function
             health-chart-indicator-catalog-function health-chart-indicator-cohorts
             health-chart-indicator-evaluators health-chart-indicator-measures)
     (health health-chart-doctor health-chart-doctor-checks))
@@ -93,8 +101,8 @@
 ;;;###autoload
 (defun health-chart-describe ()
   "Describe the whole package as data.
-Version, kinds, shapes, statuses, indicators, cohorts, source and
-entry points.  Lists are
+Version, kinds, shapes, statuses, backends, templates, indicators,
+cohorts, source and entry points.  Lists are
 vectors, so the result round-trips `json-encode'."
   (list :package "health-chart" :version health-chart-version
         :kinds (health-chart--vec
@@ -108,6 +116,25 @@ vectors, so the result round-trips `json-encode'."
                                            :doc (plist-get (cdr s) :doc)))
                          health-chart-shapes))
         :statuses (health-chart--vec (mapcar #'symbol-name health-chart-statuses))
+        :spec-schema health-chart-spec-schema
+        :backend (symbol-name health-chart-backend)
+        :backends (health-chart--vec
+                   (mapcar (lambda (b)
+                             (list :backend (symbol-name (car b))
+                                   :doc (plist-get (cdr b) :doc)
+                                   :formats (health-chart--vec
+                                             (mapcar #'symbol-name (plist-get (cdr b) :formats)))
+                                   :available (if (health-chart-backend-available-p (car b)) t
+                                                :json-false)
+                                   :obsolete (if (plist-get (cdr b) :obsolete) t :json-false)))
+                           health-chart-backends))
+        :templates (health-chart--vec
+                    (mapcar (lambda (tpl)
+                              (list :backend (symbol-name (plist-get tpl :backend))
+                                    :kind (symbol-name (plist-get tpl :kind))
+                                    :path (plist-get tpl :path)
+                                    :source (symbol-name (plist-get tpl :source))))
+                            (health-chart-templates)))
         :indicators (list :catalog (format "%s" health-chart-indicator-catalog-function)
                           :tag health-chart-indicator-tag
                           :evaluable (health-chart--vec (health-chart-indicator-known-ids))
@@ -138,9 +165,11 @@ vectors, so the result round-trips `json-encode'."
 ;;;###autoload
 (defun health-chart-doctor-checks ()
   "Every package health row: (:name :status :detail :remediation).
-:status is pass, fail or skip.  Covers chart kinds, the data source,
-the indicator catalog and cohorts; runs no process and calls no catalog."
+:status is pass, fail or skip.  Covers chart kinds, rendering backends
+and templates, the data source, the indicator catalog and cohorts; runs
+no process and calls no catalog."
   (append (health-chart-plot-doctor-checks)
+          (health-chart-render-doctor-checks)
           (health-chart-source-doctor-checks)
           (health-chart-cohort-doctor-checks)))
 

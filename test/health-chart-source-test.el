@@ -14,7 +14,8 @@
 
 (defconst health-chart-source-test--canonical
   '(:person "david" :marker "ldl_c" :value 112.0 :unit "mg/dL" :date "2025-03-01"
-    :ref-low 0 :ref-high 100 :opt-low nil :opt-high 70 :flag high :category nil)
+    :ref-low 0 :ref-high 100 :opt-low nil :opt-high 70 :flag high :category nil
+    :label nil)
   "The canonical plist of `health-chart-source-test--spec-json'.")
 
 (defmacro health-chart-source-test--with-fake-cli (&rest body)

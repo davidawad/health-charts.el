@@ -1,0 +1,103 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "health-chart bullet: one row per marker on its own normalized track, reference and optimal ranges as bands, the latest value marked by status (shape + color, glyph and word beside it).",
+  "width": {{width}},
+  "height": {{height}},
+  "autosize": {"type": "fit", "contains": "padding"},
+  "padding": {"left": 12, "right": 20, "top": 12, "bottom": 8},
+  "background": {{colors.surface}},
+  "title": {
+    "text": {{title}}, "subtitle": {{subtitle}}, "anchor": "start", "offset": 14,
+    "fontSize": 17, "subtitleFontSize": 12.5, "color": {{colors.ink}}, "subtitleColor": {{colors.secondary}}
+  },
+  "config": {
+    "font": {{font}},
+    "view": {"stroke": null},
+    "axis": {
+      "labelColor": {{colors.secondary}}, "titleColor": {{colors.secondary}}, "labelFontSize": 11.5,
+      "titleFontSize": 11.5, "titleFontWeight": "normal", "gridColor": {{colors.grid}},
+      "domainColor": {{colors.axis}}, "tickColor": {{colors.axis}}
+    },
+    "legend": {
+      "labelColor": {{colors.secondary}}, "labelFontSize": 12, "orient": "bottom",
+      "direction": "horizontal", "title": null, "symbolSize": 110, "columnPadding": 18,
+      "layout": {"bottom": {"anchor": "start", "direction": "vertical", "margin": 6}}
+    }
+  },
+  "data": {"values": {{data}}},
+  "transform": [{"calculate": "0", "as": "track_lo"}, {"calculate": "1", "as": "track_hi"}],
+  "encoding": {
+    "y": {
+      "field": "label", "type": "nominal", "title": null,
+      "scale": {"domain": {{y.domain}}, "paddingInner": 0.3, "paddingOuter": 0.2},
+      "axis": {"domain": false, "ticks": false, "labelPadding": 10, "labelFontSize": 12.5,
+               "labelColor": {{colors.ink}}, "labelLimit": 220}
+    }
+  },
+  "layer": [
+    {
+      "mark": {"type": "bar", "height": {"band": 0.62}, "color": {{colors.grid}}, "opacity": 0.55},
+      "encoding": {
+        "x": {"field": "track_lo", "type": "quantitative", "scale": {"domain": [0, 1], "nice": false, "zero": false}, "axis": null},
+        "x2": {"field": "track_hi"}
+      }
+    },
+    {
+      "transform": [{"filter": "isValid(datum.ref_x) && isValid(datum.ref_x2)"}],
+      "mark": {"type": "bar", "height": {"band": 0.62}, "opacity": {{overlays.bands.0.opacity}}},
+      "encoding": {
+        "x": {"field": "ref_x", "type": "quantitative"},
+        "x2": {"field": "ref_x2"},
+        "fill": {"datum": {{overlays.bands.0.label}}, "type": "nominal",
+                 "scale": {"domain": {{overlays.bands.label}}, "range": {{overlays.bands.color}}},
+                 "legend": {"symbolType": "square", "encode": {"symbols": {"update": {"opacity": {"value": 0.6}}}}}},
+        "tooltip": [{"field": "label", "title": "marker"}, {"field": "ref_range", "title": "reference"}]
+      }
+    },
+    {
+      "transform": [{"filter": "isValid(datum.opt_x) && isValid(datum.opt_x2)"}],
+      "mark": {"type": "bar", "height": {"band": 0.62}, "opacity": {{overlays.bands.1.opacity}}},
+      "encoding": {
+        "x": {"field": "opt_x", "type": "quantitative"},
+        "x2": {"field": "opt_x2"},
+        "fill": {"datum": {{overlays.bands.1.label}}, "type": "nominal"},
+        "tooltip": [{"field": "label", "title": "marker"}, {"field": "opt_range", "title": "optimal"}]
+      }
+    },
+    {
+      "transform": [{"filter": "isValid(datum.pos)"}],
+      "mark": {"type": "tick", "thickness": 2.5, "bandSize": 22, "opacity": 0.9},
+      "encoding": {
+        "x": {"field": "pos", "type": "quantitative"},
+        "color": {"field": "status_label", "type": "nominal",
+                  "scale": {"domain": {{legend.label}}, "range": {{legend.color}}}}
+      }
+    },
+    {
+      "transform": [{"filter": "isValid(datum.pos)"}],
+      "mark": {"type": "point", "filled": true, "size": 130, "opacity": 1, "stroke": {{colors.surface}}, "strokeWidth": 1.5},
+      "encoding": {
+        "x": {"field": "pos", "type": "quantitative"},
+        "color": {"field": "status_label", "type": "nominal",
+                  "scale": {"domain": {{legend.label}}, "range": {{legend.color}}}},
+        "shape": {"field": "status_label", "type": "nominal",
+                  "scale": {"domain": {{legend.label}}, "range": {{legend.shape}}}},
+        "tooltip": [
+          {"field": "label", "title": "marker"},
+          {"field": "date", "type": "temporal", "format": "%Y-%m-%d", "formatType": "utc"},
+          {"field": "value_label", "title": "value"},
+          {"field": "status_label", "title": "status"},
+          {"field": "ref_range", "title": "reference"},
+          {"field": "opt_range", "title": "optimal"}
+        ]
+      }
+    },
+    {
+      "mark": {"type": "text", "align": "left", "baseline": "middle", "dx": 12, "fontSize": 12.5, "color": {{colors.ink}}},
+      "encoding": {
+        "x": {"datum": 1, "type": "quantitative"},
+        "text": {"field": "latest_label"}
+      }
+    }
+  ]
+}

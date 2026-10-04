@@ -3,8 +3,10 @@
 Standalone, publishable Emacs package: every biomarker chart kind
 (time series with reference/optimal bands, small multiples, sparkline
 table, range bars, out-of-range heatmap, multi-person overlay, change
-bars) as text or SVG from plain Lisp data or the biomarker CLI.
-README.md is the full reference.
+bars) as images drawn by Vega-Lite or gnuplot from templates, or as
+unicode text, from plain Lisp data or the biomarker CLI.  Lisp never
+draws: it builds a chartspec/v1 (docs/chartspec.md) and fills
+templates/BACKEND/KIND.  README.md is the full reference.
 
 ## Driving it
 
@@ -20,8 +22,10 @@ Ask the package; don't read source to learn its state.
 4. Plan: `(health-chart-explain KIND DATA &rest PROPS)` gives the exact
    renderer and args `health-chart-plot` will use, why that backend, and
    a data summary. Never draws or fetches.
-5. Render: `health-chart-plot` / `-plot-spec`. Prefer `:backend 'text`
-   to read a chart yourself; the text renderers are deterministic.
+5. Render: `health-chart-render` / `-write` / `-plot` / `-plot-spec`.
+   Prefer `:backend 'text` to read a chart yourself; the text renderers
+   are deterministic.  `(health-chart-spec KIND DATA)` is the exact data
+   a template receives; `health-chart-templates` lists the templates.
 6. Fetch: `health-chart-source-query` / `-trend` / `-latest` / `-flag`
    go through `health-chart-source-function`; use
    `health-chart-source-static` to work without the CLI.
@@ -39,10 +43,15 @@ Ask the package; don't read source to learn its state.
   `make checkdoc` and `make lint PACKAGE_LINT=<dir>`. Golden fixtures:
   regenerate with `HEALTH_CHART_UPDATE_GOLDEN=1 make test` and review
   the diff.
-- New chart kind: a model in -model if it needs one, renderers in -text
-  and -svg, then one `health-chart-kinds` entry (or
-  `health-chart-register-kind`). The doctor and `describe` pick it up;
-  add golden fixtures.
+- New chart kind: a model in -model if it needs one, a text renderer in
+  -text, a spec builder in -spec and templates for both backends
+  (templates/vega-lite/KIND.vl.json, templates/gnuplot/KIND.gp), then
+  one `health-chart-kinds` entry (or `health-chart-register-kind`).
+  The native SVG renderer (-svg) is obsolete: no new features.  The
+  doctor and `describe` pick it up; add golden fixtures.
+- No drawing code in Lisp for image backends: Lisp decides (rows,
+  statuses, bands, ticks, words) in the spec; templates lay out.
+  Values reach tools on stdin, never through a shell.
 - The biomarker wire format lives only in health-chart-source.el
   (`health-chart-source-fields`, `-list-keys`, `-cli-args`). Nothing
   else may know JSON member names or CLI flags.  Likewise the indicator

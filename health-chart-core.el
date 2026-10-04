@@ -85,7 +85,8 @@ times, so no time zone is involved)."
     ("glucose" . "Glucose") ("hba1c" . "HbA1c") ("insulin" . "Insulin")
     ("crp" . "hs-CRP") ("hs_crp" . "hs-CRP") ("vitamin_d" . "Vitamin D")
     ("tsh" . "TSH") ("ferritin" . "Ferritin") ("alt" . "ALT") ("ast" . "AST")
-    ("creatinine" . "Creatinine") ("egfr" . "eGFR") ("testosterone" . "Testosterone"))
+    ("creatinine" . "Creatinine") ("egfr" . "eGFR") ("testosterone" . "Testosterone")
+    ("testosterone_total" . "Testosterone") ("hscrp" . "hs-CRP"))
   "Display label for each marker id.
 A marker without an entry is shown as its id with underscores as spaces."
   :type '(alist :key-type string :value-type string)
@@ -94,12 +95,12 @@ A marker without an entry is shown as its id with underscores as spaces."
 (defcustom health-chart-marker-categories
   '(("lipids" "ldl_c" "hdl_c" "total_cholesterol" "triglycerides" "apob" "lpa")
     ("metabolic" "glucose" "hba1c" "insulin")
-    ("inflammation" "crp" "hs_crp")
+    ("inflammation" "crp" "hs_crp" "hscrp")
     ("vitamins" "vitamin_d" "ferritin" "b12")
     ("thyroid" "tsh" "free_t4")
     ("liver" "alt" "ast")
     ("kidney" "creatinine" "egfr")
-    ("hormones" "testosterone"))
+    ("hormones" "testosterone" "testosterone_total"))
   "Panel categories: (CATEGORY MARKER...).
 A measurement's own :category wins; markers in no category fall into
 \"other\".  The dashboard's category filter offers these names."
@@ -112,6 +113,14 @@ A measurement's own :category wins; markers in no category fall into
       (cdr (seq-find (lambda (entry) (health-chart-marker-equal (car entry) marker))
                      health-chart-marker-labels))
       (replace-regexp-in-string "_" " " (format "%s" marker))))
+
+(defun health-chart-marker-label-in (marker ms)
+  "Display label for MARKER: the first :label its measurements in MS carry.
+Falls back to `health-chart-marker-label'."
+  (or (seq-some (lambda (m) (and (health-chart-marker-equal marker (plist-get m :marker))
+                                 (plist-get m :label)))
+                ms)
+      (health-chart-marker-label marker)))
 
 (defun health-chart-marker-category (m)
   "Category name of measurement M (or of M itself when a marker string)."

@@ -1,0 +1,190 @@
+{
+  "schema": "chartspec/v1",
+  "kind": "staleness",
+  "title": "Days since draw · sample",
+  "subtitle": "as of 2025-10-01; due after 120 d, stale after 365 d",
+  "unit": "",
+  "width": 720,
+  "height": 296,
+  "text_width": 72,
+  "text_height": 20,
+  "theme": "light",
+  "font": "DejaVu Sans",
+  "font_size": 12,
+  "colors": {
+    "surface": "#fcfcfb",
+    "ink": "#0b0b0b",
+    "secondary": "#52514e",
+    "muted": "#898781",
+    "grid": "#e1e0d9",
+    "axis": "#c3c2b7",
+    "ref_band": "#b8b7ad",
+    "opt_band": "#0ca30c",
+    "optimal": "#0ca30c",
+    "normal": "#2a78d6",
+    "suboptimal": "#e09a00",
+    "low": "#d03b3b",
+    "high": "#d03b3b",
+    "unknown": "#898781",
+    "improved": "#0ca30c",
+    "worsened": "#d03b3b",
+    "steady": "#898781",
+    "on_target": "#2a78d6",
+    "fresh": "#0ca30c",
+    "due": "#e09a00",
+    "stale": "#d03b3b",
+    "undated": "#898781",
+    "series": [
+      "#2a78d6",
+      "#eb6834",
+      "#1baf7a",
+      "#eda100",
+      "#e87ba4",
+      "#008300",
+      "#4a3aa7",
+      "#e34948"
+    ]
+  },
+  "style": {
+    "ref_band_opacity": 0.28,
+    "opt_band_opacity": 0.14,
+    "point_size": 64,
+    "line_width": 2,
+    "grid_opacity": 1
+  },
+  "x": {
+    "type": "quantitative",
+    "title": "days since draw",
+    "domain": [
+      0,
+      479
+    ]
+  },
+  "y": {
+    "type": "nominal",
+    "title": null,
+    "domain": [
+      "ApoB",
+      "Lp(a)",
+      "HbA1c",
+      "Vitamin D"
+    ]
+  },
+  "layout": null,
+  "rows": [
+    {
+      "index": 1,
+      "id": "health.cardio.apob",
+      "label": "ApoB",
+      "date": "2025-09-15",
+      "days": 16,
+      "bar": 16,
+      "days_label": "16 d",
+      "state": "fresh",
+      "glyph": "●",
+      "state_label": "● fresh",
+      "color": "#0ca30c",
+      "rgb": 828172,
+      "marker": "apob",
+      "person": "alex",
+      "text": "16 d · ● fresh"
+    },
+    {
+      "index": 2,
+      "id": "health.cardio.lp-a",
+      "label": "Lp(a)",
+      "date": "2025-09-15",
+      "days": 16,
+      "bar": 16,
+      "days_label": "16 d",
+      "state": "fresh",
+      "glyph": "●",
+      "state_label": "● fresh",
+      "color": "#0ca30c",
+      "rgb": 828172,
+      "marker": "lpa",
+      "person": "alex",
+      "text": "16 d · ● fresh"
+    },
+    {
+      "index": 3,
+      "id": "health.metabolic.hba1c",
+      "label": "HbA1c",
+      "date": "2025-09-15",
+      "days": 16,
+      "bar": 16,
+      "days_label": "16 d",
+      "state": "fresh",
+      "glyph": "●",
+      "state_label": "● fresh",
+      "color": "#0ca30c",
+      "rgb": 828172,
+      "marker": "hba1c",
+      "person": "alex",
+      "text": "16 d · ● fresh"
+    },
+    {
+      "index": 4,
+      "id": "health.vitamin-d",
+      "label": "Vitamin D",
+      "date": "2025-09-15",
+      "days": 16,
+      "bar": 16,
+      "days_label": "16 d",
+      "state": "fresh",
+      "glyph": "●",
+      "state_label": "● fresh",
+      "color": "#0ca30c",
+      "rgb": 828172,
+      "marker": "vitamin_d",
+      "person": "alex",
+      "text": "16 d · ● fresh"
+    }
+  ],
+  "overlays": {
+    "ref_low": null,
+    "ref_high": null,
+    "opt_low": null,
+    "opt_high": null,
+    "ref_y": null,
+    "ref_y2": null,
+    "opt_y": null,
+    "opt_y2": null,
+    "ref_label": "",
+    "opt_label": "",
+    "bands": [],
+    "thresholds": [
+      {
+        "value": 120,
+        "label": "due after 120 d",
+        "axis": "x",
+        "key": "due",
+        "color": "#e09a00"
+      },
+      {
+        "value": 365,
+        "label": "stale after 365 d",
+        "axis": "x",
+        "key": "stale",
+        "color": "#d03b3b"
+      }
+    ],
+    "annotations": []
+  },
+  "legend": [
+    {
+      "key": "fresh",
+      "glyph": "●",
+      "word": "fresh",
+      "label": "● fresh",
+      "color": "#0ca30c",
+      "rgb": 828172
+    }
+  ],
+  "series": [],
+  "panels": [],
+  "meta": {
+    "points": 4,
+    "as_of": "2025-10-01"
+  }
+}

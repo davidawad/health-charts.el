@@ -57,10 +57,14 @@ with \<health-chart-dashboard-mode-map>\[health-chart-dashboard-select-cohort]."
   :type '(repeat (choice (const scorecard) (const cohort) (const staleness)))
   :group 'health-charts)
 
-(defcustom health-chart-dashboard-backend 'text
-  "Backend the dashboard starts with for its sections: `text', `svg' or `auto'.
-The sparkline table is always text, so RET works on its rows."
-  :type '(choice (const text) (const svg) (const auto))
+(defcustom health-chart-dashboard-backend 'auto
+  "Backend the dashboard starts with for its sections.
+`auto' follows `health-chart-backend' selection (Vega-Lite or gnuplot
+images in a GUI, gnuplot or native text in a terminal); or name one of
+`health-chart-backends'.  The sparkline table is always text, so RET
+works on its rows."
+  :type '(choice (const auto) (const vega-lite) (const gnuplot) (const text)
+                 (const :tag "svg (native, obsolete)" svg))
   :group 'health-charts)
 
 (defvar-local health-chart-dashboard--person nil "Person shown.")
@@ -141,7 +145,8 @@ The sparkline table is always text, so RET works on its rows."
             (or health-chart-dashboard--person "everyone")
             (or health-chart-dashboard--category "all")
             (or health-chart-dashboard--cohort "none")
-            (health-chart--usable-backend health-chart-dashboard--backend)
+            (health-chart--usable-backend health-chart-dashboard--backend
+                                          (car health-chart-dashboard-sections))
             (string-join (delq nil (list (and health-chart-dashboard--ref "reference")
                                          (and health-chart-dashboard--optimal "optimal")))
                          "+"))
@@ -153,7 +158,7 @@ The sparkline table is always text, so RET works on its rows."
 \\[health-chart-dashboard-select-category] category  \\[health-chart-dashboard-select-cohort] cohort  \
 \\[health-chart-dashboard-cohort-panel] cohort panel  \\[health-chart-dashboard-panel] panel  \
 \\[health-chart-dashboard-delta] change  \\[health-chart-dashboard-refresh] refresh  \
-\\[health-chart-dashboard-toggle-backend] text/svg  \\[health-chart-dashboard-toggle-ref] ref  \
+\\[health-chart-dashboard-toggle-backend] text/image  \\[health-chart-dashboard-toggle-ref] ref  \
 \\[health-chart-dashboard-toggle-optimal] optimal  \\[quit-window] quit\n\n")
     'face 'health-chart-dim)))
 
@@ -292,12 +297,14 @@ COHORT names an entry of `health-chart-indicator-cohorts'."
                                 :buffer (format "*health-chart: %s*" health-chart-dashboard--cohort)))
 
 (defun health-chart-dashboard-toggle-backend ()
-  "Flip the dashboard sections between text and SVG."
+  "Flip the dashboard sections between text and an image backend."
   (interactive)
-  (setq health-chart-dashboard--backend
-        (if (eq (health-chart-resolve-backend health-chart-dashboard--backend) 'svg) 'text 'svg))
-  (when (and (eq health-chart-dashboard--backend 'svg) (not (image-type-available-p 'svg)))
-    (message "This Emacs cannot display SVG; showing text"))
+  (let ((kind (or (car health-chart-dashboard-sections) 'bullet)))
+    (setq health-chart-dashboard--backend
+          (health-chart--toggled-backend kind health-chart-dashboard--backend))
+    (when (eq (health-chart--usable-backend health-chart-dashboard--backend kind) 'text)
+      (unless (eq health-chart-dashboard--backend 'text)
+        (message "This frame cannot show images; showing text"))))
   (health-chart-dashboard--render))
 
 (defun health-chart-dashboard-toggle-ref ()

@@ -83,7 +83,7 @@ VALUE MEASUREMENT) ...)) oldest first."
          (days (mapcar (lambda (m) (health-chart-date-days (plist-get m :date))) chosen))
          (values (mapcar (lambda (m) (plist-get m :value)) chosen)))
     (when chosen
-      (append (list :marker marker :label (health-chart-marker-label marker)
+      (append (list :marker marker :label (health-chart-marker-label-in marker chosen)
                     :unit (plist-get (car (last chosen)) :unit)
                     :person (if compare nil person) :compare (and compare t)
                     :lines lines :latest (car (last chosen))
@@ -110,7 +110,7 @@ Each row is (:marker :label :unit :latest :values :status :ref :opt)."
               (let* ((series (cdr group))
                      (latest (car (last series)))
                      (ranges (health-chart-ranges series)))
-                (list :marker (car group) :label (health-chart-marker-label (car group))
+                (list :marker (car group) :label (health-chart-marker-label-in (car group) (cdr group))
                       :unit (plist-get latest :unit) :person person :latest latest
                       :values (delq nil (mapcar (lambda (m) (plist-get m :value)) series))
                       :status (health-chart-status latest)
@@ -158,7 +158,7 @@ out-of-range cells."
                           (let ((cells (mapcar (lambda (d)
                                                  (car (last (health-chart-filter (cdr group) :since d :until d))))
                                                dates)))
-                            (list :marker (car group) :label (health-chart-marker-label (car group))
+                            (list :marker (car group) :label (health-chart-marker-label-in (car group) (cdr group))
                                   :cells cells
                                   :out (seq-count (lambda (c) (and c (health-chart-out-of-range-p c)))
                                                   cells))))
@@ -203,7 +203,7 @@ Returns (:person :from :to :rows); a row is (:marker :label :unit :before
                                  (a (car (last (health-chart-filter (cdr group) :since to :until to)))))
                              (when (and b a)
                                (let ((bv (plist-get b :value)) (av (plist-get a :value)))
-                                 (list :marker (car group) :label (health-chart-marker-label (car group))
+                                 (list :marker (car group) :label (health-chart-marker-label-in (car group) (cdr group))
                                        :unit (plist-get a :unit) :before bv :after av
                                        :change (- av bv)
                                        :pct (if (zerop bv) nil (* 100.0 (/ (- av bv) (float (abs bv)))))

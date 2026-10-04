@@ -1,0 +1,196 @@
+person,marker,marker_name,category,taken_at,value,unit,ref_low,ref_high,opt_low,opt_high,flag
+alex,ldl-c,LDL-C,lipids,2021-11-08,162,mg/dL,0,100,,70,high
+alex,ldl-c,LDL-C,lipids,2022-05-16,151,mg/dL,0,100,,70,high
+alex,ldl-c,LDL-C,lipids,2022-11-14,138,mg/dL,0,100,,70,high
+alex,ldl-c,LDL-C,lipids,2023-06-05,121,mg/dL,0,100,,70,high
+alex,ldl-c,LDL-C,lipids,2024-01-15,104,mg/dL,0,100,,70,high
+alex,ldl-c,LDL-C,lipids,2024-08-12,92,mg/dL,0,100,,70,normal
+alex,ldl-c,LDL-C,lipids,2025-03-10,84,mg/dL,0,100,,70,normal
+alex,ldl-c,LDL-C,lipids,2025-09-15,76,mg/dL,0,100,,70,normal
+alex,hdl-c,HDL-C,lipids,2021-11-08,38,mg/dL,40,,60,,low
+alex,hdl-c,HDL-C,lipids,2022-05-16,41,mg/dL,40,,60,,normal
+alex,hdl-c,HDL-C,lipids,2022-11-14,44,mg/dL,40,,60,,normal
+alex,hdl-c,HDL-C,lipids,2023-06-05,47,mg/dL,40,,60,,normal
+alex,hdl-c,HDL-C,lipids,2024-01-15,52,mg/dL,40,,60,,normal
+alex,hdl-c,HDL-C,lipids,2024-08-12,55,mg/dL,40,,60,,normal
+alex,hdl-c,HDL-C,lipids,2025-03-10,58,mg/dL,40,,60,,normal
+alex,hdl-c,HDL-C,lipids,2025-09-15,61,mg/dL,40,,60,,normal
+alex,triglycerides,Triglycerides,lipids,2021-11-08,212,mg/dL,0,150,,100,high
+alex,triglycerides,Triglycerides,lipids,2022-05-16,188,mg/dL,0,150,,100,high
+alex,triglycerides,Triglycerides,lipids,2022-11-14,160,mg/dL,0,150,,100,high
+alex,triglycerides,Triglycerides,lipids,2023-06-05,138,mg/dL,0,150,,100,normal
+alex,triglycerides,Triglycerides,lipids,2024-01-15,121,mg/dL,0,150,,100,normal
+alex,triglycerides,Triglycerides,lipids,2024-08-12,104,mg/dL,0,150,,100,normal
+alex,triglycerides,Triglycerides,lipids,2025-03-10,96,mg/dL,0,150,,100,normal
+alex,triglycerides,Triglycerides,lipids,2025-09-15,88,mg/dL,0,150,,100,normal
+alex,apob,ApoB,lipids,2021-11-08,128,mg/dL,0,90,,80,high
+alex,apob,ApoB,lipids,2022-05-16,120,mg/dL,0,90,,80,high
+alex,apob,ApoB,lipids,2022-11-14,111,mg/dL,0,90,,80,high
+alex,apob,ApoB,lipids,2023-06-05,98,mg/dL,0,90,,80,high
+alex,apob,ApoB,lipids,2024-01-15,88,mg/dL,0,90,,80,normal
+alex,apob,ApoB,lipids,2024-08-12,81,mg/dL,0,90,,80,normal
+alex,apob,ApoB,lipids,2025-03-10,76,mg/dL,0,90,,80,normal
+alex,apob,ApoB,lipids,2025-09-15,72,mg/dL,0,90,,80,normal
+alex,lpa,Lp(a),lipids,2021-11-08,142,nmol/L,0,75,,30,high
+alex,lpa,Lp(a),lipids,2022-05-16,148,nmol/L,0,75,,30,high
+alex,lpa,Lp(a),lipids,2022-11-14,139,nmol/L,0,75,,30,high
+alex,lpa,Lp(a),lipids,2023-06-05,151,nmol/L,0,75,,30,high
+alex,lpa,Lp(a),lipids,2024-01-15,145,nmol/L,0,75,,30,high
+alex,lpa,Lp(a),lipids,2024-08-12,140,nmol/L,0,75,,30,high
+alex,lpa,Lp(a),lipids,2025-03-10,149,nmol/L,0,75,,30,high
+alex,lpa,Lp(a),lipids,2025-09-15,144,nmol/L,0,75,,30,high
+alex,hba1c,HbA1c,metabolic,2021-11-08,5.9,%,4.0,5.6,,5.3,high
+alex,hba1c,HbA1c,metabolic,2022-05-16,5.8,%,4.0,5.6,,5.3,high
+alex,hba1c,HbA1c,metabolic,2022-11-14,5.7,%,4.0,5.6,,5.3,high
+alex,hba1c,HbA1c,metabolic,2023-06-05,5.6,%,4.0,5.6,,5.3,normal
+alex,hba1c,HbA1c,metabolic,2024-01-15,5.5,%,4.0,5.6,,5.3,normal
+alex,hba1c,HbA1c,metabolic,2024-08-12,5.4,%,4.0,5.6,,5.3,normal
+alex,hba1c,HbA1c,metabolic,2025-03-10,5.3,%,4.0,5.6,,5.3,normal
+alex,hba1c,HbA1c,metabolic,2025-09-15,5.3,%,4.0,5.6,,5.3,normal
+alex,glucose,Glucose,metabolic,2021-11-08,108,mg/dL,70,99,72,90,high
+alex,glucose,Glucose,metabolic,2022-05-16,104,mg/dL,70,99,72,90,high
+alex,glucose,Glucose,metabolic,2022-11-14,101,mg/dL,70,99,72,90,high
+alex,glucose,Glucose,metabolic,2023-06-05,97,mg/dL,70,99,72,90,normal
+alex,glucose,Glucose,metabolic,2024-01-15,94,mg/dL,70,99,72,90,normal
+alex,glucose,Glucose,metabolic,2024-08-12,92,mg/dL,70,99,72,90,normal
+alex,glucose,Glucose,metabolic,2025-03-10,96,mg/dL,70,99,72,90,normal
+alex,glucose,Glucose,metabolic,2025-09-15,89,mg/dL,70,99,72,90,normal
+alex,hscrp,hs-CRP,inflammation,2021-11-08,4.2,mg/L,0,3.0,,1.0,high
+alex,hscrp,hs-CRP,inflammation,2022-05-16,3.6,mg/L,0,3.0,,1.0,high
+alex,hscrp,hs-CRP,inflammation,2022-11-14,2.8,mg/L,0,3.0,,1.0,normal
+alex,hscrp,hs-CRP,inflammation,2023-06-05,2.1,mg/L,0,3.0,,1.0,normal
+alex,hscrp,hs-CRP,inflammation,2024-01-15,1.6,mg/L,0,3.0,,1.0,normal
+alex,hscrp,hs-CRP,inflammation,2024-08-12,1.2,mg/L,0,3.0,,1.0,normal
+alex,hscrp,hs-CRP,inflammation,2025-03-10,0.9,mg/L,0,3.0,,1.0,normal
+alex,hscrp,hs-CRP,inflammation,2025-09-15,0.8,mg/L,0,3.0,,1.0,normal
+alex,vitamin-d,Vitamin D,vitamins,2021-11-08,22,ng/mL,30,100,40,60,low
+alex,vitamin-d,Vitamin D,vitamins,2022-05-16,26,ng/mL,30,100,40,60,low
+alex,vitamin-d,Vitamin D,vitamins,2022-11-14,34,ng/mL,30,100,40,60,normal
+alex,vitamin-d,Vitamin D,vitamins,2023-06-05,41,ng/mL,30,100,40,60,normal
+alex,vitamin-d,Vitamin D,vitamins,2024-01-15,38,ng/mL,30,100,40,60,normal
+alex,vitamin-d,Vitamin D,vitamins,2024-08-12,47,ng/mL,30,100,40,60,normal
+alex,vitamin-d,Vitamin D,vitamins,2025-03-10,52,ng/mL,30,100,40,60,normal
+alex,vitamin-d,Vitamin D,vitamins,2025-09-15,55,ng/mL,30,100,40,60,normal
+alex,tsh,TSH,thyroid,2021-11-08,1.8,mIU/L,0.4,4.0,0.5,2.5,normal
+alex,tsh,TSH,thyroid,2022-05-16,2.1,mIU/L,0.4,4.0,0.5,2.5,normal
+alex,tsh,TSH,thyroid,2022-11-14,1.9,mIU/L,0.4,4.0,0.5,2.5,normal
+alex,tsh,TSH,thyroid,2023-06-05,2.4,mIU/L,0.4,4.0,0.5,2.5,normal
+alex,tsh,TSH,thyroid,2024-01-15,2.2,mIU/L,0.4,4.0,0.5,2.5,normal
+alex,tsh,TSH,thyroid,2024-08-12,2.0,mIU/L,0.4,4.0,0.5,2.5,normal
+alex,tsh,TSH,thyroid,2025-03-10,2.3,mIU/L,0.4,4.0,0.5,2.5,normal
+alex,tsh,TSH,thyroid,2025-09-15,2.1,mIU/L,0.4,4.0,0.5,2.5,normal
+alex,ferritin,Ferritin,vitamins,2021-11-08,182,ng/mL,30,400,50,150,normal
+alex,ferritin,Ferritin,vitamins,2022-05-16,195,ng/mL,30,400,50,150,normal
+alex,ferritin,Ferritin,vitamins,2022-11-14,210,ng/mL,30,400,50,150,normal
+alex,ferritin,Ferritin,vitamins,2023-06-05,188,ng/mL,30,400,50,150,normal
+alex,ferritin,Ferritin,vitamins,2024-01-15,176,ng/mL,30,400,50,150,normal
+alex,ferritin,Ferritin,vitamins,2024-08-12,169,ng/mL,30,400,50,150,normal
+alex,ferritin,Ferritin,vitamins,2025-03-10,160,ng/mL,30,400,50,150,normal
+alex,ferritin,Ferritin,vitamins,2025-09-15,154,ng/mL,30,400,50,150,normal
+alex,testosterone-total,Testosterone (total),hormones,2021-11-08,412,ng/dL,264,916,500,900,normal
+alex,testosterone-total,Testosterone (total),hormones,2022-05-16,438,ng/dL,264,916,500,900,normal
+alex,testosterone-total,Testosterone (total),hormones,2022-11-14,465,ng/dL,264,916,500,900,normal
+alex,testosterone-total,Testosterone (total),hormones,2023-06-05,512,ng/dL,264,916,500,900,normal
+alex,testosterone-total,Testosterone (total),hormones,2024-01-15,548,ng/dL,264,916,500,900,normal
+alex,testosterone-total,Testosterone (total),hormones,2024-08-12,575,ng/dL,264,916,500,900,normal
+alex,testosterone-total,Testosterone (total),hormones,2025-03-10,602,ng/dL,264,916,500,900,normal
+alex,testosterone-total,Testosterone (total),hormones,2025-09-15,618,ng/dL,264,916,500,900,normal
+alex,alt,ALT,liver,2021-11-08,48,U/L,7,56,,30,normal
+alex,alt,ALT,liver,2022-05-16,52,U/L,7,56,,30,normal
+alex,alt,ALT,liver,2022-11-14,61,U/L,7,56,,30,high
+alex,alt,ALT,liver,2023-06-05,44,U/L,7,56,,30,normal
+alex,alt,ALT,liver,2024-01-15,36,U/L,7,56,,30,normal
+alex,alt,ALT,liver,2024-08-12,29,U/L,7,56,,30,normal
+alex,alt,ALT,liver,2025-03-10,26,U/L,7,56,,30,normal
+alex,alt,ALT,liver,2025-09-15,24,U/L,7,56,,30,normal
+sam,ldl-c,LDL-C,lipids,2022-01-24,88,mg/dL,0,100,,70,normal
+sam,ldl-c,LDL-C,lipids,2022-08-01,92,mg/dL,0,100,,70,normal
+sam,ldl-c,LDL-C,lipids,2023-02-13,95,mg/dL,0,100,,70,normal
+sam,ldl-c,LDL-C,lipids,2023-09-11,101,mg/dL,0,100,,70,high
+sam,ldl-c,LDL-C,lipids,2024-04-08,108,mg/dL,0,100,,70,high
+sam,ldl-c,LDL-C,lipids,2024-11-18,112,mg/dL,0,100,,70,high
+sam,ldl-c,LDL-C,lipids,2025-06-23,118,mg/dL,0,100,,70,high
+sam,hdl-c,HDL-C,lipids,2022-01-24,66,mg/dL,40,,60,,normal
+sam,hdl-c,HDL-C,lipids,2022-08-01,64,mg/dL,40,,60,,normal
+sam,hdl-c,HDL-C,lipids,2023-02-13,68,mg/dL,40,,60,,normal
+sam,hdl-c,HDL-C,lipids,2023-09-11,65,mg/dL,40,,60,,normal
+sam,hdl-c,HDL-C,lipids,2024-04-08,70,mg/dL,40,,60,,normal
+sam,hdl-c,HDL-C,lipids,2024-11-18,67,mg/dL,40,,60,,normal
+sam,hdl-c,HDL-C,lipids,2025-06-23,69,mg/dL,40,,60,,normal
+sam,triglycerides,Triglycerides,lipids,2022-01-24,78,mg/dL,0,150,,100,normal
+sam,triglycerides,Triglycerides,lipids,2022-08-01,85,mg/dL,0,150,,100,normal
+sam,triglycerides,Triglycerides,lipids,2023-02-13,82,mg/dL,0,150,,100,normal
+sam,triglycerides,Triglycerides,lipids,2023-09-11,90,mg/dL,0,150,,100,normal
+sam,triglycerides,Triglycerides,lipids,2024-04-08,88,mg/dL,0,150,,100,normal
+sam,triglycerides,Triglycerides,lipids,2024-11-18,95,mg/dL,0,150,,100,normal
+sam,triglycerides,Triglycerides,lipids,2025-06-23,92,mg/dL,0,150,,100,normal
+sam,apob,ApoB,lipids,2022-01-24,72,mg/dL,0,90,,80,normal
+sam,apob,ApoB,lipids,2022-08-01,75,mg/dL,0,90,,80,normal
+sam,apob,ApoB,lipids,2023-02-13,78,mg/dL,0,90,,80,normal
+sam,apob,ApoB,lipids,2023-09-11,82,mg/dL,0,90,,80,normal
+sam,apob,ApoB,lipids,2024-04-08,86,mg/dL,0,90,,80,normal
+sam,apob,ApoB,lipids,2024-11-18,91,mg/dL,0,90,,80,high
+sam,apob,ApoB,lipids,2025-06-23,95,mg/dL,0,90,,80,high
+sam,lpa,Lp(a),lipids,2022-01-24,18,nmol/L,0,75,,30,normal
+sam,lpa,Lp(a),lipids,2022-08-01,21,nmol/L,0,75,,30,normal
+sam,lpa,Lp(a),lipids,2023-02-13,19,nmol/L,0,75,,30,normal
+sam,lpa,Lp(a),lipids,2023-09-11,17,nmol/L,0,75,,30,normal
+sam,lpa,Lp(a),lipids,2024-04-08,20,nmol/L,0,75,,30,normal
+sam,lpa,Lp(a),lipids,2024-11-18,22,nmol/L,0,75,,30,normal
+sam,lpa,Lp(a),lipids,2025-06-23,19,nmol/L,0,75,,30,normal
+sam,hba1c,HbA1c,metabolic,2022-01-24,5.2,%,4.0,5.6,,5.3,normal
+sam,hba1c,HbA1c,metabolic,2022-08-01,5.1,%,4.0,5.6,,5.3,normal
+sam,hba1c,HbA1c,metabolic,2023-02-13,5.3,%,4.0,5.6,,5.3,normal
+sam,hba1c,HbA1c,metabolic,2023-09-11,5.2,%,4.0,5.6,,5.3,normal
+sam,hba1c,HbA1c,metabolic,2024-04-08,5.4,%,4.0,5.6,,5.3,normal
+sam,hba1c,HbA1c,metabolic,2024-11-18,5.3,%,4.0,5.6,,5.3,normal
+sam,hba1c,HbA1c,metabolic,2025-06-23,5.5,%,4.0,5.6,,5.3,normal
+sam,glucose,Glucose,metabolic,2022-01-24,84,mg/dL,70,99,72,90,normal
+sam,glucose,Glucose,metabolic,2022-08-01,86,mg/dL,70,99,72,90,normal
+sam,glucose,Glucose,metabolic,2023-02-13,82,mg/dL,70,99,72,90,normal
+sam,glucose,Glucose,metabolic,2023-09-11,88,mg/dL,70,99,72,90,normal
+sam,glucose,Glucose,metabolic,2024-04-08,85,mg/dL,70,99,72,90,normal
+sam,glucose,Glucose,metabolic,2024-11-18,87,mg/dL,70,99,72,90,normal
+sam,glucose,Glucose,metabolic,2025-06-23,83,mg/dL,70,99,72,90,normal
+sam,hscrp,hs-CRP,inflammation,2022-01-24,0.6,mg/L,0,3.0,,1.0,normal
+sam,hscrp,hs-CRP,inflammation,2022-08-01,0.5,mg/L,0,3.0,,1.0,normal
+sam,hscrp,hs-CRP,inflammation,2023-02-13,0.8,mg/L,0,3.0,,1.0,normal
+sam,hscrp,hs-CRP,inflammation,2023-09-11,3.4,mg/L,0,3.0,,1.0,high
+sam,hscrp,hs-CRP,inflammation,2024-04-08,0.7,mg/L,0,3.0,,1.0,normal
+sam,hscrp,hs-CRP,inflammation,2024-11-18,0.6,mg/L,0,3.0,,1.0,normal
+sam,hscrp,hs-CRP,inflammation,2025-06-23,0.5,mg/L,0,3.0,,1.0,normal
+sam,vitamin-d,Vitamin D,vitamins,2022-01-24,48,ng/mL,30,100,40,60,normal
+sam,vitamin-d,Vitamin D,vitamins,2022-08-01,44,ng/mL,30,100,40,60,normal
+sam,vitamin-d,Vitamin D,vitamins,2023-02-13,36,ng/mL,30,100,40,60,normal
+sam,vitamin-d,Vitamin D,vitamins,2023-09-11,31,ng/mL,30,100,40,60,normal
+sam,vitamin-d,Vitamin D,vitamins,2024-04-08,27,ng/mL,30,100,40,60,low
+sam,vitamin-d,Vitamin D,vitamins,2024-11-18,24,ng/mL,30,100,40,60,low
+sam,vitamin-d,Vitamin D,vitamins,2025-06-23,29,ng/mL,30,100,40,60,low
+sam,tsh,TSH,thyroid,2022-01-24,2.2,mIU/L,0.4,4.0,0.5,2.5,normal
+sam,tsh,TSH,thyroid,2022-08-01,2.8,mIU/L,0.4,4.0,0.5,2.5,normal
+sam,tsh,TSH,thyroid,2023-02-13,3.4,mIU/L,0.4,4.0,0.5,2.5,normal
+sam,tsh,TSH,thyroid,2023-09-11,3.9,mIU/L,0.4,4.0,0.5,2.5,normal
+sam,tsh,TSH,thyroid,2024-04-08,4.6,mIU/L,0.4,4.0,0.5,2.5,high
+sam,tsh,TSH,thyroid,2024-11-18,5.1,mIU/L,0.4,4.0,0.5,2.5,high
+sam,tsh,TSH,thyroid,2025-06-23,4.4,mIU/L,0.4,4.0,0.5,2.5,high
+sam,ferritin,Ferritin,vitamins,2022-01-24,42,ng/mL,30,400,50,150,normal
+sam,ferritin,Ferritin,vitamins,2022-08-01,36,ng/mL,30,400,50,150,normal
+sam,ferritin,Ferritin,vitamins,2023-02-13,28,ng/mL,30,400,50,150,low
+sam,ferritin,Ferritin,vitamins,2023-09-11,24,ng/mL,30,400,50,150,low
+sam,ferritin,Ferritin,vitamins,2024-04-08,31,ng/mL,30,400,50,150,normal
+sam,ferritin,Ferritin,vitamins,2024-11-18,46,ng/mL,30,400,50,150,normal
+sam,ferritin,Ferritin,vitamins,2025-06-23,58,ng/mL,30,400,50,150,normal
+sam,testosterone-total,Testosterone (total),hormones,2022-01-24,28,ng/dL,8,60,15,50,normal
+sam,testosterone-total,Testosterone (total),hormones,2022-08-01,31,ng/dL,8,60,15,50,normal
+sam,testosterone-total,Testosterone (total),hormones,2023-02-13,26,ng/dL,8,60,15,50,normal
+sam,testosterone-total,Testosterone (total),hormones,2023-09-11,24,ng/dL,8,60,15,50,normal
+sam,testosterone-total,Testosterone (total),hormones,2024-04-08,22,ng/dL,8,60,15,50,normal
+sam,testosterone-total,Testosterone (total),hormones,2024-11-18,19,ng/dL,8,60,15,50,normal
+sam,testosterone-total,Testosterone (total),hormones,2025-06-23,17,ng/dL,8,60,15,50,normal
+sam,alt,ALT,liver,2022-01-24,18,U/L,7,56,,30,normal
+sam,alt,ALT,liver,2022-08-01,21,U/L,7,56,,30,normal
+sam,alt,ALT,liver,2023-02-13,19,U/L,7,56,,30,normal
+sam,alt,ALT,liver,2023-09-11,22,U/L,7,56,,30,normal
+sam,alt,ALT,liver,2024-04-08,20,U/L,7,56,,30,normal
+sam,alt,ALT,liver,2024-11-18,24,U/L,7,56,,30,normal
+sam,alt,ALT,liver,2025-06-23,23,U/L,7,56,,30,normal

@@ -26,13 +26,8 @@
 (require 'health-chart-model)
 (require 'health-chart-text)
 (require 'health-chart-svg)
-
-(defcustom health-chart-backend 'auto
-  "Rendering backend: `text', `svg', or `auto'.
-`auto' uses SVG when the selected frame can display SVG images, else
-unicode text."
-  :type '(choice (const auto) (const text) (const svg))
-  :group 'health-charts)
+(require 'health-chart-kind)
+(require 'health-chart-render)
 
 (defcustom health-chart-empty-text "no data"
   "Text shown in a buffer when a chart has nothing to draw."
@@ -40,313 +35,27 @@ unicode text."
   :group 'health-charts)
 
 ;; -----------------------------------------------------------------------
-;; Errors: (MESSAGE :code CODE ...), the message naming the fix.
-;; -----------------------------------------------------------------------
-
-(define-error 'health-chart-unknown-kind
-  "health-chart: unknown chart kind" 'health-chart-error)
-(define-error 'health-chart-invalid-data
-  "health-chart: invalid chart data" 'health-chart-error)
-
-(defun health-chart--invalid (index fmt &rest args)
-  "Signal `health-chart-invalid-data' at element INDEX; FMT/ARGS the reason."
-  (signal 'health-chart-invalid-data
-          (list (format "element %d: %s" index (apply #'format fmt args))
-                :code "invalid_data" :index index)))
-
-;; -----------------------------------------------------------------------
-;; Synthetic example data -- two made-up people, nine markers, six draws.
-;; -----------------------------------------------------------------------
-
-(defconst health-chart--example-dates
-  '("2024-03-04" "2024-06-03" "2024-09-02" "2024-12-02" "2025-03-03" "2025-06-02")
-  "Draw dates of the example data.")
-
-(defconst health-chart--example-markers
-  ;; marker unit ref-low ref-high opt-low opt-high  alex values  sam values
-  '(("ldl_c" "mg/dL" 0 100 nil 70 (131 124 108 96 112 88) (92 95 88 84 79 74))
-    ("hdl_c" "mg/dL" 40 nil 60 nil (52 55 58 57 54 61) (64 66 63 67 70 68))
-    ("triglycerides" "mg/dL" 0 150 nil 100 (162 140 121 118 134 104) (88 92 81 79 85 76))
-    ("apob" "mg/dL" 0 90 nil 80 (104 99 91 86 93 84) (71 73 69 66 64 62))
-    ("glucose" "mg/dL" 70 99 72 90 (97 101 94 92 99 93) (86 84 88 85 83 87))
-    ("hba1c" "%" nil 5.7 nil 5.3 (5.6 5.8 5.5 5.4 5.6 5.3) (5.1 5.0 5.2 5.1 5.0 5.1))
-    ("vitamin_d" "ng/mL" 30 100 40 60 (24 31 38 45 36 48) (52 49 55 58 51 54))
-    ("tsh" "mIU/L" 0.4 4.0 0.5 2.5 (1.9 2.2 2.0 2.6 2.4 2.1) (1.4 1.6 1.5 1.3 1.7 1.5))
-    ("crp" "mg/L" nil 3.0 nil 1.0 (2.4 3.6 1.8 1.2 2.1 3.4) (0.6 0.5 0.9 0.4 0.7 0.5)))
-  "Example markers: (MARKER UNIT REF-LOW REF-HIGH OPT-LOW OPT-HIGH ALEX SAM).")
-
-(defun health-chart--example-measurements (&optional persons)
-  "Synthetic canonical measurements for PERSONS (default both)."
-  (let ((persons (or persons '("alex" "sam"))))
-    (cl-loop
-     for person in persons
-     append (cl-loop
-             for (marker unit rl rh ol oh alex sam) in health-chart--example-markers
-             append (cl-loop for date in health-chart--example-dates
-                             for v in (if (equal person "alex") alex sam)
-                             collect (let ((m (list :person person :marker marker :value v
-                                                    :unit unit :date date :ref-low rl
-                                                    :ref-high rh :opt-low ol :opt-high oh)))
-                                       (health-chart-source-normalize
-                                        (plist-put m :flag (let ((s (health-chart-status m)))
-                                                             (if (memq s '(low high)) s 'normal))))))))))
-
-;; -----------------------------------------------------------------------
-;; Shapes and kinds -- registries, so the whole surface is enumerable.
-;; -----------------------------------------------------------------------
-
-(defun health-chart--validate-measurements (data)
-  "Signal unless DATA (already normalized) is a list of valid measurements."
-  (unless (listp data)
-    (signal 'health-chart-invalid-data
-            (list (format "measurements must be a list, got %S" data) :code "invalid_data")))
-  (cl-loop
-   for m in data for i from 0
-   do (let ((marker (plist-get m :marker)) (date (plist-get m :date)))
-        (unless (and (stringp marker) (not (string-empty-p marker)))
-          (health-chart--invalid i "needs a non-empty \"marker\", got %S" marker))
-        (unless (health-chart-date-p date)
-          (health-chart--invalid i "needs \"date\" as YYYY-MM-DD, got %S" date))
-        (unless (numberp (plist-get m :value))
-          (health-chart--invalid i "needs a numeric \"value\", got %S" (plist-get m :value)))
-        (dolist (key '(:ref-low :ref-high :opt-low :opt-high))
-          (let ((v (plist-get m key)))
-            (unless (or (null v) (numberp v))
-              (health-chart--invalid i "%s must be a number or null, got %S" key v))))
-        (dolist (pair '((:ref-low . :ref-high) (:opt-low . :opt-high)))
-          (let ((lo (plist-get m (car pair))) (hi (plist-get m (cdr pair))))
-            (when (and lo hi (> lo hi))
-              (health-chart--invalid i "%s %s exceeds %s %s (swap them)"
-                                     (car pair) lo (cdr pair) hi)))))))
-
-(defun health-chart--normalize-series (data)
-  "DATA as a list of numbers, oldest first.
-DATA is numbers in order, (DATE . VALUE) or (DATE VALUE) pairs, or the
-measurements of one marker; pairs and measurements are sorted by date."
-  (let ((items (append data nil)))
-    (cond
-     ((cl-every #'numberp items) items)
-     ((cl-every (lambda (p) (and (consp p) (stringp (car p)))) items)
-      (mapcar (lambda (p) (if (consp (cdr p)) (cadr p) (cdr p)))
-              (seq-sort-by #'car #'string< items)))
-     ((cl-every #'consp items)
-      (let ((ms (health-chart-source-normalize-list items)))
-        (when (cdr (health-chart-markers ms))
-          (signal 'health-chart-invalid-data
-                  (list (format "a sparkline shows one marker, got %s; filter with `health-chart-filter'"
-                                (string-join (health-chart-markers ms) ", "))
-                        :code "invalid_data")))
-        (mapcar (lambda (m) (plist-get m :value)) (health-chart-sort-by-date ms))))
-     (t items))))
-
-(defun health-chart--validate-series (data)
-  "Signal unless DATA (already normalized) is a list of numbers."
-  (cl-loop for v in data for i from 0
-           unless (numberp v)
-           do (health-chart--invalid i "expected a number, got %S" v)))
-
-;; Synthetic indicator values: alex's example draws through the local
-;; evaluators, judged as of a fixed day so the example never changes.
-(defconst health-chart--example-indicator-members
-  '(("health.cardio.apob") ("health.cardio.lp-a")
-    ("health.biomarker.latest" :marker "ldl_c")
-    ("health.metabolic.hba1c")
-    ("health.biomarker.trend-slope" :marker "glucose")
-    ("health.inflammation.hs-crp")
-    ("health.biomarker.range-position" :marker "crp")
-    ("health.vitamin-d")
-    ("health.panel.out-of-range-count"))
-  "(RECIPE-ID . PARAMS) of the example indicator values.")
-
-(defun health-chart--example-indicator-values ()
-  "Synthetic canonical indicator values for alex, as of 2025-08-01."
-  (let ((ms (health-chart--example-measurements '("alex"))))
-    (mapcar (lambda (member)
-              (apply #'health-chart-indicator-evaluate (car member) ms
-                     :as-of "2025-08-01" :cohort "example" (cdr member)))
-            health-chart--example-indicator-members)))
-
-(defun health-chart--validate-indicators (data)
-  "Signal `health-chart-invalid-data' unless DATA are valid indicator values."
-  (condition-case err (health-chart-indicator-validate-values data)
-    (health-chart-error (signal 'health-chart-invalid-data (cdr err)))))
-
-(defvar health-chart-shapes
-  `((measurements
-     :doc "biomarker/v1 measurements: plists (:marker :date :value [:person :unit
-:ref-low :ref-high :opt-low :opt-high :flag :category]), alists or JSON
-objects with the same members (snake_case accepted), or a biomarker/v1
-envelope {\"schema\":\"biomarker/v1\",\"measurements\":[...]}.  Any order."
-     :example ,(health-chart--example-measurements)
-     :normalize health-chart-source-normalize-list
-     :validator health-chart--validate-measurements)
-    (series
-     :doc "Numbers oldest first, or (DATE . VALUE) pairs, or measurements."
-     :example (131 124 108 96 112 88)
-     :normalize health-chart--normalize-series
-     :validator health-chart--validate-series)
-    (indicators
-     :doc "Indicator values: plists (:id :label :value [:unit :date :as-of :series
-:direction :bounds :ref-low :ref-high :opt-low :opt-high :marker :person
-:cohort :measure :status]), or alists / JSON objects with the same members
-\(snake_case accepted).  :direction is lower-better, higher-better,
-in-range or neutral; :bounds is (LO HI) or {\"min\":LO,\"max\":HI}.
-`health-chart-indicator-evaluate' and `health-chart-cohort-values' make them."
-     :example ,(health-chart--example-indicator-values)
-     :normalize health-chart-indicator-normalize-values
-     :validator health-chart--validate-indicators))
-  "Data shapes: (SHAPE :doc :example :normalize FN :validator FN).
-:normalize turns any accepted input into the canonical form (and must be
-idempotent); :validator signals `health-chart-invalid-data' with :index.")
-
-(defvar health-chart-kinds
-  '((timeseries :shape measurements :text health-chart-text-timeseries
-                :svg health-chart-svg-timeseries :check health-chart--check-one-marker
-                :doc "One marker over time with reference and optimal bands shaded.")
-    (panel :shape measurements :text health-chart-text-panel :svg health-chart-svg-panel
-           :doc "Small multiples: a compact time series per marker (a panel dashboard).")
-    (table :shape measurements :text health-chart-text-table :svg health-chart-svg-table
-           :doc "Sparkline table: marker | latest | trend | flag | reference.")
-    (bullet :shape measurements :text health-chart-text-bullet :svg health-chart-svg-bullet
-            :doc "Range bars: where each marker's latest value sits in its ranges.")
-    (heatmap :shape measurements :text health-chart-text-heatmap :svg health-chart-svg-heatmap
-             :doc "Markers by draw dates, each cell the draw's status (out-of-range map).")
-    (compare :shape measurements :text health-chart-text-compare :svg health-chart-svg-compare
-             :check health-chart--check-one-marker
-             :doc "One marker over time for several people, overlaid.")
-    (delta :shape measurements :text health-chart-text-delta :svg health-chart-svg-delta
-           :check health-chart--check-delta
-           :doc "Percent change per marker between two draws, toward or away from target.")
-    (sparkline :shape series :text health-chart-text-sparkline :svg health-chart-svg-sparkline
-               :doc "One-row sparkline of plain numbers, for tables and mode lines.")
-    (scorecard :shape indicators :text health-chart-text-scorecard :svg health-chart-svg-scorecard
-               :doc "Indicator scorecard: indicator | value | unit | status | trend sparkline.")
-    (cohort :shape indicators :text health-chart-text-cohort :svg health-chart-svg-cohort
-            :doc "Cohort panel: a card per indicator with value, status, range track and trend.")
-    (staleness :shape indicators :text health-chart-text-staleness :svg health-chart-svg-staleness
-               :check health-chart--check-staleness
-               :doc "Days since each indicator's draw, against due and stale thresholds."))
-  "Chart kinds: (KIND :shape SHAPE :text FN :svg FN :doc STRING [:check FN]).
-Renderers are called as (FN DATA &rest PROPS) with normalized DATA and
-return a string, or nil when there is nothing to draw.  :check (DATA
-PROPS) validates props that select from DATA.")
-
-(defun health-chart--check-one-marker (data props)
-  "Signal unless PROPS' :marker, when given, occurs in DATA."
-  (when-let* ((marker (plist-get props :marker)))
-    (unless (member marker (health-chart-markers data))
-      (signal 'health-chart-invalid-data
-              (list (format "no measurements for marker %S; markers present: %s" marker
-                            (string-join (health-chart-markers data) ", "))
-                    :code "unknown_marker" :marker marker)))))
-
-(defun health-chart--check-delta (data props)
-  "Signal unless PROPS' :from and :to, when given, are draw dates in DATA."
-  (dolist (key '(:from :to))
-    (when-let* ((d (plist-get props key)))
-      (unless (member d (health-chart-dates data))
-        (signal 'health-chart-invalid-data
-                (list (format "%s %S is not a draw date; dates present: %s" key d
-                              (string-join (health-chart-dates data) ", "))
-                      :code "unknown_date" :date d))))))
-
-(defun health-chart--check-staleness (_data props)
-  "Signal unless PROPS' :as-of is a date and :due-days / :stale-days numbers."
-  (when-let* ((d (plist-get props :as-of)))
-    (unless (health-chart-date-p d)
-      (signal 'health-chart-invalid-data
-              (list (format ":as-of must be YYYY-MM-DD, got %S" d) :code "invalid_prop"))))
-  (dolist (key '(:due-days :stale-days))
-    (when-let* ((n (plist-get props key)))
-      (unless (natnump n)
-        (signal 'health-chart-invalid-data
-                (list (format "%s must be a whole number of days, got %S" key n)
-                      :code "invalid_prop"))))))
-
-(defun health-chart-register-kind (kind &rest spec)
-  "Register (or replace) chart KIND with SPEC (:shape :text :svg :doc [:check]).
-:shape must name an entry of `health-chart-shapes'."
-  (unless (assq (plist-get spec :shape) health-chart-shapes)
-    (signal 'health-chart-error
-            (list (format "unknown shape %S; known: %S" (plist-get spec :shape)
-                          (mapcar #'car health-chart-shapes))
-                  :code "unknown_shape")))
-  (setf (alist-get kind health-chart-kinds) spec)
-  kind)
-
-(defun health-chart--kind (kind)
-  "KIND's registry plist, or signal `health-chart-unknown-kind'."
-  (or (alist-get kind health-chart-kinds)
-      (signal 'health-chart-unknown-kind
-              (list (format "%S is not a chart kind; use one of %s (see `health-chart-list-kinds')"
-                            kind (mapconcat #'symbol-name (mapcar #'car health-chart-kinds) ", "))
-                    :code "unknown_kind" :kind kind))))
-
-(defun health-chart--shape (kind)
-  "The shape plist of KIND."
-  (alist-get (plist-get (health-chart--kind kind) :shape) health-chart-shapes))
-
-(defun health-chart-normalize (kind data)
-  "DATA in KIND's canonical form (see `health-chart-shapes')."
-  (if-let* ((fn (plist-get (health-chart--shape kind) :normalize)))
-      (condition-case err (funcall fn data)
-        (health-chart-source-error (signal (car err) (cdr err)))
-        (health-chart-error
-         (signal 'health-chart-invalid-data (list (cadr err) :code "invalid_data")))
-        (wrong-type-argument
-         (signal 'health-chart-invalid-data
-                 (list (format "cannot read data as %s: %S" (plist-get (health-chart--kind kind) :shape)
-                               err)
-                       :code "invalid_data"))))
-    data))
-
-;;;###autoload
-(defun health-chart-validate (kind data &rest props)
-  "Return t when DATA fits KIND's shape and PROPS, else signal a typed error.
-`health-chart-invalid-data' carries the offending element's :index.
-Empty DATA is valid: it renders as nothing."
-  (let* ((entry (health-chart--kind kind))
-         (data (health-chart-normalize kind data))
-         (backend (plist-get props :backend)))
-    (unless (memq backend '(nil auto text svg))
-      (signal 'health-chart-invalid-data
-              (list (format ":backend must be text, svg or auto, got %S" backend)
-                    :code "invalid_prop")))
-    (when data
-      (funcall (plist-get (health-chart--shape kind) :validator) data)
-      (when-let* ((check (plist-get entry :check)))
-        (funcall check data props)))
-    t))
-
-;; -----------------------------------------------------------------------
 ;; Backend
 ;; -----------------------------------------------------------------------
 
-(defun health-chart--plist-drop (plist &rest keys)
-  "PLIST without KEYS."
-  (cl-loop for (k v) on plist by #'cddr
-           unless (memq k keys) append (list k v)))
+(defun health-chart--backend-decision (backend &optional kind format)
+  "(BACKEND FORMAT REASON) for drawing KIND (default timeseries) with BACKEND.
+BACKEND nil means `health-chart-backend'; FORMAT nil the natural one.
+See `health-chart-select-backend'."
+  (health-chart-select-backend (or kind 'timeseries) backend format))
 
-(defun health-chart--backend-decision (backend)
-  "(CONCRETE-BACKEND . REASON) for BACKEND (nil = `health-chart-backend')."
-  (pcase (or backend health-chart-backend)
-    ('svg '(svg . "requested svg"))
-    ('text '(text . "requested text"))
-    (_ (if (and (display-images-p) (image-type-available-p 'svg))
-           '(svg . "auto: this frame displays SVG images")
-         '(text . "auto: this frame cannot display SVG images")))))
-
-(defun health-chart-resolve-backend (backend)
-  "Concrete backend (`text' or `svg') for BACKEND (nil = the default)."
-  (car (health-chart--backend-decision backend)))
+(defun health-chart-resolve-backend (backend &optional kind)
+  "Concrete backend name for BACKEND (nil = the default) drawing KIND."
+  (car (health-chart--backend-decision backend kind)))
 
 (defun health-chart--renderer-args (backend props)
-  "The keyword args the BACKEND renderer receives for caller PROPS."
+  "The keyword args the BACKEND renderer receives for caller PROPS.
+Native renderers get keyword args; template backends get the spec props."
   (if (eq backend 'svg)
       (append (when (plist-get props :pixel-width) (list :width (plist-get props :pixel-width)))
               (when (plist-get props :pixel-height) (list :height (plist-get props :pixel-height)))
-              (health-chart--plist-drop props :backend :width :height :pixel-width :pixel-height))
-    (health-chart--plist-drop props :backend :pixel-width :pixel-height)))
+              (health-chart--plist-drop props :backend :format :width :height :pixel-width :pixel-height))
+    (health-chart--plist-drop props :backend :format :pixel-width :pixel-height)))
 
 ;; -----------------------------------------------------------------------
 ;; Explain: the pure plan
@@ -378,20 +87,37 @@ Empty DATA is valid: it renders as nothing."
 ;;;###autoload
 (defun health-chart-explain (kind data &rest props)
   "Return the plan `health-chart-plot' would follow for KIND, DATA, PROPS.
-Nothing is rendered.
+Nothing is rendered or run.
 A plist: :kind :shape :valid (t, or the error message) :backend
-:backend-reason :renderer :args, and when valid a data summary (:points
-:markers :persons :from :to :out-of-range).  Pure: never signals for
-bad DATA."
+:format :backend-reason :renderer :args; for a template backend also
+:template (the file), :program (the generated Vega-Lite or gnuplot
+source) and :steps (each step's exact :argv, the first reading
+:program on stdin; :fallback when PNG/PDF may need rsvg-convert); and
+when valid a data summary (:points :markers :persons :from :to
+:out-of-range).  Pure: never signals for bad DATA."
   (let* ((entry (health-chart--kind kind))
-         (decision (health-chart--backend-decision (plist-get props :backend)))
+         (decision (condition-case err
+                       (health-chart--backend-decision (plist-get props :backend) kind
+                                                       (plist-get props :format))
+                     (health-chart-error (list nil nil (cadr err)))))
+         (backend (car decision))
+         (native (and backend (plist-get (health-chart--backend backend) :native)))
          (valid (condition-case err (apply #'health-chart-validate kind data props)
-                  (error (error-message-string err)))))
+                  (error (error-message-string err))))
+         (plan (and backend (not native) (eq valid t)
+                    (condition-case err
+                        (apply #'health-chart-render-explain kind data
+                               :backend backend :format (cadr decision) props)
+                      (health-chart-error (list :plan-error (cadr err)))))))
     (append
      (list :kind kind :shape (plist-get entry :shape) :valid valid
-           :backend (car decision) :backend-reason (cdr decision)
-           :renderer (plist-get entry (if (eq (car decision) 'svg) :svg :text))
-           :args (health-chart--renderer-args (car decision) props))
+           :backend backend :format (cadr decision) :backend-reason (nth 2 decision)
+           :renderer (if native (plist-get entry native) (plist-get plan :template))
+           :args (health-chart--renderer-args backend props))
+     (when plan
+       (list :template (plist-get plan :template) :program (plist-get plan :program)
+             :steps (plist-get plan :steps) :fallback (plist-get plan :fallback)
+             :plan-error (plist-get plan :plan-error)))
      (when (eq valid t)
        (health-chart--data-summary kind (health-chart-normalize kind data))))))
 
@@ -420,19 +146,20 @@ bad DATA."
 ;;;###autoload
 (defun health-chart-plot (kind data &rest props)
   "Render DATA as a KIND chart and return it as a string.
-KIND is a key of `health-chart-kinds' (`health-chart-list-kinds'); DATA
-must fit its shape (`health-chart-validate').  PROPS: :backend (text,
-svg or auto), :width/:height (text columns/rows), :pixel-width
-/:pixel-height (SVG), :title, :person, :marker, :ref and :optimal (show
-the bands), and per-kind props (:from/:to for delta, :columns for
-panel).  Returns nil when there is nothing to draw."
-  (let* ((entry (health-chart--kind kind))
-         (data (health-chart-normalize kind data))
-         (backend (health-chart-resolve-backend (plist-get props :backend))))
+KIND is a key of `health-chart-kinds' (`health-chart-list-kinds') or a
+kind with a template (`health-chart-templates'); DATA must fit its shape
+\(`health-chart-validate').  PROPS: :backend (auto, vega-lite, gnuplot,
+text or svg; see `health-chart-backend'), :format (svg, png, pdf, text,
+vega-lite; default svg where images show, else text), :width/:height
+\(text columns/rows), :pixel-width/:pixel-height (images), :title,
+:person, :marker, :ref and :optimal (show the bands), and per-kind props
+\(:from/:to for delta, :columns for panel).  Returns nil when there is
+nothing to draw."
+  (let ((data (health-chart-normalize kind data)))
     (apply #'health-chart-validate kind data props)
-    (let ((out (apply (plist-get entry (if (eq backend 'svg) :svg :text)) data
-                      (health-chart--renderer-args backend props))))
-      (if (and out (eq backend 'svg))
+    (pcase-let ((`(,_backend ,format ,out)
+                 (apply #'health-chart-render-string kind data props)))
+      (if (and out (eq format 'svg))
           (health-chart--svg-provenance out kind data props)
         out))))
 
@@ -472,26 +199,37 @@ Empty VALUES give \"\"."
 ;; Insert and view
 ;; -----------------------------------------------------------------------
 
-(defun health-chart--insert-rendered (out backend)
-  "Insert rendered OUT for BACKEND at point."
+(defun health-chart--insert-rendered (out format)
+  "Insert rendered OUT, in FORMAT (svg, png or text), at point."
   (cond
    ((or (null out) (equal out ""))
     (insert (propertize health-chart-empty-text 'face 'health-chart-dim)))
-   ((eq backend 'svg) (insert-image (create-image out 'svg t :ascent 'center) "[chart]"))
+   ((memq format '(svg png))
+    (insert-image (create-image out format t :ascent 'center) "[chart]"))
    (t (insert out))))
 
-(defun health-chart--usable-backend (backend)
-  "BACKEND resolved, falling back to text when SVG cannot be displayed."
-  (let ((b (health-chart-resolve-backend backend)))
-    (if (and (eq b 'svg) (not (image-type-available-p 'svg))) 'text b)))
+(defun health-chart--usable-decision (kind backend)
+  "(BACKEND FORMAT REASON) for KIND with BACKEND that this frame can show.
+An image backend falls back to the terminal choice where images cannot
+be displayed."
+  (let ((d (health-chart--backend-decision backend kind)))
+    (if (and (memq (cadr d) '(svg png))
+             (not (and (display-images-p) (image-type-available-p (cadr d)))))
+        (let ((health-chart-graphic-backends nil))
+          (health-chart-select-backend kind 'auto 'text))
+      d)))
+
+(defun health-chart--usable-backend (backend &optional kind)
+  "BACKEND resolved for KIND (default bullet) to one this frame can show."
+  (car (health-chart--usable-decision (or kind 'bullet) backend)))
 
 ;;;###autoload
 (defun health-chart-plot-insert (kind data &rest props)
   "Insert DATA as a KIND chart at point.  PROPS as in `health-chart-plot'.
-Falls back to text when SVG is requested but cannot be displayed."
-  (let ((backend (health-chart--usable-backend (plist-get props :backend))))
+Falls back to text when an image is requested but cannot be displayed."
+  (pcase-let ((`(,backend ,format ,_) (health-chart--usable-decision kind (plist-get props :backend))))
     (health-chart--insert-rendered
-     (apply #'health-chart-plot kind data :backend backend props) backend)))
+     (apply #'health-chart-plot kind data :backend backend :format format props) format)))
 
 (defvar-local health-chart-plot--spec nil
   "(KIND DATA PROPS) of the chart shown in this `health-chart-plot-mode' buffer.")
@@ -519,18 +257,18 @@ Falls back to text when SVG is requested but cannot be displayed."
               (list :width (max 40 (min 120 (- cols 2)))))
             (unless (plist-member props :pixel-width)
               (list :pixel-width (if win (min 900 (max 400 (- (window-body-width win t) 20)))
-                                   health-chart-svg-width))))))
+                                   health-chart-image-width))))))
 
 (defun health-chart-plot-refresh ()
   "Re-render this buffer's chart."
   (interactive)
   (pcase-let* ((`(,kind ,data ,props) health-chart-plot--spec)
-               (backend (health-chart--usable-backend (plist-get props :backend)))
-               (out (apply #'health-chart-plot kind data :backend backend
+               (`(,backend ,format ,_) (health-chart--usable-decision kind (plist-get props :backend)))
+               (out (apply #'health-chart-plot kind data :backend backend :format format
                            (health-chart-plot--fit-props props)))
                (inhibit-read-only t))
     (erase-buffer)
-    (health-chart--insert-rendered out backend)
+    (health-chart--insert-rendered out format)
     (insert "\n")
     (goto-char (point-min))))
 
@@ -542,13 +280,22 @@ Falls back to text when SVG is requested but cannot be displayed."
     (health-chart-plot-refresh)
     (not now)))
 
+(defun health-chart--toggled-backend (kind backend)
+  "The backend to switch to from BACKEND for KIND: text <-> the image choice."
+  (if (eq (cadr (health-chart--backend-decision backend kind)) 'text)
+      (let ((b (car (ignore-errors (health-chart-select-backend kind 'auto 'svg)))))
+        ;; no image backend installed: the native SVG renderer, as before
+        (if (memq b '(nil text)) 'svg b))
+    'text))
+
 (defun health-chart-plot-toggle-backend ()
-  "Flip this buffer's chart between text and SVG."
+  "Flip this buffer's chart between text and an image backend."
   (interactive)
-  (let* ((props (nth 2 health-chart-plot--spec))
-         (now (health-chart-resolve-backend (plist-get props :backend))))
+  (let* ((kind (car health-chart-plot--spec))
+         (props (nth 2 health-chart-plot--spec)))
     (setf (nth 2 health-chart-plot--spec)
-          (plist-put (copy-sequence props) :backend (if (eq now 'svg) 'text 'svg)))
+          (plist-put (copy-sequence props) :backend
+                     (health-chart--toggled-backend kind (plist-get props :backend))))
     (health-chart-plot-refresh)))
 
 (defun health-chart-plot-toggle-ref ()
