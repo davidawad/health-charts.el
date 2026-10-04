@@ -318,7 +318,10 @@ share of that marker's draws (0..1), `count' and `draws' the numbers."
                                   :x (health-chart-spec--round x0 4)
                                   :x2 (health-chart-spec--round x 4)
                                   :mid (health-chart-spec--round (+ x0 (/ share 2)) 4)
-                                  :seg_label (if (>= share 0.09) (format "%d" count) "")
+                                  ;; glyph + count: low and high share a color
+                                  :seg_label (if (>= share 0.09)
+                                                 (format "%s %d" (health-chart-status-glyph st) count)
+                                               "")
                                   :summary (plist-get s :label)
                                   :detail (format "%d of %d draws %s" count n (symbol-name st))))))))
              (present (mapcar (lambda (r) (intern (plist-get r :status))) rows)))

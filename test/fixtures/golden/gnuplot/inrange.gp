@@ -11,37 +11,37 @@ set datafile columnheaders
 
 $data << EOD
 index	marker	label	unit	status	glyph	status_label	color	rgb	count	draws	x	x2	mid	seg_label	summary	detail
-1	lpa	Lp(a)	nmol/L	high	▲	▲ high	#d03b3b	13646651	8	8	0	1	0.5	8	0/8 in range	8 of 8 draws high
-2	ldl-c	LDL-C	mg/dL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	3	8	0	0.375	0.1875	3	3/8 in range	3 of 8 draws suboptimal
-2	ldl-c	LDL-C	mg/dL	high	▲	▲ high	#d03b3b	13646651	5	8	0.375	1	0.6875	5	3/8 in range	5 of 8 draws high
-3	apob	ApoB	mg/dL	optimal	●	● optimal	#0ca30c	828172	2	8	0	0.25	0.125	2	4/8 in range	2 of 8 draws optimal
-3	apob	ApoB	mg/dL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	2	8	0.25	0.5	0.375	2	4/8 in range	2 of 8 draws suboptimal
-3	apob	ApoB	mg/dL	high	▲	▲ high	#d03b3b	13646651	4	8	0.5	1	0.75	4	4/8 in range	4 of 8 draws high
-4	triglycerides	Triglycerides	mg/dL	optimal	●	● optimal	#0ca30c	828172	2	8	0	0.25	0.125	2	5/8 in range	2 of 8 draws optimal
-4	triglycerides	Triglycerides	mg/dL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	3	8	0.25	0.625	0.4375	3	5/8 in range	3 of 8 draws suboptimal
-4	triglycerides	Triglycerides	mg/dL	high	▲	▲ high	#d03b3b	13646651	3	8	0.625	1	0.8125	3	5/8 in range	3 of 8 draws high
-5	hba1c	HbA1c	%	optimal	●	● optimal	#0ca30c	828172	2	8	0	0.25	0.125	2	5/8 in range	2 of 8 draws optimal
-5	hba1c	HbA1c	%	suboptimal	◐	◐ suboptimal	#e09a00	14719488	3	8	0.25	0.625	0.4375	3	5/8 in range	3 of 8 draws suboptimal
-5	hba1c	HbA1c	%	high	▲	▲ high	#d03b3b	13646651	3	8	0.625	1	0.8125	3	5/8 in range	3 of 8 draws high
-6	glucose	Glucose	mg/dL	optimal	●	● optimal	#0ca30c	828172	1	8	0	0.125	0.0625	1	5/8 in range	1 of 8 draws optimal
-6	glucose	Glucose	mg/dL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	4	8	0.125	0.625	0.375	4	5/8 in range	4 of 8 draws suboptimal
-6	glucose	Glucose	mg/dL	high	▲	▲ high	#d03b3b	13646651	3	8	0.625	1	0.8125	3	5/8 in range	3 of 8 draws high
-7	hscrp	hs-CRP	mg/L	optimal	●	● optimal	#0ca30c	828172	2	8	0	0.25	0.125	2	6/8 in range	2 of 8 draws optimal
-7	hscrp	hs-CRP	mg/L	suboptimal	◐	◐ suboptimal	#e09a00	14719488	4	8	0.25	0.75	0.5	4	6/8 in range	4 of 8 draws suboptimal
-7	hscrp	hs-CRP	mg/L	high	▲	▲ high	#d03b3b	13646651	2	8	0.75	1	0.875	2	6/8 in range	2 of 8 draws high
-8	vitamin-d	Vitamin D	ng/mL	low	▼	▼ low	#d03b3b	13646651	2	8	0	0.25	0.125	2	6/8 in range	2 of 8 draws low
-8	vitamin-d	Vitamin D	ng/mL	optimal	●	● optimal	#0ca30c	828172	4	8	0.25	0.75	0.5	4	6/8 in range	4 of 8 draws optimal
-8	vitamin-d	Vitamin D	ng/mL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	2	8	0.75	1	0.875	2	6/8 in range	2 of 8 draws suboptimal
-9	hdl-c	HDL-C	mg/dL	low	▼	▼ low	#d03b3b	13646651	1	8	0	0.125	0.0625	1	7/8 in range	1 of 8 draws low
-9	hdl-c	HDL-C	mg/dL	optimal	●	● optimal	#0ca30c	828172	1	8	0.125	0.25	0.1875	1	7/8 in range	1 of 8 draws optimal
-9	hdl-c	HDL-C	mg/dL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	6	8	0.25	1	0.625	6	7/8 in range	6 of 8 draws suboptimal
-10	alt	ALT	U/L	optimal	●	● optimal	#0ca30c	828172	3	8	0	0.375	0.1875	3	7/8 in range	3 of 8 draws optimal
-10	alt	ALT	U/L	suboptimal	◐	◐ suboptimal	#e09a00	14719488	4	8	0.375	0.875	0.625	4	7/8 in range	4 of 8 draws suboptimal
-10	alt	ALT	U/L	high	▲	▲ high	#d03b3b	13646651	1	8	0.875	1	0.9375	1	7/8 in range	1 of 8 draws high
-11	tsh	TSH	mIU/L	optimal	●	● optimal	#0ca30c	828172	8	8	0	1	0.5	8	8/8 in range	8 of 8 draws optimal
-12	ferritin	Ferritin	ng/mL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	8	8	0	1	0.5	8	8/8 in range	8 of 8 draws suboptimal
-13	testosterone-total	Testosterone	ng/dL	optimal	●	● optimal	#0ca30c	828172	5	8	0	0.625	0.3125	5	8/8 in range	5 of 8 draws optimal
-13	testosterone-total	Testosterone	ng/dL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	3	8	0.625	1	0.8125	3	8/8 in range	3 of 8 draws suboptimal
+1	lpa	Lp(a)	nmol/L	high	▲	▲ high	#d03b3b	13646651	8	8	0	1	0.5	▲ 8	0/8 in range	8 of 8 draws high
+2	ldl-c	LDL-C	mg/dL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	3	8	0	0.375	0.1875	◐ 3	3/8 in range	3 of 8 draws suboptimal
+2	ldl-c	LDL-C	mg/dL	high	▲	▲ high	#d03b3b	13646651	5	8	0.375	1	0.6875	▲ 5	3/8 in range	5 of 8 draws high
+3	apob	ApoB	mg/dL	optimal	●	● optimal	#0ca30c	828172	2	8	0	0.25	0.125	● 2	4/8 in range	2 of 8 draws optimal
+3	apob	ApoB	mg/dL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	2	8	0.25	0.5	0.375	◐ 2	4/8 in range	2 of 8 draws suboptimal
+3	apob	ApoB	mg/dL	high	▲	▲ high	#d03b3b	13646651	4	8	0.5	1	0.75	▲ 4	4/8 in range	4 of 8 draws high
+4	triglycerides	Triglycerides	mg/dL	optimal	●	● optimal	#0ca30c	828172	2	8	0	0.25	0.125	● 2	5/8 in range	2 of 8 draws optimal
+4	triglycerides	Triglycerides	mg/dL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	3	8	0.25	0.625	0.4375	◐ 3	5/8 in range	3 of 8 draws suboptimal
+4	triglycerides	Triglycerides	mg/dL	high	▲	▲ high	#d03b3b	13646651	3	8	0.625	1	0.8125	▲ 3	5/8 in range	3 of 8 draws high
+5	hba1c	HbA1c	%	optimal	●	● optimal	#0ca30c	828172	2	8	0	0.25	0.125	● 2	5/8 in range	2 of 8 draws optimal
+5	hba1c	HbA1c	%	suboptimal	◐	◐ suboptimal	#e09a00	14719488	3	8	0.25	0.625	0.4375	◐ 3	5/8 in range	3 of 8 draws suboptimal
+5	hba1c	HbA1c	%	high	▲	▲ high	#d03b3b	13646651	3	8	0.625	1	0.8125	▲ 3	5/8 in range	3 of 8 draws high
+6	glucose	Glucose	mg/dL	optimal	●	● optimal	#0ca30c	828172	1	8	0	0.125	0.0625	● 1	5/8 in range	1 of 8 draws optimal
+6	glucose	Glucose	mg/dL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	4	8	0.125	0.625	0.375	◐ 4	5/8 in range	4 of 8 draws suboptimal
+6	glucose	Glucose	mg/dL	high	▲	▲ high	#d03b3b	13646651	3	8	0.625	1	0.8125	▲ 3	5/8 in range	3 of 8 draws high
+7	hscrp	hs-CRP	mg/L	optimal	●	● optimal	#0ca30c	828172	2	8	0	0.25	0.125	● 2	6/8 in range	2 of 8 draws optimal
+7	hscrp	hs-CRP	mg/L	suboptimal	◐	◐ suboptimal	#e09a00	14719488	4	8	0.25	0.75	0.5	◐ 4	6/8 in range	4 of 8 draws suboptimal
+7	hscrp	hs-CRP	mg/L	high	▲	▲ high	#d03b3b	13646651	2	8	0.75	1	0.875	▲ 2	6/8 in range	2 of 8 draws high
+8	vitamin-d	Vitamin D	ng/mL	low	▼	▼ low	#d03b3b	13646651	2	8	0	0.25	0.125	▼ 2	6/8 in range	2 of 8 draws low
+8	vitamin-d	Vitamin D	ng/mL	optimal	●	● optimal	#0ca30c	828172	4	8	0.25	0.75	0.5	● 4	6/8 in range	4 of 8 draws optimal
+8	vitamin-d	Vitamin D	ng/mL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	2	8	0.75	1	0.875	◐ 2	6/8 in range	2 of 8 draws suboptimal
+9	hdl-c	HDL-C	mg/dL	low	▼	▼ low	#d03b3b	13646651	1	8	0	0.125	0.0625	▼ 1	7/8 in range	1 of 8 draws low
+9	hdl-c	HDL-C	mg/dL	optimal	●	● optimal	#0ca30c	828172	1	8	0.125	0.25	0.1875	● 1	7/8 in range	1 of 8 draws optimal
+9	hdl-c	HDL-C	mg/dL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	6	8	0.25	1	0.625	◐ 6	7/8 in range	6 of 8 draws suboptimal
+10	alt	ALT	U/L	optimal	●	● optimal	#0ca30c	828172	3	8	0	0.375	0.1875	● 3	7/8 in range	3 of 8 draws optimal
+10	alt	ALT	U/L	suboptimal	◐	◐ suboptimal	#e09a00	14719488	4	8	0.375	0.875	0.625	◐ 4	7/8 in range	4 of 8 draws suboptimal
+10	alt	ALT	U/L	high	▲	▲ high	#d03b3b	13646651	1	8	0.875	1	0.9375	▲ 1	7/8 in range	1 of 8 draws high
+11	tsh	TSH	mIU/L	optimal	●	● optimal	#0ca30c	828172	8	8	0	1	0.5	● 8	8/8 in range	8 of 8 draws optimal
+12	ferritin	Ferritin	ng/mL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	8	8	0	1	0.5	◐ 8	8/8 in range	8 of 8 draws suboptimal
+13	testosterone-total	Testosterone	ng/dL	optimal	●	● optimal	#0ca30c	828172	5	8	0	0.625	0.3125	● 5	8/8 in range	5 of 8 draws optimal
+13	testosterone-total	Testosterone	ng/dL	suboptimal	◐	◐ suboptimal	#e09a00	14719488	3	8	0.625	1	0.8125	◐ 3	8/8 in range	3 of 8 draws suboptimal
 EOD
 
 array YL = ['Lp(a)', 'LDL-C', 'ApoB', 'Triglycerides', 'HbA1c', 'Glucose', 'hs-CRP', 'Vitamin D', 'HDL-C', 'ALT', 'TSH', 'Ferritin', 'Testosterone']
