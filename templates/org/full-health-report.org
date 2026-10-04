@@ -37,6 +37,19 @@ linked gene's call next to its lab markers.
 #+BEGIN: health-chart :kind staleness :person "{{person}}" :cohort (cardio metabolic inflammation vitamins) :until "{{until}}" :as-of "{{until}}" :caption "Days since each indicator was drawn"
 #+END:
 
+* Body composition
+Frequent series (weigh-ins, computed biological age) are kept out of the
+per-draw lab charts above and shown here as trends.
+
+#+BEGIN: health-chart :kind trend :marker "weight" :person "{{person}}" :since "{{since}}" :until "{{until}}" :caption "Weight, rolling mean and linear trend"
+#+END:
+
+#+BEGIN: health-chart :kind trend :marker "bmi" :person "{{person}}" :since "{{since}}" :until "{{until}}" :caption "BMI, rolling mean and linear trend"
+#+END:
+
+#+BEGIN: health-chart :kind trend :marker "biological-age" :person "{{person}}" :since "{{since}}" :until "{{until}}" :caption "Biological age (as computed in the source sheet)"
+#+END:
+
 * Genetics
 ** Summary
 #+BEGIN: health-genetics :section summary :kit "{{person}}"

@@ -299,8 +299,36 @@ kinds known only by a template file.")
   "The shape plist of KIND."
   (alist-get (plist-get (health-chart--kind kind) :shape) health-chart-shapes))
 
+(defcustom health-chart-series-categories '("body" "vitals")
+  "Categories of frequently measured series (daily weight, heart rate...).
+Draw-based kinds (`health-chart-draw-kinds') leave these markers out
+when lab markers are present, so a year of daily weigh-ins does not turn
+into hundreds of \"draws\".  nil keeps every marker."
+  :type '(repeat string)
+  :group 'health-charts)
+
+(defconst health-chart-draw-kinds '(heatmap delta inrange dumbbell strip)
+  "Kinds organised by lab draw date.")
+
+(defun health-chart--drop-series (kind data)
+  "DATA without `health-chart-series-categories' markers when KIND is a draw kind.
+Unchanged for other kinds, when DATA is not a measurement list, or when
+nothing but series markers would remain."
+  (if (and (memq kind health-chart-draw-kinds) health-chart-series-categories
+           (proper-list-p data) (cl-every (lambda (m) (and (listp m) (plist-member m :marker))) data))
+      (let ((labs (seq-remove (lambda (m) (member (health-chart-marker-category m)
+                                                  health-chart-series-categories))
+                              data)))
+        (if labs labs data))
+    data))
+
 (defun health-chart-normalize (kind data)
-  "DATA in KIND's canonical form (see `health-chart-shapes')."
+  "DATA in KIND's canonical form (see `health-chart-shapes').
+Draw-based kinds also drop daily series (`health-chart-series-categories')."
+  (health-chart--drop-series kind (health-chart--normalize-shape kind data)))
+
+(defun health-chart--normalize-shape (kind data)
+  "DATA in KIND's canonical form, as KIND's shape normalizes it."
   (if-let* ((fn (plist-get (health-chart--shape kind) :normalize)))
       (condition-case err (funcall fn data)
         (health-chart-source-error (signal (car err) (cdr err)))

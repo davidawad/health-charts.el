@@ -103,7 +103,9 @@ A marker without an entry is shown as its id with underscores as spaces."
     ("thyroid" "tsh" "free_t4")
     ("liver" "alt" "ast")
     ("kidney" "creatinine" "egfr")
-    ("hormones" "testosterone" "testosterone_total"))
+    ("hormones" "testosterone" "testosterone_total")
+    ("body" "weight" "bmi" "body_fat" "biological_age")
+    ("vitals" "resting_hr" "hrv" "vo2max" "bp_systolic" "bp_diastolic"))
   "Panel categories: (CATEGORY MARKER...).
 A measurement's own :category wins; markers in no category fall into
 \"other\".  The dashboard's category filter offers these names."
