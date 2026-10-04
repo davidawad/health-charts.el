@@ -72,7 +72,8 @@ is hidden unless `health-chart-org-test-real-genetics' is non-nil."
 (defun health-chart-org-test-update (text)
   "TEXT as an Org file in the current directory, every health block refreshed."
   (let ((file (expand-file-name "report.org")))
-    (with-temp-file file (insert text))
+    (let ((coding-system-for-write 'utf-8-unix))
+      (with-temp-file file (insert text)))
     (with-current-buffer (find-file-noselect file)
       (unwind-protect
           (progn (health-chart-org-update)

@@ -324,6 +324,28 @@ On Windows it is a .cmd file, as npm's shims are."
               (should (health-chart-gnuplot-available-p)))))
       (delete-directory dir t))))
 
+;; gnuplot on Windows exits 0 after a script error, printing nothing
+(ert-deftest health-chart-backend-test-empty-output-is-a-failure ()
+  (let* ((dir (make-temp-file "hc-tools" t))
+         (health-chart-tool-directories (list dir))
+         (name "hc-silent"))
+    (unwind-protect
+        (progn
+          ;; exits at once, never reading stdin
+          (if (eq system-type 'windows-nt)
+              (health-chart-backend-test--write (expand-file-name (concat name ".cmd") dir)
+                                                "@echo off\r\necho oops 1>&2\r\n")
+            (let ((file (expand-file-name name dir)))
+              (health-chart-backend-test--write file "#!/bin/sh\necho oops >&2\n")
+              (set-file-modes file #o755)))
+          (let ((err (should-error (health-chart--run (list name) "plot x")
+                                   :type 'health-chart-backend-error)))
+            (should (equal (plist-get (cddr err) :code) "backend_failed"))
+            (should (string-match-p "wrote no output: oops" (cadr err))))
+          ;; a tool writing its own file owes nothing on stdout
+          (should (equal (health-chart--run (list name) "plot x" nil t) "")))
+      (delete-directory dir t))))
+
 (ert-deftest health-chart-backend-test-tools-get-stdin-and-time-out ()
   (skip-unless (not (eq system-type 'windows-nt)))
   (let* ((dir (make-temp-file "hc-tools" t))

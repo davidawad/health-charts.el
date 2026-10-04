@@ -566,24 +566,22 @@
       {
         "date": "2025-09-15",
         "value": 89,
-        "text": "latest 89 mg/dL",
+        "text": "Glucose 89 mg/dL  ● optimal",
         "status_label": "● optimal",
         "color": "#0ca30c",
         "axis": "left",
         "series": "glucose",
-        "series_color": "#2a78d6",
-        "text": "Glucose 89 mg/dL  ● optimal"
+        "series_color": "#2a78d6"
       },
       {
         "date": "2025-09-15",
         "value": 5.3,
-        "text": "latest 5.3 %",
+        "text": "HbA1c 5.3 %  ● optimal",
         "status_label": "● optimal",
         "color": "#0ca30c",
         "axis": "right",
         "series": "hba1c",
-        "series_color": "#4a3aa7",
-        "text": "HbA1c 5.3 %  ● optimal"
+        "series_color": "#4a3aa7"
       }
     ]
   },

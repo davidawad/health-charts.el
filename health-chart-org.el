@@ -919,7 +919,8 @@ the document keeps its SVG links; see `health-chart-org-latex-png'."
 (defun health-chart-org--template-title (file)
   "The #+TITLE of template FILE, placeholders and all, or nil."
   (with-temp-buffer
-    (insert-file-contents file nil 0 2000)
+    (let ((coding-system-for-read 'utf-8))
+      (insert-file-contents file nil 0 2000))
     (when (re-search-forward "^#\\+TITLE:[ \t]*\\(.*\\)$" nil t)
       (string-trim (match-string 1)))))
 
@@ -1045,7 +1046,10 @@ existing OUTPUT.  See `health-chart-org-new-report-explain'."
     (let ((coding-system-for-write 'utf-8-unix))
       (write-region text nil output nil 'silent))
     (with-current-buffer (find-file-noselect output)
-      (revert-buffer t t t)
+      (let ((coding-system-for-read 'utf-8-unix))
+        (revert-buffer t t t))
+      ;; blocks insert non-ASCII glyphs; never prompt for a coding on save
+      (set-buffer-file-coding-system 'utf-8-unix)
       (health-chart-org-update)
       (save-buffer)
       (unless noninteractive (pop-to-buffer-same-window (current-buffer))))

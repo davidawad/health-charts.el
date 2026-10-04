@@ -537,12 +537,13 @@ two markers of MS."
              (annotations
               (apply #'vector
                      (cl-loop for model in models for s in series
-                              collect (append (health-chart-spec--latest-annotation
-                                               (plist-get model :latest) theme)
+                              collect (append (plist-put
+                                               (health-chart-spec--latest-annotation
+                                                (plist-get model :latest) theme)
+                                               :text (plist-get s :latest_label))
                                               (list :axis (plist-get s :axis)
                                                     :series (plist-get s :name)
-                                                    :series_color (plist-get s :color)
-                                                    :text (plist-get s :latest_label)))))))
+                                                    :series_color (plist-get s :color)))))))
         (list :title (format "%s · %s · %s" (plist-get (nth 0 models) :label)
                              (plist-get (nth 1 models) :label) (or person "all"))
               :subtitle (concat "latest: " (string-join (mapcar (lambda (s) (plist-get s :latest_label)) series) " · "))

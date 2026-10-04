@@ -106,7 +106,9 @@
   ;; the real shell entry point, fed a biomarker/v1 envelope on stdin
   (let ((bin (expand-file-name "../bin/health-chart" health-chart-test-dir))
         (process-environment (cons (concat "EMACS=" (expand-file-name invocation-name invocation-directory))
-                                   process-environment)))
+                                   process-environment))
+        ;; the CLI writes UTF-8 whatever the locale
+        (coding-system-for-read 'utf-8))
     (with-temp-buffer
       (should (= 0 (call-process bin (health-chart-test-fixture "biomarker-query.json") t nil
                                  "pipe" "heatmap" "{\"person\":\"sam\"}")))
