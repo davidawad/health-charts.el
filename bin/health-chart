@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # health-chart from the shell: chart specs as JSON in, charts or JSON out.
 #   health-chart render spec.json        (or: ... | health-chart render -)
-#   health-chart explain|validate spec.json
+#   health-chart write spec.json chart.png   (.svg .png .pdf .txt .vl.json)
+#   health-chart spec|explain|validate spec.json
 #   biomarker trend --marker ldl_c --format json | health-chart pipe timeseries ['{"width":60}']
-#   health-chart example KIND | kinds | describe | doctor | cohorts
+#   health-chart example KIND | kinds | describe | doctor | backends | templates | cohorts
 #   health-chart cohort NAME ['{"kind":"staleness","person":"alex"}'] | cohort-explain NAME [PROPS]
 # Set EMACS to pick the binary. See health-chart-batch.el for the spec format.
 set -euo pipefail

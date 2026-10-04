@@ -17,7 +17,12 @@
 ;; CMD is one of:
 ;;
 ;;   render   [FILE|-]          chart SPEC (JSON) -> the chart, text or SVG
-;;   explain  [FILE|-]          chart SPEC -> the plan as JSON
+;;   write    SPEC OUT          chart SPEC (file or -) -> OUT, the format
+;;                              from its extension (.svg .png .pdf .txt
+;;                              .vl.json); prints {"ok":true,"file":OUT}
+;;   spec     [FILE|-]          chart SPEC -> the chartspec/v1 JSON
+;;   explain  [FILE|-]          chart SPEC -> the plan as JSON (backend,
+;;                              template, generated program, argv)
 ;;   validate [FILE|-]          chart SPEC -> {"ok":true} or the error envelope
 ;;   pipe     KIND [PROPS]      biomarker JSON on stdin -> KIND chart (text
 ;;                              unless PROPS, a JSON object, says otherwise)
@@ -25,6 +30,8 @@
 ;;   kinds                      every kind with its shape and doc, as JSON
 ;;   describe                   the whole package as JSON
 ;;   doctor                     health rows as JSON
+;;   backends                   rendering backends and whether installed
+;;   templates                  every (backend, kind) template and its path
 ;;   cohorts                    every indicator cohort, as JSON
 ;;   cohort   NAME [PROPS]      fetch and render cohort NAME (PROPS: "kind"
 ;;                              scorecard|cohort|staleness, "person",
@@ -46,7 +53,7 @@
 (require 'json)
 (require 'health-chart)
 
-(defconst health-chart-batch--symbol-props '(:backend)
+(defconst health-chart-batch--symbol-props '(:backend :format :theme)
   "Props whose JSON string value is a Lisp symbol.")
 
 (defun health-chart-batch--keyword (key)
@@ -173,8 +180,46 @@
            (let ((spec (health-chart-batch-spec
                         (health-chart-batch--parse (health-chart-batch--read-text arg)))))
              (health-chart-batch--json
-              (apply #'health-chart-explain (plist-get spec :kind) (plist-get spec :data)
-                     (health-chart--plist-drop spec :kind :data)))))
+              (health-chart-batch--jsonable
+               (apply #'health-chart-explain (plist-get spec :kind) (plist-get spec :data)
+                      (health-chart--plist-drop spec :kind :data))))))
+          ("spec"
+           (let ((spec (health-chart-batch-spec
+                        (health-chart-batch--parse (health-chart-batch--read-text arg)))))
+             (princ (health-chart-spec-to-json
+                     (apply #'health-chart-spec (plist-get spec :kind) (plist-get spec :data)
+                            (health-chart--plist-drop spec :kind :data))
+                     t))
+             (terpri)))
+          ("write"
+           (unless (cadr args)
+             (signal 'health-chart-error
+                     (list "write needs SPEC and OUT, e.g. `health-chart write spec.json chart.png'"
+                           :code "bad_request")))
+           (let ((spec (health-chart-batch-spec
+                        (health-chart-batch--parse (health-chart-batch--read-text arg)))))
+             (health-chart-batch--json
+              `((ok . t)
+                (file . ,(apply #'health-chart-write (plist-get spec :kind) (plist-get spec :data)
+                                (cadr args) (health-chart--plist-drop spec :kind :data)))))))
+          ("backends"
+           (health-chart-batch--json
+            (apply #'vector
+                   (mapcar (lambda (b)
+                             `((backend . ,(symbol-name (car b)))
+                               (available . ,(if (health-chart-backend-available-p (car b)) t :json-false))
+                               (formats . ,(apply #'vector (mapcar #'symbol-name (plist-get (cdr b) :formats))))
+                               (doc . ,(plist-get (cdr b) :doc))))
+                           health-chart-backends))))
+          ("templates"
+           (health-chart-batch--json
+            (apply #'vector
+                   (mapcar (lambda (tpl)
+                             `((backend . ,(symbol-name (plist-get tpl :backend)))
+                               (kind . ,(symbol-name (plist-get tpl :kind)))
+                               (path . ,(plist-get tpl :path))
+                               (source . ,(symbol-name (plist-get tpl :source)))))
+                           (health-chart-templates)))))
           ("validate"
            (let ((spec (health-chart-batch-spec
                         (health-chart-batch--parse (health-chart-batch--read-text arg)))))
@@ -212,8 +257,8 @@
               (health-chart-batch--jsonable
                (apply #'health-chart-cohort-plot-explain (car call) (cdr call))))))
           (_ (signal 'health-chart-error
-                     (list (format "unknown command %S; use render, explain, validate, pipe, example, kinds, describe, doctor, \
-cohorts, cohort or cohort-explain" cmd)
+                     (list (format "unknown command %S; use render, write, spec, explain, validate, pipe, example, kinds, \
+describe, doctor, backends, templates, cohorts, cohort or cohort-explain" cmd)
                            :code "bad_request"))))
         0)
     (error

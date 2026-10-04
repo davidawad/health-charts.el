@@ -61,9 +61,11 @@
     (health-chart-dashboard-toggle-ref)
     (should (string-match-p "bands: \n" (buffer-string)))
     (health-chart-dashboard-toggle-backend)
-    (should (eq health-chart-dashboard--backend 'svg))
-    ;; the header names the backend actually drawn, text when SVG can't be shown
-    (should (string-match-p (if (image-type-available-p 'svg) "· svg ·" "· text ·") (buffer-string)))
+    ;; text flips to the image choice: vega-lite or gnuplot when installed
+    (should (memq health-chart-dashboard--backend '(vega-lite gnuplot svg)))
+    ;; the header names the backend actually drawn, text when images can't be shown
+    (unless (display-images-p)
+      (should (string-match-p "· text ·" (buffer-string))))
     (health-chart-dashboard-toggle-backend)
     (should (eq health-chart-dashboard--backend 'text))))
 

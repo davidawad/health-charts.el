@@ -112,7 +112,7 @@ normalizes it.  `health-chart-source-cli' runs the biomarker CLI,
   '((person . :person) (marker . :marker) (value . :value) (unit . :unit)
     (date . :date) (ref_low . :ref-low) (ref_high . :ref-high)
     (opt_low . :opt-low) (opt_high . :opt-high) (flag . :flag)
-    (category . :category))
+    (category . :category) (marker_name . :label))
   "JSON member name -> canonical plist key.  Unknown members are dropped.")
 
 (defconst health-chart-source-field-aliases
@@ -141,7 +141,7 @@ normalizes it.  `health-chart-source-cli' runs the biomarker CLI,
    ((eq key :flag)
     (let ((s (downcase (string-trim (format "%s" v)))))
       (unless (string-empty-p s) (intern s))))
-   ((memq key '(:marker :person :category :unit))
+   ((memq key '(:marker :person :category :unit :label))
     (if (symbolp v) (symbol-name v) v))
    (t v)))
 

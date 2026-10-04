@@ -1,0 +1,87 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "health-chart timeseries: one marker over time, reference and optimal bands shaded, points by status (glyph + word in the legend), latest value annotated.",
+  "width": 720,
+  "height": 360,
+  "autosize": {"type": "fit", "contains": "padding"},
+  "padding": {"left": 12, "right": 20, "top": 12, "bottom": 8},
+  "background": "#fcfcfb",
+  "title": {
+    "text": "LDL-C · alex", "subtitle": "latest 76 mg/dL on 2025-09-15 · ◐ suboptimal", "anchor": "start", "offset": 12,
+    "fontSize": 17, "subtitleFontSize": 12.5, "color": "#0b0b0b", "subtitleColor": "#52514e"
+  },
+  "config": {
+    "font": "DejaVu Sans",
+    "view": {"stroke": null},
+    "axis": {
+      "labelColor": "#52514e", "titleColor": "#52514e", "labelFontSize": 11.5,
+      "titleFontSize": 11.5, "titleFontWeight": "normal", "gridColor": "#e1e0d9",
+      "domainColor": "#c3c2b7", "tickColor": "#c3c2b7"
+    },
+    "legend": {
+      "labelColor": "#52514e", "labelFontSize": 12, "orient": "bottom",
+      "direction": "horizontal", "title": null, "symbolSize": 110, "columnPadding": 18
+    }
+  },
+  "data": {"values": [{"person":"alex","marker":"ldl-c","label":"LDL-C","date":"2021-11-08","value":162,"unit":"mg/dL","value_label":"162 mg/dL","status":"high","glyph":"▲","status_label":"▲ high","color":"#d03b3b","rgb":13646651,"shape":"triangle-up","pt":9,"ref_low":0,"ref_high":100,"opt_low":null,"opt_high":70,"series":"alex","latest":0},{"person":"alex","marker":"ldl-c","label":"LDL-C","date":"2022-05-16","value":151,"unit":"mg/dL","value_label":"151 mg/dL","status":"high","glyph":"▲","status_label":"▲ high","color":"#d03b3b","rgb":13646651,"shape":"triangle-up","pt":9,"ref_low":0,"ref_high":100,"opt_low":null,"opt_high":70,"series":"alex","latest":0},{"person":"alex","marker":"ldl-c","label":"LDL-C","date":"2022-11-14","value":138,"unit":"mg/dL","value_label":"138 mg/dL","status":"high","glyph":"▲","status_label":"▲ high","color":"#d03b3b","rgb":13646651,"shape":"triangle-up","pt":9,"ref_low":0,"ref_high":100,"opt_low":null,"opt_high":70,"series":"alex","latest":0},{"person":"alex","marker":"ldl-c","label":"LDL-C","date":"2023-06-05","value":121,"unit":"mg/dL","value_label":"121 mg/dL","status":"high","glyph":"▲","status_label":"▲ high","color":"#d03b3b","rgb":13646651,"shape":"triangle-up","pt":9,"ref_low":0,"ref_high":100,"opt_low":null,"opt_high":70,"series":"alex","latest":0},{"person":"alex","marker":"ldl-c","label":"LDL-C","date":"2024-01-15","value":104,"unit":"mg/dL","value_label":"104 mg/dL","status":"high","glyph":"▲","status_label":"▲ high","color":"#d03b3b","rgb":13646651,"shape":"triangle-up","pt":9,"ref_low":0,"ref_high":100,"opt_low":null,"opt_high":70,"series":"alex","latest":0},{"person":"alex","marker":"ldl-c","label":"LDL-C","date":"2024-08-12","value":92,"unit":"mg/dL","value_label":"92 mg/dL","status":"suboptimal","glyph":"◐","status_label":"◐ suboptimal","color":"#e09a00","rgb":14719488,"shape":"diamond","pt":13,"ref_low":0,"ref_high":100,"opt_low":null,"opt_high":70,"series":"alex","latest":0},{"person":"alex","marker":"ldl-c","label":"LDL-C","date":"2025-03-10","value":84,"unit":"mg/dL","value_label":"84 mg/dL","status":"suboptimal","glyph":"◐","status_label":"◐ suboptimal","color":"#e09a00","rgb":14719488,"shape":"diamond","pt":13,"ref_low":0,"ref_high":100,"opt_low":null,"opt_high":70,"series":"alex","latest":0},{"person":"alex","marker":"ldl-c","label":"LDL-C","date":"2025-09-15","value":76,"unit":"mg/dL","value_label":"76 mg/dL","status":"suboptimal","glyph":"◐","status_label":"◐ suboptimal","color":"#e09a00","rgb":14719488,"shape":"diamond","pt":13,"ref_low":0,"ref_high":100,"opt_low":null,"opt_high":70,"series":"alex","latest":1}]},
+  "encoding": {
+    "x": {
+      "field": "date", "type": "temporal", "title": "",
+      "scale": {"type": "utc", "domain": [1631491200000,1762732800000]},
+      "axis": {"values": [1640995200000,1672531200000,1704067200000,1735689600000], "format": "%Y", "formatType": "utc", "grid": false, "labelPadding": 6}
+    }
+  },
+  "layer": [
+    {
+      "data": {"values": [{"key":"reference","label":"reference 0–100","low":0,"high":100,"y":0,"y2":100,"color":"#b8b7ad","opacity":0.28},{"key":"optimal","label":"optimal ≤70","low":null,"high":70,"y":0,"y2":70,"color":"#0ca30c","opacity":0.14}]},
+      "mark": {"type": "rect"},
+      "encoding": {
+        "x": null,
+        "y": {"field": "y", "type": "quantitative", "scale": {"domain": [0,174.96], "nice": false, "zero": false}},
+        "y2": {"field": "y2"},
+        "fill": {
+          "field": "label", "type": "nominal",
+          "scale": {"domain": ["reference 0–100","optimal ≤70"], "range": ["#b8b7ad","#0ca30c"]},
+          "legend": {"symbolType": "square", "symbolOpacity": 0.45}
+        },
+        "opacity": {"field": "opacity", "type": "quantitative", "scale": null, "legend": null}
+      }
+    },
+    {
+      "mark": {"type": "line", "strokeWidth": 2, "color": "#898781", "interpolate": "linear"},
+      "encoding": {
+        "y": {"field": "value", "type": "quantitative", "title": "mg/dL",
+              "scale": {"domain": [0,174.96], "nice": false, "zero": false},
+              "axis": {"tickCount": 6, "labelPadding": 4}}
+      }
+    },
+    {
+      "mark": {"type": "point", "filled": true, "size": 110, "opacity": 1, "stroke": "#fcfcfb", "strokeWidth": 1.5},
+      "encoding": {
+        "y": {"field": "value", "type": "quantitative"},
+        "color": {
+          "field": "status_label", "type": "nominal",
+          "scale": {"domain": ["◐ suboptimal","▲ high"], "range": ["#e09a00","#d03b3b"]}
+        },
+        "shape": {
+          "field": "status_label", "type": "nominal",
+          "scale": {"domain": ["◐ suboptimal","▲ high"], "range": ["diamond","triangle-up"]}
+        },
+        "tooltip": [
+          {"field": "date", "type": "temporal", "format": "%Y-%m-%d", "formatType": "utc"},
+          {"field": "value_label", "title": "value"},
+          {"field": "status_label", "title": "status"}
+        ]
+      }
+    },
+    {
+      "data": {"values": [{"date":"2025-09-15","value":76,"text":"latest 76 mg/dL","status_label":"◐ suboptimal","color":"#e09a00"}]},
+      "mark": {"type": "text", "align": "right", "baseline": "bottom", "dx": -4, "dy": -12,
+               "fontSize": 12.5, "fontWeight": "bold", "color": "#0b0b0b"},
+      "encoding": {
+        "y": {"field": "value", "type": "quantitative"},
+        "text": {"field": "text"}
+      }
+    }
+  ]
+}
