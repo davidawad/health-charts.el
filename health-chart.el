@@ -69,6 +69,7 @@
 (require 'health-chart-indicator)
 (require 'health-chart-kind)
 (require 'health-chart-spec)
+(require 'health-chart-spec-gallery)
 (require 'health-chart-template)
 (require 'health-chart-render)
 (require 'health-chart-plot)

@@ -186,8 +186,13 @@ The same plain-data form the batch CLI reads as JSON."
           :shape (plist-get entry :shape) :shape-doc (plist-get shape :doc)
           :example (plist-get shape :example)
           :text (plist-get entry :text) :svg (plist-get entry :svg)
-          :renderers-defined (and (fboundp (plist-get entry :text))
-                                  (fboundp (plist-get entry :svg)) t))))
+          :templates (mapcar (lambda (b) (car b))
+                             (seq-filter (lambda (b) (health-chart-template-for (car b) kind))
+                                         health-chart-backends))
+          :renderers-defined (and (or (and (fboundp (plist-get entry :text))
+                                           (fboundp (plist-get entry :svg)))
+                                      (health-chart--template-kind-p kind))
+                                  t))))
 
 ;;;###autoload
 (defun health-chart-sparkline (values &rest props)
@@ -357,19 +362,23 @@ PROPS as in `health-chart-plot', plus :buffer (name, default
   (append
    (mapcar
     (lambda (entry)
-      (let* ((kind (car entry))
-             (example (plist-get (health-chart--shape kind) :example))
-             (problem (condition-case err
-                          (progn
-                            (unless (stringp (health-chart-plot kind example :backend 'text))
-                              (error "Text renderer returned nothing"))
-                            (unless (string-prefix-p "<svg" (health-chart-plot kind example :backend 'svg))
-                              (error "SVG renderer returned no document"))
-                            nil)
-                        (error (error-message-string err)))))
-        (list :name (format "kind %s" kind) :status (if problem 'fail 'pass)
-              :detail (or problem "renders its example as text and SVG")
-              :remediation (when problem "fix the renderer or its registry entry"))))
+      (if (not (or (plist-get (cdr entry) :text) (plist-get (cdr entry) :svg)))
+          ;; drawn by templates only; `health-chart-render-doctor-checks' fills each
+          (list :name (format "kind %s" (car entry)) :status 'pass
+                :detail "template-only kind; its templates are checked as template rows")
+        (let* ((kind (car entry))
+               (example (plist-get (health-chart--shape kind) :example))
+               (problem (condition-case err
+                            (progn
+                              (unless (stringp (health-chart-plot kind example :backend 'text))
+                                (error "Text renderer returned nothing"))
+                              (unless (string-prefix-p "<svg" (health-chart-plot kind example :backend 'svg))
+                                (error "SVG renderer returned no document"))
+                              nil)
+                          (error (error-message-string err)))))
+          (list :name (format "kind %s" kind) :status (if problem 'fail 'pass)
+                :detail (or problem "renders its example as text and SVG")
+                :remediation (when problem "fix the renderer or its registry entry")))))
     health-chart-kinds)
    (list (if (image-type-available-p 'svg)
              (list :name "svg-display" :status 'pass :detail "this Emacs displays SVG")
