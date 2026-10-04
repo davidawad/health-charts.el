@@ -40,7 +40,7 @@ Glucose  ────░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒�
 #+end_example
 #+END:
 #+BEGIN: health-chart :kind bogus
-# health-chart (unknown_kind): bogus is not a chart kind; use one of timeseries, panel, table, bullet, heatmap, compare, delta, sparkline, scorecard, cohort, staleness (see `health-chart-list-kinds')
+# health-chart (unknown_kind): bogus is not a chart kind; use one of timeseries, panel, table, bullet, heatmap, compare, delta, trend, lollipop, strip, dumbbell, dual, inrange, sparkline, scorecard, cohort, staleness (see `health-chart-list-kinds')
 #+END:
 #+BEGIN: health-chart :person "alex" :since "last year"
 # health-chart (invalid_param): :since must be a date like "2025-01-31", got "last year"

@@ -39,7 +39,13 @@
     (heatmap :person "alex")
     (compare :marker "vitamin-d")
     (delta :person "alex")
-    (staleness))
+    (staleness)
+    (trend :person "alex" :marker "ldl-c")
+    (lollipop :person "alex" :marker "hscrp")
+    (strip :person "alex")
+    (dumbbell :person "alex")
+    (dual :person "alex" :marker ("glucose" "hba1c"))
+    (inrange :person "alex"))
   "Each templated kind with the props its goldens are built with.")
 
 (defun health-chart-backend-test--data (kind)
@@ -203,7 +209,8 @@
 
 (ert-deftest health-chart-backend-test-every-kind-has-both-templates ()
   (health-chart-test-env
-    (dolist (kind '(timeseries panel bullet heatmap compare delta staleness))
+    (dolist (kind '(timeseries panel bullet heatmap compare delta staleness
+                    trend lollipop strip dumbbell dual inrange))
       (dolist (backend '(vega-lite gnuplot))
         (should (health-chart-template-for backend kind))))
     (should (seq-every-p (lambda (tpl) (eq (plist-get tpl :source) 'bundled)) (health-chart-templates)))))
@@ -348,7 +355,7 @@
                         :backend 'vega-lite :format 'svg props)))
         (should (string-prefix-p "<svg" svg))
         ;; status words reach the drawing, never color alone
-        (unless (memq kind '(compare delta staleness))
+        (unless (memq kind '(compare delta staleness dumbbell))
           (should (string-match-p "suboptimal\\|optimal\\|high\\|low" svg)))))))
 
 (ert-deftest health-chart-backend-test-vega-lite-png ()

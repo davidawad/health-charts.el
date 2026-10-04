@@ -1,0 +1,387 @@
+{
+  "schema": "chartspec/v1",
+  "kind": "trend",
+  "title": "LDL-C · alex",
+  "subtitle": "latest 76 mg/dL on 2025-09-15 · ◐ suboptimal · ↘ falling 23.28 mg/dL per year (linear fit)",
+  "unit": "mg/dL",
+  "width": 720,
+  "height": 360,
+  "text_width": 72,
+  "text_height": 20,
+  "theme": "light",
+  "font": "DejaVu Sans",
+  "font_size": 12,
+  "colors": {
+    "surface": "#fcfcfb",
+    "ink": "#0b0b0b",
+    "secondary": "#52514e",
+    "muted": "#898781",
+    "grid": "#e1e0d9",
+    "axis": "#c3c2b7",
+    "ref_band": "#b8b7ad",
+    "opt_band": "#0ca30c",
+    "optimal": "#0ca30c",
+    "normal": "#2a78d6",
+    "suboptimal": "#e09a00",
+    "low": "#d03b3b",
+    "high": "#d03b3b",
+    "unknown": "#898781",
+    "improved": "#0ca30c",
+    "worsened": "#d03b3b",
+    "steady": "#898781",
+    "on_target": "#2a78d6",
+    "fresh": "#0ca30c",
+    "due": "#e09a00",
+    "stale": "#d03b3b",
+    "undated": "#898781",
+    "series": [
+      "#2a78d6",
+      "#eb6834",
+      "#1baf7a",
+      "#eda100",
+      "#e87ba4",
+      "#008300",
+      "#4a3aa7",
+      "#e34948"
+    ]
+  },
+  "style": {
+    "ref_band_opacity": 0.28,
+    "opt_band_opacity": 0.14,
+    "point_size": 64,
+    "line_width": 2,
+    "grid_opacity": 1
+  },
+  "x": {
+    "type": "temporal",
+    "title": "",
+    "domain": [
+      "2021-09-13",
+      "2025-11-10"
+    ],
+    "domain_ms": [
+      1631491200000,
+      1762732800000
+    ],
+    "domain_sec": [
+      1631491200,
+      1762732800
+    ],
+    "tick_format": "%Y",
+    "tick_step_months": 12,
+    "ticks": [
+      {
+        "date": "2022-01-01",
+        "label": "2022",
+        "ms": 1640995200000,
+        "sec": 1640995200
+      },
+      {
+        "date": "2023-01-01",
+        "label": "2023",
+        "ms": 1672531200000,
+        "sec": 1672531200
+      },
+      {
+        "date": "2024-01-01",
+        "label": "2024",
+        "ms": 1704067200000,
+        "sec": 1704067200
+      },
+      {
+        "date": "2025-01-01",
+        "label": "2025",
+        "ms": 1735689600000,
+        "sec": 1735689600
+      }
+    ]
+  },
+  "y": {
+    "type": "quantitative",
+    "title": "mg/dL",
+    "domain": [
+      0,
+      174.96
+    ]
+  },
+  "layout": {
+    "trend": {
+      "slope_per_year": -23.2762,
+      "label": "↘ falling 23.28 mg/dL per year",
+      "draws": 8
+    }
+  },
+  "rows": [
+    {
+      "person": "alex",
+      "marker": "ldl-c",
+      "label": "LDL-C",
+      "date": "2021-11-08",
+      "value": 162,
+      "unit": "mg/dL",
+      "value_label": "162 mg/dL",
+      "status": "high",
+      "glyph": "▲",
+      "status_label": "▲ high",
+      "color": "#d03b3b",
+      "rgb": 13646651,
+      "shape": "triangle-up",
+      "pt": 9,
+      "ref_low": 0,
+      "ref_high": 100,
+      "opt_low": null,
+      "opt_high": 70,
+      "series": "alex",
+      "latest": 0,
+      "roll": 156.5,
+      "fit": 160.33
+    },
+    {
+      "person": "alex",
+      "marker": "ldl-c",
+      "label": "LDL-C",
+      "date": "2022-05-16",
+      "value": 151,
+      "unit": "mg/dL",
+      "value_label": "151 mg/dL",
+      "status": "high",
+      "glyph": "▲",
+      "status_label": "▲ high",
+      "color": "#d03b3b",
+      "rgb": 13646651,
+      "shape": "triangle-up",
+      "pt": 9,
+      "ref_low": 0,
+      "ref_high": 100,
+      "opt_low": null,
+      "opt_high": 70,
+      "series": "alex",
+      "latest": 0,
+      "roll": 150.3333,
+      "fit": 148.2856
+    },
+    {
+      "person": "alex",
+      "marker": "ldl-c",
+      "label": "LDL-C",
+      "date": "2022-11-14",
+      "value": 138,
+      "unit": "mg/dL",
+      "value_label": "138 mg/dL",
+      "status": "high",
+      "glyph": "▲",
+      "status_label": "▲ high",
+      "color": "#d03b3b",
+      "rgb": 13646651,
+      "shape": "triangle-up",
+      "pt": 9,
+      "ref_low": 0,
+      "ref_high": 100,
+      "opt_low": null,
+      "opt_high": 70,
+      "series": "alex",
+      "latest": 0,
+      "roll": 136.6667,
+      "fit": 136.6873
+    },
+    {
+      "person": "alex",
+      "marker": "ldl-c",
+      "label": "LDL-C",
+      "date": "2023-06-05",
+      "value": 121,
+      "unit": "mg/dL",
+      "value_label": "121 mg/dL",
+      "status": "high",
+      "glyph": "▲",
+      "status_label": "▲ high",
+      "color": "#d03b3b",
+      "rgb": 13646651,
+      "shape": "triangle-up",
+      "pt": 9,
+      "ref_low": 0,
+      "ref_high": 100,
+      "opt_low": null,
+      "opt_high": 70,
+      "series": "alex",
+      "latest": 0,
+      "roll": 121,
+      "fit": 123.7508
+    },
+    {
+      "person": "alex",
+      "marker": "ldl-c",
+      "label": "LDL-C",
+      "date": "2024-01-15",
+      "value": 104,
+      "unit": "mg/dL",
+      "value_label": "104 mg/dL",
+      "status": "high",
+      "glyph": "▲",
+      "status_label": "▲ high",
+      "color": "#d03b3b",
+      "rgb": 13646651,
+      "shape": "triangle-up",
+      "pt": 9,
+      "ref_low": 0,
+      "ref_high": 100,
+      "opt_low": null,
+      "opt_high": 70,
+      "series": "alex",
+      "latest": 0,
+      "roll": 105.6667,
+      "fit": 109.476
+    },
+    {
+      "person": "alex",
+      "marker": "ldl-c",
+      "label": "LDL-C",
+      "date": "2024-08-12",
+      "value": 92,
+      "unit": "mg/dL",
+      "value_label": "92 mg/dL",
+      "status": "suboptimal",
+      "glyph": "◐",
+      "status_label": "◐ suboptimal",
+      "color": "#e09a00",
+      "rgb": 14719488,
+      "shape": "diamond",
+      "pt": 13,
+      "ref_low": 0,
+      "ref_high": 100,
+      "opt_low": null,
+      "opt_high": 70,
+      "series": "alex",
+      "latest": 0,
+      "roll": 93.3333,
+      "fit": 96.0933
+    },
+    {
+      "person": "alex",
+      "marker": "ldl-c",
+      "label": "LDL-C",
+      "date": "2025-03-10",
+      "value": 84,
+      "unit": "mg/dL",
+      "value_label": "84 mg/dL",
+      "status": "suboptimal",
+      "glyph": "◐",
+      "status_label": "◐ suboptimal",
+      "color": "#e09a00",
+      "rgb": 14719488,
+      "shape": "diamond",
+      "pt": 13,
+      "ref_low": 0,
+      "ref_high": 100,
+      "opt_low": null,
+      "opt_high": 70,
+      "series": "alex",
+      "latest": 0,
+      "roll": 84,
+      "fit": 82.7107
+    },
+    {
+      "person": "alex",
+      "marker": "ldl-c",
+      "label": "LDL-C",
+      "date": "2025-09-15",
+      "value": 76,
+      "unit": "mg/dL",
+      "value_label": "76 mg/dL",
+      "status": "suboptimal",
+      "glyph": "◐",
+      "status_label": "◐ suboptimal",
+      "color": "#e09a00",
+      "rgb": 14719488,
+      "shape": "diamond",
+      "pt": 13,
+      "ref_low": 0,
+      "ref_high": 100,
+      "opt_low": null,
+      "opt_high": 70,
+      "series": "alex",
+      "latest": 1,
+      "roll": 80,
+      "fit": 70.6663
+    }
+  ],
+  "overlays": {
+    "ref_low": 0,
+    "ref_high": 100,
+    "opt_low": null,
+    "opt_high": 70,
+    "ref_y": 0,
+    "ref_y2": 100,
+    "opt_y": 0,
+    "opt_y2": 70,
+    "ref_label": "reference 0–100",
+    "opt_label": "optimal ≤70",
+    "bands": [
+      {
+        "key": "reference",
+        "label": "reference 0–100",
+        "low": 0,
+        "high": 100,
+        "y": 0,
+        "y2": 100,
+        "color": "#b8b7ad",
+        "opacity": 0.28
+      },
+      {
+        "key": "optimal",
+        "label": "optimal ≤70",
+        "low": null,
+        "high": 70,
+        "y": 0,
+        "y2": 70,
+        "color": "#0ca30c",
+        "opacity": 0.14
+      }
+    ],
+    "thresholds": [],
+    "annotations": [
+      {
+        "date": "2025-09-15",
+        "value": 76,
+        "text": "latest 76 mg/dL",
+        "status_label": "◐ suboptimal",
+        "color": "#e09a00"
+      }
+    ]
+  },
+  "legend": [
+    {
+      "key": "suboptimal",
+      "glyph": "◐",
+      "word": "suboptimal",
+      "label": "◐ suboptimal",
+      "color": "#e09a00",
+      "rgb": 14719488,
+      "shape": "diamond",
+      "pt": 13
+    },
+    {
+      "key": "high",
+      "glyph": "▲",
+      "word": "high",
+      "label": "▲ high",
+      "color": "#d03b3b",
+      "rgb": 13646651,
+      "shape": "triangle-up",
+      "pt": 9
+    }
+  ],
+  "series": [],
+  "panels": [],
+  "meta": {
+    "points": 8,
+    "from": "2021-11-08",
+    "to": "2025-09-15",
+    "persons": [
+      "alex"
+    ],
+    "markers": [
+      "ldl-c"
+    ]
+  }
+}
