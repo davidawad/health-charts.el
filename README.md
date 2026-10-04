@@ -26,6 +26,12 @@ made-up people). Regenerate:
 | `delta`: change between two draws, toward or away from target | <img src="docs/screenshots/vega-lite/delta.png" width="260" alt="delta, Vega-Lite"> | <img src="docs/screenshots/gnuplot/delta.png" width="260" alt="delta, gnuplot"> |
 | `staleness`: days since each test, against due and stale | <img src="docs/screenshots/vega-lite/staleness.png" width="260" alt="staleness, Vega-Lite"> | <img src="docs/screenshots/gnuplot/staleness.png" width="260" alt="staleness, gnuplot"> |
 | `panel`: a small time series per marker | <img src="docs/screenshots/vega-lite/panel.png" width="170" alt="panel, Vega-Lite"> | <img src="docs/screenshots/gnuplot/panel.png" width="170" alt="panel, gnuplot"> |
+| `trend`: draws, 3-draw mean and a linear trend with its slope in words | <img src="docs/screenshots/vega-lite/trend.png" width="260" alt="trend, Vega-Lite"> | <img src="docs/screenshots/gnuplot/trend.png" width="260" alt="trend, gnuplot"> |
+| `lollipop`: how far past its limit each draw was | <img src="docs/screenshots/vega-lite/lollipop.png" width="260" alt="lollipop, Vega-Lite"> | <img src="docs/screenshots/gnuplot/lollipop.png" width="260" alt="lollipop, gnuplot"> |
+| `strip`: every draw of every marker on its own range scale | <img src="docs/screenshots/vega-lite/strip.png" width="260" alt="strip, Vega-Lite"> | <img src="docs/screenshots/gnuplot/strip.png" width="260" alt="strip, gnuplot"> |
+| `dumbbell`: first draw to latest, toward or away from range | <img src="docs/screenshots/vega-lite/dumbbell.png" width="260" alt="dumbbell, Vega-Lite"> | <img src="docs/screenshots/gnuplot/dumbbell.png" width="260" alt="dumbbell, gnuplot"> |
+| `dual`: two related markers on two axes | <img src="docs/screenshots/vega-lite/dual.png" width="260" alt="dual, Vega-Lite"> | <img src="docs/screenshots/gnuplot/dual.png" width="260" alt="dual, gnuplot"> |
+| `inrange`: share of draws below, inside and above range | <img src="docs/screenshots/vega-lite/inrange.png" width="260" alt="inrange, Vega-Lite"> | <img src="docs/screenshots/gnuplot/inrange.png" width="260" alt="inrange, gnuplot"> |
 
 *The same spec through both backends, from
 [`examples/sample-panel.json`](examples/sample-panel.json); full size
@@ -189,9 +195,14 @@ the source's `flag` is used only when a measurement has no ranges.
 
 ## Chart kinds
 
-`(health-chart-list-kinds)` lists them. Every kind has a native text
-renderer; the seven marked ◆ also have templates for both image
-backends (`(health-chart-templates)` lists them).
+`(health-chart-list-kinds)` lists them. Every kind except those marked ◇ has a
+native text renderer, and the seven marked ◆ also have templates for both image
+backends (`(health-chart-templates)` lists them). The six marked ◇
+(adapted from the Vega-Lite gallery, see
+[docs/chart-gallery.md](docs/chart-gallery.md)) are drawn by templates
+only, Vega-Lite and gnuplot: `:backend text` and `:backend svg` decline
+them with an `unsupported_kind` error that names the template backends,
+and `auto` picks one of those.
 
 | kind | shows |
 |---|---|
@@ -202,6 +213,12 @@ backends (`(health-chart-templates)` lists them).
 | `heatmap` ◆ | markers by draw dates, each cell the draw's status |
 | `compare` ◆ | one marker over time for several people, one glyph/color each |
 | `delta` ◆ | percent change per marker between two draws, judged against target |
+| `trend` ◇ | one marker with a 3-draw rolling mean and a linear trend, slope in words |
+| `lollipop` ◇ | one marker's draws as stems to its target limit, labeled with the distance past it |
+| `strip` ◇ | every draw of every marker on its own range scale (0 = reference low, 1 = high) |
+| `dumbbell` ◇ | first draw to latest per marker on its range scale, colored by verdict |
+| `dual` ◇ | two related markers (default glucose and HbA1c) on a left and a right axis (`:marker '("a" "b")`) |
+| `inrange` ◇ | share of each marker's draws below, inside and above its reference range |
 | `sparkline` | one-row sparkline of plain numbers |
 | `scorecard` | indicator values: indicator, value, unit, status, trend sparkline |
 | `cohort` | cohort panel: a card per indicator with value, status, range track, trend |
@@ -315,6 +332,16 @@ backends, 1200 px wide. Regenerate with
 | `compare` | ![compare, Vega-Lite](docs/screenshots/vega-lite/compare.png) | ![compare, gnuplot](docs/screenshots/gnuplot/compare.png) |
 | `delta` | ![delta, Vega-Lite](docs/screenshots/vega-lite/delta.png) | ![delta, gnuplot](docs/screenshots/gnuplot/delta.png) |
 | `staleness` | ![staleness, Vega-Lite](docs/screenshots/vega-lite/staleness.png) | ![staleness, gnuplot](docs/screenshots/gnuplot/staleness.png) |
+| `trend` | ![trend, Vega-Lite](docs/screenshots/vega-lite/trend.png) | ![trend, gnuplot](docs/screenshots/gnuplot/trend.png) |
+| `lollipop` | ![lollipop, Vega-Lite](docs/screenshots/vega-lite/lollipop.png) | ![lollipop, gnuplot](docs/screenshots/gnuplot/lollipop.png) |
+| `strip` | ![strip, Vega-Lite](docs/screenshots/vega-lite/strip.png) | ![strip, gnuplot](docs/screenshots/gnuplot/strip.png) |
+| `dumbbell` | ![dumbbell, Vega-Lite](docs/screenshots/vega-lite/dumbbell.png) | ![dumbbell, gnuplot](docs/screenshots/gnuplot/dumbbell.png) |
+| `dual` | ![dual, Vega-Lite](docs/screenshots/vega-lite/dual.png) | ![dual, gnuplot](docs/screenshots/gnuplot/dual.png) |
+| `inrange` | ![inrange, Vega-Lite](docs/screenshots/vega-lite/inrange.png) | ![inrange, gnuplot](docs/screenshots/gnuplot/inrange.png) |
+
+The last six are adapted from the Vega-Lite example gallery; which
+patterns were taken or rejected, and why, is in
+[docs/chart-gallery.md](docs/chart-gallery.md).
 
 ## Templates
 

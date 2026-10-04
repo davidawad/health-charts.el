@@ -116,10 +116,12 @@
                           (mapcar #'health-chart-source-to-json ex)
                         ex)))
       ,@(pcase kind
-          ((or 'timeseries 'compare) '((marker . "ldl_c")))
+          ((or 'timeseries 'compare 'trend 'lollipop) '((marker . "ldl_c")))
+          ('dual '((marker . ["glucose" "hba1c"])))
           ('panel '((marker . ["ldl_c" "apob" "glucose" "crp"]))))
       ,@(unless (memq kind '(compare sparkline)) '((person . "alex")))
-      (backend . "text"))))
+      ;; template-only kinds have no native text renderer; gnuplot draws text
+      (backend . ,(if (plist-get d :text) "text" "gnuplot")))))
 
 (defun health-chart-batch--jsonable (v)
   "V with plists as objects and other lists as arrays, for `json-encode'."

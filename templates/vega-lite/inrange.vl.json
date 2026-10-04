@@ -1,0 +1,72 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "health-chart inrange: per marker, the share of its draws below, inside and above the reference range as one 100% stacked bar, segments colored by status with glyph and word in the legend and the draw count inside. Adapted from the Vega-Lite normalized stacked bar (stacked_bar_normalize).",
+  "width": {{width}},
+  "height": {{height}},
+  "autosize": {"type": "fit", "contains": "padding"},
+  "padding": {"left": 12, "right": 20, "top": 12, "bottom": 8},
+  "background": {{colors.surface}},
+  "title": {
+    "text": {{title}}, "subtitle": {{subtitle}}, "anchor": "start", "offset": 14,
+    "fontSize": 17, "subtitleFontSize": 12.5, "color": {{colors.ink}}, "subtitleColor": {{colors.secondary}}
+  },
+  "config": {
+    "font": {{font}},
+    "view": {"stroke": null},
+    "axis": {
+      "labelColor": {{colors.secondary}}, "titleColor": {{colors.secondary}}, "labelFontSize": 11.5,
+      "titleFontSize": 11.5, "titleFontWeight": "normal", "gridColor": {{colors.grid}},
+      "domainColor": {{colors.axis}}, "tickColor": {{colors.axis}}
+    },
+    "legend": {
+      "labelColor": {{colors.secondary}}, "labelFontSize": 12, "orient": "bottom",
+      "direction": "horizontal", "title": null, "symbolSize": 140, "columnPadding": 18
+    }
+  },
+  "data": {"values": {{data}}},
+  "encoding": {
+    "y": {
+      "field": "label", "type": "nominal", "title": null,
+      "scale": {"domain": {{y.domain}}, "paddingInner": 0.3, "paddingOuter": 0.2},
+      "axis": {"domain": false, "ticks": false, "labelPadding": 10, "labelFontSize": 12.5,
+               "labelColor": {{colors.ink}}, "labelLimit": 220}
+    }
+  },
+  "layer": [
+    {
+      "mark": {"type": "bar", "height": {"band": 0.72}, "stroke": {{colors.surface}}, "strokeWidth": 1.5},
+      "encoding": {
+        "x": {"field": "x", "type": "quantitative", "title": {{x.title}},
+              "scale": {"domain": [0, 1], "nice": false, "zero": false},
+              "axis": {"values": [0, 0.25, 0.5, 0.75, 1], "labelExpr": "format(datum.value * 100, '.0f') + '%'",
+                       "grid": true, "labelPadding": 4, "domain": false, "titlePadding": 8}},
+        "x2": {"field": "x2"},
+        "color": {"field": "status_label", "type": "nominal",
+                  "scale": {"domain": {{legend.label}}, "range": {{legend.color}}},
+                  "legend": {"symbolType": "square"}},
+        "tooltip": [
+          {"field": "label", "title": "marker"},
+          {"field": "detail", "title": "draws"},
+          {"field": "status_label", "title": "status"}
+        ]
+      }
+    },
+    {
+      "transform": [{"filter": "datum.seg_label !== ''"}],
+      "mark": {"type": "text", "baseline": "middle", "fontSize": 12, "fontWeight": "bold"},
+      "encoding": {
+        "x": {"field": "mid", "type": "quantitative"},
+        "color": {"condition": {"test": "datum.status === 'suboptimal'", "value": {{colors.ink}}}, "value": "#ffffff"},
+        "text": {"field": "seg_label"}
+      }
+    },
+    {
+      "transform": [{"aggregate": [{"op": "max", "field": "x2", "as": "end"}], "groupby": ["label", "summary"]}],
+      "mark": {"type": "text", "align": "left", "baseline": "middle", "dx": 10, "fontSize": 12.5, "color": {{colors.ink}}},
+      "encoding": {
+        "x": {"datum": 1, "type": "quantitative"},
+        "text": {"field": "summary"}
+      }
+    }
+  ]
+}

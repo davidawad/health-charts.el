@@ -1,0 +1,138 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "health-chart dual: two related markers over time, one per axis (left and right, titles and lines in the marker's color), points by status (glyph + word in the legend), each marker's upper reference limit dashed on its own axis. Adapted from the Vega-Lite dual-axis plot (layer_dual_axis).",
+  "width": 720,
+  "height": 360,
+  "autosize": {"type": "fit", "contains": "padding"},
+  "padding": {"left": 12, "right": 20, "top": 12, "bottom": 8},
+  "background": "#fcfcfb",
+  "title": {
+    "text": "Glucose · HbA1c · alex", "subtitle": "latest: Glucose 89 mg/dL  ● optimal · HbA1c 5.3 %  ● optimal", "anchor": "start", "offset": 12,
+    "fontSize": 17, "subtitleFontSize": 12.5, "color": "#0b0b0b", "subtitleColor": "#52514e"
+  },
+  "config": {
+    "font": "DejaVu Sans",
+    "view": {"stroke": null},
+    "axis": {
+      "labelColor": "#52514e", "titleColor": "#52514e", "labelFontSize": 11.5,
+      "titleFontSize": 12, "titleFontWeight": "bold", "gridColor": "#e1e0d9",
+      "domainColor": "#c3c2b7", "tickColor": "#c3c2b7"
+    },
+    "legend": {
+      "labelColor": "#52514e", "labelFontSize": 12, "orient": "bottom",
+      "direction": "horizontal", "title": null, "symbolSize": 110, "columnPadding": 18
+    }
+  },
+  "data": {"values": [{"person":"alex","marker":"glucose","label":"Glucose","date":"2021-11-08","value":108,"unit":"mg/dL","value_label":"108 mg/dL","status":"high","glyph":"▲","status_label":"▲ high","color":"#d03b3b","rgb":13646651,"shape":"triangle-up","pt":9,"ref_low":70,"ref_high":99,"opt_low":72,"opt_high":90,"series":"glucose","series_label":"Glucose (left axis)","series_color":"#2a78d6","axis":"left","latest":0},{"person":"alex","marker":"glucose","label":"Glucose","date":"2022-05-16","value":104,"unit":"mg/dL","value_label":"104 mg/dL","status":"high","glyph":"▲","status_label":"▲ high","color":"#d03b3b","rgb":13646651,"shape":"triangle-up","pt":9,"ref_low":70,"ref_high":99,"opt_low":72,"opt_high":90,"series":"glucose","series_label":"Glucose (left axis)","series_color":"#2a78d6","axis":"left","latest":0},{"person":"alex","marker":"glucose","label":"Glucose","date":"2022-11-14","value":101,"unit":"mg/dL","value_label":"101 mg/dL","status":"high","glyph":"▲","status_label":"▲ high","color":"#d03b3b","rgb":13646651,"shape":"triangle-up","pt":9,"ref_low":70,"ref_high":99,"opt_low":72,"opt_high":90,"series":"glucose","series_label":"Glucose (left axis)","series_color":"#2a78d6","axis":"left","latest":0},{"person":"alex","marker":"glucose","label":"Glucose","date":"2023-06-05","value":97,"unit":"mg/dL","value_label":"97 mg/dL","status":"suboptimal","glyph":"◐","status_label":"◐ suboptimal","color":"#e09a00","rgb":14719488,"shape":"diamond","pt":13,"ref_low":70,"ref_high":99,"opt_low":72,"opt_high":90,"series":"glucose","series_label":"Glucose (left axis)","series_color":"#2a78d6","axis":"left","latest":0},{"person":"alex","marker":"glucose","label":"Glucose","date":"2024-01-15","value":94,"unit":"mg/dL","value_label":"94 mg/dL","status":"suboptimal","glyph":"◐","status_label":"◐ suboptimal","color":"#e09a00","rgb":14719488,"shape":"diamond","pt":13,"ref_low":70,"ref_high":99,"opt_low":72,"opt_high":90,"series":"glucose","series_label":"Glucose (left axis)","series_color":"#2a78d6","axis":"left","latest":0},{"person":"alex","marker":"glucose","label":"Glucose","date":"2024-08-12","value":92,"unit":"mg/dL","value_label":"92 mg/dL","status":"suboptimal","glyph":"◐","status_label":"◐ suboptimal","color":"#e09a00","rgb":14719488,"shape":"diamond","pt":13,"ref_low":70,"ref_high":99,"opt_low":72,"opt_high":90,"series":"glucose","series_label":"Glucose (left axis)","series_color":"#2a78d6","axis":"left","latest":0},{"person":"alex","marker":"glucose","label":"Glucose","date":"2025-03-10","value":96,"unit":"mg/dL","value_label":"96 mg/dL","status":"suboptimal","glyph":"◐","status_label":"◐ suboptimal","color":"#e09a00","rgb":14719488,"shape":"diamond","pt":13,"ref_low":70,"ref_high":99,"opt_low":72,"opt_high":90,"series":"glucose","series_label":"Glucose (left axis)","series_color":"#2a78d6","axis":"left","latest":0},{"person":"alex","marker":"glucose","label":"Glucose","date":"2025-09-15","value":89,"unit":"mg/dL","value_label":"89 mg/dL","status":"optimal","glyph":"●","status_label":"● optimal","color":"#0ca30c","rgb":828172,"shape":"circle","pt":7,"ref_low":70,"ref_high":99,"opt_low":72,"opt_high":90,"series":"glucose","series_label":"Glucose (left axis)","series_color":"#2a78d6","axis":"left","latest":1},{"person":"alex","marker":"hba1c","label":"HbA1c","date":"2021-11-08","value":5.9,"unit":"%","value_label":"5.9 %","status":"high","glyph":"▲","status_label":"▲ high","color":"#d03b3b","rgb":13646651,"shape":"triangle-up","pt":9,"ref_low":4.0,"ref_high":5.6,"opt_low":null,"opt_high":5.3,"series":"hba1c","series_label":"HbA1c (right axis)","series_color":"#4a3aa7","axis":"right","latest":0},{"person":"alex","marker":"hba1c","label":"HbA1c","date":"2022-05-16","value":5.8,"unit":"%","value_label":"5.8 %","status":"high","glyph":"▲","status_label":"▲ high","color":"#d03b3b","rgb":13646651,"shape":"triangle-up","pt":9,"ref_low":4.0,"ref_high":5.6,"opt_low":null,"opt_high":5.3,"series":"hba1c","series_label":"HbA1c (right axis)","series_color":"#4a3aa7","axis":"right","latest":0},{"person":"alex","marker":"hba1c","label":"HbA1c","date":"2022-11-14","value":5.7,"unit":"%","value_label":"5.7 %","status":"high","glyph":"▲","status_label":"▲ high","color":"#d03b3b","rgb":13646651,"shape":"triangle-up","pt":9,"ref_low":4.0,"ref_high":5.6,"opt_low":null,"opt_high":5.3,"series":"hba1c","series_label":"HbA1c (right axis)","series_color":"#4a3aa7","axis":"right","latest":0},{"person":"alex","marker":"hba1c","label":"HbA1c","date":"2023-06-05","value":5.6,"unit":"%","value_label":"5.6 %","status":"suboptimal","glyph":"◐","status_label":"◐ suboptimal","color":"#e09a00","rgb":14719488,"shape":"diamond","pt":13,"ref_low":4.0,"ref_high":5.6,"opt_low":null,"opt_high":5.3,"series":"hba1c","series_label":"HbA1c (right axis)","series_color":"#4a3aa7","axis":"right","latest":0},{"person":"alex","marker":"hba1c","label":"HbA1c","date":"2024-01-15","value":5.5,"unit":"%","value_label":"5.5 %","status":"suboptimal","glyph":"◐","status_label":"◐ suboptimal","color":"#e09a00","rgb":14719488,"shape":"diamond","pt":13,"ref_low":4.0,"ref_high":5.6,"opt_low":null,"opt_high":5.3,"series":"hba1c","series_label":"HbA1c (right axis)","series_color":"#4a3aa7","axis":"right","latest":0},{"person":"alex","marker":"hba1c","label":"HbA1c","date":"2024-08-12","value":5.4,"unit":"%","value_label":"5.4 %","status":"suboptimal","glyph":"◐","status_label":"◐ suboptimal","color":"#e09a00","rgb":14719488,"shape":"diamond","pt":13,"ref_low":4.0,"ref_high":5.6,"opt_low":null,"opt_high":5.3,"series":"hba1c","series_label":"HbA1c (right axis)","series_color":"#4a3aa7","axis":"right","latest":0},{"person":"alex","marker":"hba1c","label":"HbA1c","date":"2025-03-10","value":5.3,"unit":"%","value_label":"5.3 %","status":"optimal","glyph":"●","status_label":"● optimal","color":"#0ca30c","rgb":828172,"shape":"circle","pt":7,"ref_low":4.0,"ref_high":5.6,"opt_low":null,"opt_high":5.3,"series":"hba1c","series_label":"HbA1c (right axis)","series_color":"#4a3aa7","axis":"right","latest":0},{"person":"alex","marker":"hba1c","label":"HbA1c","date":"2025-09-15","value":5.3,"unit":"%","value_label":"5.3 %","status":"optimal","glyph":"●","status_label":"● optimal","color":"#0ca30c","rgb":828172,"shape":"circle","pt":7,"ref_low":4.0,"ref_high":5.6,"opt_low":null,"opt_high":5.3,"series":"hba1c","series_label":"HbA1c (right axis)","series_color":"#4a3aa7","axis":"right","latest":1}]},
+  "encoding": {
+    "x": {
+      "field": "date", "type": "temporal", "title": "",
+      "scale": {"type": "utc", "domain": [1631491200000,1762732800000]},
+      "axis": {"values": [1640995200000,1672531200000,1704067200000,1735689600000], "format": "%Y", "formatType": "utc", "grid": false, "labelPadding": 6,
+               "titleFontWeight": "normal"}
+    }
+  },
+  "resolve": {"scale": {"y": "independent"}},
+  "layer": [
+    {
+      "transform": [{"filter": "datum.axis === 'left'"}],
+      "mark": {"type": "line", "strokeWidth": 2.5, "color": "#2a78d6"},
+      "encoding": {
+        "y": {"field": "value", "type": "quantitative", "title": "Glucose (mg/dL)",
+              "scale": {"domain": [66.96,111.04], "nice": false, "zero": false},
+              "axis": {"orient": "left", "tickCount": 6, "labelPadding": 4, "titleColor": "#2a78d6",
+                       "titlePadding": 8, "domainColor": "#2a78d6", "tickColor": "#2a78d6"}}
+      }
+    },
+    {
+      "transform": [{"filter": "datum.axis === 'right'"}],
+      "mark": {"type": "line", "strokeWidth": 2.5, "strokeDash": [7, 4], "color": "#4a3aa7"},
+      "encoding": {
+        "y": {"field": "value", "type": "quantitative", "title": "HbA1c (%)",
+              "scale": {"domain": [5.252,5.948], "nice": false, "zero": false},
+              "axis": {"orient": "right", "tickCount": 6, "labelPadding": 4, "grid": false, "titleColor": "#4a3aa7",
+                       "titlePadding": 8, "domainColor": "#4a3aa7", "tickColor": "#4a3aa7"}}
+      }
+    },
+    {
+      "data": {"values": [{"value":99,"axis":"left","label":"Glucose ≤99","color":"#2a78d6"},{"value":5.6,"axis":"right","label":"HbA1c ≤5.6","color":"#4a3aa7"}]},
+      "transform": [{"filter": "datum.axis === 'left'"}],
+      "mark": {"type": "rule", "strokeWidth": 1.5, "strokeDash": [2, 4], "color": "#2a78d6", "opacity": 0.8},
+      "encoding": {
+        "x": null,
+        "y": {"field": "value", "type": "quantitative",
+              "scale": {"domain": [66.96,111.04], "nice": false, "zero": false}, "axis": null}
+      }
+    },
+    {
+      "data": {"values": [{"value":99,"axis":"left","label":"Glucose ≤99","color":"#2a78d6"},{"value":5.6,"axis":"right","label":"HbA1c ≤5.6","color":"#4a3aa7"}]},
+      "transform": [{"filter": "datum.axis === 'right'"}],
+      "mark": {"type": "rule", "strokeWidth": 1.5, "strokeDash": [2, 4], "color": "#4a3aa7", "opacity": 0.8},
+      "encoding": {
+        "x": null,
+        "y": {"field": "value", "type": "quantitative",
+              "scale": {"domain": [5.252,5.948], "nice": false, "zero": false}, "axis": null}
+      }
+    },
+    {
+      "data": {"values": [{"value":99,"axis":"left","label":"Glucose ≤99","color":"#2a78d6"},{"value":5.6,"axis":"right","label":"HbA1c ≤5.6","color":"#4a3aa7"}]},
+      "transform": [{"filter": "datum.axis === 'left'"}],
+      "mark": {"type": "text", "align": "left", "baseline": "bottom", "dx": 6, "dy": -3,
+               "fontSize": 11.5, "color": "#2a78d6"},
+      "encoding": {
+        "x": {"value": 0},
+        "y": {"field": "value", "type": "quantitative",
+              "scale": {"domain": [66.96,111.04], "nice": false, "zero": false}, "axis": null},
+        "text": {"field": "label"}
+      }
+    },
+    {
+      "data": {"values": [{"value":99,"axis":"left","label":"Glucose ≤99","color":"#2a78d6"},{"value":5.6,"axis":"right","label":"HbA1c ≤5.6","color":"#4a3aa7"}]},
+      "transform": [{"filter": "datum.axis === 'right'"}],
+      "mark": {"type": "text", "align": "left", "baseline": "bottom", "dx": 6, "dy": -3,
+               "fontSize": 11.5, "color": "#4a3aa7"},
+      "encoding": {
+        "x": {"value": 0},
+        "y": {"field": "value", "type": "quantitative",
+              "scale": {"domain": [5.252,5.948], "nice": false, "zero": false}, "axis": null},
+        "text": {"field": "label"}
+      }
+    },
+    {
+      "transform": [{"filter": "datum.axis === 'left'"}],
+      "mark": {"type": "point", "filled": true, "size": 120, "opacity": 1, "stroke": "#fcfcfb", "strokeWidth": 1.5},
+      "encoding": {
+        "y": {"field": "value", "type": "quantitative",
+              "scale": {"domain": [66.96,111.04], "nice": false, "zero": false}, "axis": null},
+        "color": {"field": "status_label", "type": "nominal",
+                  "scale": {"domain": ["● optimal","◐ suboptimal","▲ high"], "range": ["#0ca30c","#e09a00","#d03b3b"]}},
+        "shape": {"field": "status_label", "type": "nominal",
+                  "scale": {"domain": ["● optimal","◐ suboptimal","▲ high"], "range": ["circle","diamond","triangle-up"]}},
+        "tooltip": [
+          {"field": "label", "title": "marker"},
+          {"field": "date", "type": "temporal", "format": "%Y-%m-%d", "formatType": "utc"},
+          {"field": "value_label", "title": "value"},
+          {"field": "status_label", "title": "status"}
+        ]
+      }
+    },
+    {
+      "transform": [{"filter": "datum.axis === 'right'"}],
+      "mark": {"type": "point", "filled": true, "size": 120, "opacity": 1, "stroke": "#fcfcfb", "strokeWidth": 1.5},
+      "encoding": {
+        "y": {"field": "value", "type": "quantitative",
+              "scale": {"domain": [5.252,5.948], "nice": false, "zero": false}, "axis": null},
+        "color": {"field": "status_label", "type": "nominal",
+                  "scale": {"domain": ["● optimal","◐ suboptimal","▲ high"], "range": ["#0ca30c","#e09a00","#d03b3b"]}},
+        "shape": {"field": "status_label", "type": "nominal",
+                  "scale": {"domain": ["● optimal","◐ suboptimal","▲ high"], "range": ["circle","diamond","triangle-up"]}},
+        "tooltip": [
+          {"field": "label", "title": "marker"},
+          {"field": "date", "type": "temporal", "format": "%Y-%m-%d", "formatType": "utc"},
+          {"field": "value_label", "title": "value"},
+          {"field": "status_label", "title": "status"}
+        ]
+      }
+    }
+  ]
+}

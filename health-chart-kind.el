@@ -204,6 +204,21 @@ idempotent); :validator signals `health-chart-invalid-data' with :index.")
     (delta :shape measurements :spec health-chart-spec-delta :text health-chart-text-delta :svg health-chart-svg-delta
            :check health-chart--check-delta
            :doc "Percent change per marker between two draws, toward or away from target.")
+    (trend :shape measurements :spec health-chart-spec-trend
+           :check health-chart--check-one-marker
+           :doc "One marker's draws with a 3-draw rolling mean and a linear trend, slope in words.")
+    (lollipop :shape measurements :spec health-chart-spec-lollipop
+              :check health-chart--check-one-marker
+              :doc "One marker's draws as stems to its target limit: how far past it each draw was.")
+    (strip :shape measurements :spec health-chart-spec-strip
+           :doc "Every draw of every marker on its own range scale (0 = reference low, 1 = high).")
+    (dumbbell :shape measurements :spec health-chart-spec-dumbbell
+              :doc "First draw to latest draw per marker on its range scale, colored by verdict.")
+    (dual :shape measurements :spec health-chart-spec-dual
+          :check health-chart--check-dual
+          :doc "Two related markers (glucose and HbA1c) over time on a left and a right axis.")
+    (inrange :shape measurements :spec health-chart-spec-inrange
+             :doc "Share of each marker's draws below, inside and above its reference range.")
     (sparkline :shape series :text health-chart-text-sparkline :svg health-chart-svg-sparkline
                :doc "One-row sparkline of plain numbers, for tables and mode lines.")
     (scorecard :shape indicators :text health-chart-text-scorecard :svg health-chart-svg-scorecard
@@ -214,7 +229,9 @@ idempotent); :validator signals `health-chart-invalid-data' with :index.")
                :check health-chart--check-staleness
                :doc "Days since each indicator's draw, against due and stale thresholds."))
   "Chart kinds: (KIND :shape SHAPE :text FN :svg FN :doc DOC [:check FN]).
-:spec FN is optional too.
+:spec FN is optional too.  A kind with neither :text nor :svg (trend,
+lollipop, strip, dumbbell, dual, inrange) is drawn by templates only:
+the native backends skip it, auto selection picks a template backend.
 Renderers are called as (FN DATA &rest PROPS) with normalized DATA and
 return a string, or nil when there is nothing to draw.  :check (DATA
 PROPS) validates props that select from DATA.  :spec (DATA PROPS) builds

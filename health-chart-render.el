@@ -269,6 +269,17 @@ terminal.  REASON says why, for `health-chart-explain'."
                         (cond ((and graphic (memq 'svg formats)) 'svg)
                               ((memq 'text formats) 'text)
                               (t (car formats))))))
+          (when (and (plist-get plist :native)
+                     (not (functionp (plist-get (health-chart--kind kind) (plist-get plist :native)))))
+            (signal 'health-chart-backend-error
+                    (list (format "backend %s has no renderer for %s, a kind drawn by templates only; use %s"
+                                  requested kind
+                                  (mapconcat #'symbol-name
+                                             (seq-filter (lambda (b) (and (assq b health-chart-backends)
+                                                                          (health-chart-template-for b kind)))
+                                                         health-chart-graphic-backends)
+                                             " or "))
+                          :code "unsupported_kind" :backend requested :kind kind)))
           (unless (memq fmt formats)
             (signal 'health-chart-backend-error
                     (list (format "backend %s cannot write %s; it writes %s" requested fmt

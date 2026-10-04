@@ -103,6 +103,22 @@ Delta and staleness rows are not measurements:
 | delta | `index`, `marker`, `label`, `unit`, `before`, `after`, `change`, `pct`, `pct_label` (`"-8.6%"`), `value_label` (`"84 → 76 mg/dL"`), `verdict` (improved, worsened, steady, on-target, unknown), `glyph`, `verdict_label` (`"✔ improved"`), `side` (`pos`/`neg`), `text` (the bar-end label, shortened when it would not fit), `color`, `rgb` |
 | staleness | `index`, `id`, `label`, `date`, `days` (null when undated), `bar` (days, 0 when undated), `days_label` (`"536 d"` or `"no draw"`), `state` (fresh, due, stale, undated), `glyph`, `state_label` (`"◐ due"`), `text` (bar-end label), `color`, `rgb`, `marker`, `person` |
 
+The gallery kinds (docs/chart-gallery.md) add:
+
+| kind | extra members |
+|---|---|
+| trend | measurement rows plus `roll` (centred mean of up to three draws) and `fit` (the least-squares line at the row's date, null under three draws); `layout.trend` = `{slope_per_year, label, draws}` with `label` like `"↘ falling 23.28 mg/dL per year"` |
+| lollipop | measurement rows plus `base` (the target's upper limit, else lower; optimal before reference), `gap` (value minus base), `gap_label` (`"+3.2"`); `overlays.thresholds` holds the limit line |
+| strip | measurement rows, every draw, plus `index` (marker row), `draws`, `norm` (range position: 0 = reference low, 1 = reference high), `x` (`norm` clamped to `x.domain`), `clipped` (1 when clamped), `latest`, `ref_x`/`ref_x2` (0 and 1, null when the reference band is hidden), `opt_x`/`opt_x2` (the optimal band in range positions, open sides closed at the domain), `ref_range`, `opt_range`, `latest_label` |
+| dumbbell | one row per marker with two draws: the later draw's measurement members plus `index`, `before`, `after`, `date_before`, `date_after`, `norm_before`, `norm_after`, `x_before`, `x_after`, `verdict`, `verdict_glyph`, `verdict_label`, `verdict_color`, `verdict_rgb`, `values_label` (`"162 → 76 mg/dL"`), `span_label`, `text` (the end label), and the strip band members |
+| dual | measurement rows of both markers plus `series`, `series_label`, `series_color`, `axis` (`"left"`/`"right"`), `latest`; `layout.left` and `layout.right` = `{name, axis, label, title, unit, color, rgb, domain, latest_label}`; `overlays.thresholds` carry `axis`; `series` lists the two |
+| inrange | one row per marker and status that occurs: `index`, `marker`, `label`, `unit`, `status`, `glyph`, `status_label`, `color`, `rgb`, `count`, `draws`, `x`/`x2` (segment start and end as a share of the marker's draws), `mid`, `seg_label` (the count, empty when the segment is narrow), `summary` (`"5/8 in range"`), `detail` |
+
+Range position is the value on the marker's reference range, so markers
+with different units share one axis. An open reference side is closed at
+0 (low) or mirrored from the optimal edge (high); a marker with no range
+at all is left out of `strip` and `dumbbell`.
+
 Template-only kinds (a template with no registry entry) get every
 measurement as a row, sorted by date, plus the timeseries members of
 the first marker.
