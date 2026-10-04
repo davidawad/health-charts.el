@@ -1,0 +1,37 @@
+#+TITLE: Lab draw · {{person}} · {{until}}
+#+SUBTITLE: Latest results as of {{until}}
+#+DATE: {{date}}
+#+OPTIONS: toc:nil num:nil author:nil
+#+STARTUP: showall
+
+Results of the draw on or before {{until}}, with each marker's history
+for context.  Refresh every block with =M-x health-chart-org-update=.
+
+* Out of range
+#+BEGIN: health-flags :person "{{person}}" :until "{{until}}"
+#+END:
+
+* Results
+#+BEGIN: health-table :person "{{person}}" :until "{{until}}"
+#+END:
+
+* Where each value sits in its ranges
+#+BEGIN: health-chart :kind bullet :person "{{person}}" :until "{{until}}" :caption "Latest value per marker against its reference (light) and optimal (dark) ranges"
+#+END:
+
+* By category
+** Lipids
+#+BEGIN: health-chart :kind panel :person "{{person}}" :category "lipids" :until "{{until}}" :caption "Lipid markers over time"
+#+END:
+
+** Metabolic
+#+BEGIN: health-chart :kind panel :person "{{person}}" :category "metabolic" :until "{{until}}" :caption "Glycemic markers over time"
+#+END:
+
+** Vitamins and minerals
+#+BEGIN: health-chart :kind panel :person "{{person}}" :category "vitamins" :until "{{until}}" :caption "Vitamin D and ferritin over time"
+#+END:
+
+** Inflammation, thyroid, liver and hormones
+#+BEGIN: health-chart :kind panel :person "{{person}}" :markers ("hscrp" "tsh" "alt" "testosterone-total") :until "{{until}}" :caption "Other markers over time"
+#+END:

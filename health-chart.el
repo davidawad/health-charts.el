@@ -43,13 +43,19 @@
 ;;              `health-chart-cohort-values', `health-chart-cohort-plot';
 ;;              each effectful call has a pure `-explain' twin
 ;;   dashboard  `health-charts' (M-x), alias of `health-chart-dashboard'
+;;   reports    Org dynamic blocks (#+BEGIN: health-chart, health-table,
+;;              health-scorecard, health-flags, health-genetics) and
+;;              report templates: `health-chart-org-new-report',
+;;              `health-chart-org-update', `health-chart-org-templates';
+;;              plans from `health-chart-org-explain'
 ;;   health     `health-chart-doctor' (M-x) / `health-chart-doctor-checks'
 ;;
 ;; Non-Emacs callers use bin/health-chart, which reads a spec as JSON.
 ;; Modules: -core (config, dates, status), -source (biomarker data
 ;; layer), -indicator (catalog, indicator values, evaluators), -model
 ;; (what to draw), -text, -svg, -plot (kinds), -cohort (named indicator
-;; sets), -dashboard, -batch (CLI).
+;; sets), -dashboard, -batch (CLI), -org (Org reports; loaded on
+;; first use, so plain charts never load Org).
 
 ;;; Code:
 
@@ -67,6 +73,16 @@
 (require 'health-chart-plot)
 (require 'health-chart-cohort)
 (require 'health-chart-dashboard)
+
+;; The Org report layer loads on first use (it requires Org).
+(dolist (fn '(health-chart-org-new-report health-chart-org-update health-chart-org-templates))
+  (autoload fn "health-chart-org" nil t))
+(dolist (fn '(health-chart-org-explain health-chart-org-new-report-explain
+              health-chart-org-stamp health-chart-org-context health-chart-org-template-list
+              org-dblock-write:health-chart org-dblock-write:health-table
+              org-dblock-write:health-scorecard org-dblock-write:health-flags
+              org-dblock-write:health-genetics))
+  (autoload fn "health-chart-org"))
 
 (defconst health-chart-version "0.2.0"
   "Version of the health-chart package.")
@@ -91,6 +107,9 @@
     (evaluate health-chart-indicator-evaluate health-chart-cohort-evaluate
               health-chart-indicator-status)
     (dashboard health-charts health-chart-dashboard)
+    (report health-chart-org-new-report health-chart-org-update health-chart-org-templates
+            health-chart-org-explain health-chart-org-new-report-explain
+            health-chart-org-stamp health-chart-org-template-list)
     (extend health-chart-register-kind health-chart-shapes health-chart-backends
             health-chart-template-directories health-chart-source-function
             health-chart-indicator-catalog-function health-chart-indicator-cohorts

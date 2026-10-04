@@ -1,0 +1,98 @@
+#+TITLE: Health report · alex · 2025
+#+SUBTITLE: 2024-10-01 – 2025-09-30
+#+DATE: 2025-10-01
+#+OPTIONS: toc:2 num:nil author:nil
+#+STARTUP: showall
+
+Labs and genetics together: the latest draw, the year's trends, the
+cohorts and, when genetics.el is loaded, the genetic summary.
+
+* Labs
+** Out of range
+#+BEGIN: health-flags :person "alex" :until "2025-09-30"
+- ▲ high · *Lp(a)* 144 nmol/L (2025-09-15), reference 0–75
+#+END:
+
+** Latest results
+#+BEGIN: health-table :person "alex" :until "2025-09-30"
+#+PLOT: title:"Latest values · alex" ind:1 deps:(2) type:2d with:histograms set:"style fill solid 0.6" set:"xtics rotate by -45"
+| Marker        | Value | Unit   |       Date | Status       | Reference | Optimal |
+|---------------+-------+--------+------------+--------------+-----------+---------|
+| LDL-C         |    76 | mg/dL  | 2025-09-15 | ◐ suboptimal | 0–100     | ≤70     |
+| HDL-C         |    61 | mg/dL  | 2025-09-15 | ● optimal    | ≥40       | ≥60     |
+| Triglycerides |    88 | mg/dL  | 2025-09-15 | ● optimal    | 0–150     | ≤100    |
+| ApoB          |    72 | mg/dL  | 2025-09-15 | ● optimal    | 0–90      | ≤80     |
+| Lp(a)         |   144 | nmol/L | 2025-09-15 | ▲ high       | 0–75      | ≤30     |
+| HbA1c         |   5.3 | %      | 2025-09-15 | ● optimal    | 4–5.6     | ≤5.3    |
+| Glucose       |    89 | mg/dL  | 2025-09-15 | ● optimal    | 70–99     | 72–90   |
+| hs-CRP        |   0.8 | mg/L   | 2025-09-15 | ● optimal    | 0–3       | ≤1      |
+| Vitamin D     |    55 | ng/mL  | 2025-09-15 | ● optimal    | 30–100    | 40–60   |
+| TSH           |   2.1 | mIU/L  | 2025-09-15 | ● optimal    | 0.4–4     | 0.5–2.5 |
+| Ferritin      |   154 | ng/mL  | 2025-09-15 | ◐ suboptimal | 30–400    | 50–150  |
+| Testosterone  |   618 | ng/dL  | 2025-09-15 | ● optimal    | 264–916   | 500–900 |
+| ALT           |    24 | U/L    | 2025-09-15 | ● optimal    | 7–56      | ≤30     |
+#+END:
+
+#+BEGIN: health-chart :kind bullet :person "alex" :until "2025-09-30" :caption "Latest value per marker against its reference and optimal ranges"
+#+CAPTION: Latest value per marker against its reference and optimal ranges
+#+ATTR_HTML: :alt Latest value per marker against its reference and optimal ranges
+[[file:full-health-report-assets/bullet-alex-6464d203.svg]]
+#+END:
+
+** Trends over 2024-10-01 – 2025-09-30
+#+BEGIN: health-chart :kind panel :person "alex" :since "2024-10-01" :until "2025-09-30" :caption "Every marker over the period"
+#+CAPTION: Every marker over the period
+#+ATTR_HTML: :alt Every marker over the period
+[[file:full-health-report-assets/panel-alex-25c6b9fe.svg]]
+#+END:
+
+#+BEGIN: health-chart :kind heatmap :person "alex" :until "2025-09-30" :caption "Each draw's status per marker"
+#+CAPTION: Each draw's status per marker
+#+ATTR_HTML: :alt Each draw's status per marker
+[[file:full-health-report-assets/heatmap-alex-5242f740.svg]]
+#+END:
+
+#+BEGIN: health-chart :kind delta :person "alex" :baseline "2024-10-01" :until "2025-09-30" :caption "Change since the last draw before 2024-10-01"
+#+CAPTION: Change since the last draw before 2024-10-01
+#+ATTR_HTML: :alt Change since the last draw before 2024-10-01
+[[file:full-health-report-assets/delta-alex-b2c523aa.svg]]
+#+END:
+
+** Cohorts
+#+BEGIN: health-scorecard :person "alex" :cohort (cardio metabolic inflammation vitamins) :until "2025-09-30" :as-of "2025-09-30"
+| Indicator       | Value | Unit     |       Date | Status       | Trend      |
+|-----------------+-------+----------+------------+--------------+------------|
+| ApoB            |    72 | mg/dL    | 2025-09-15 | ● optimal    | ↘ improved |
+| Lp(a)           |   144 | nmol/L   | 2025-09-15 | ▲ high       | ↗ worsened |
+| LDL-C           |    76 | mg/dL    | 2025-09-15 | ◐ suboptimal | ↘ improved |
+| HbA1c           |   5.3 | %        | 2025-09-15 | ● optimal    | ↘ improved |
+| Glucose         |    89 | mg/dL    | 2025-09-15 | ● optimal    | ↘ improved |
+| Glucose slope   |  -4.3 | mg/dL/yr | 2025-09-15 | ? n/a        | ↘ falling  |
+| hs-CRP          |   0.8 | mg/L     | 2025-09-15 | ● optimal    | ↘ improved |
+| hs-CRP position | 0.267 | of range | 2025-09-15 | ○ normal     | ↘ improved |
+| Vitamin D       |    55 | ng/mL    | 2025-09-15 | ● optimal    | ↗ improved |
+| Vitamin D age   |    15 | days     | 2025-09-15 | ○ normal     | –          |
+#+END:
+
+#+BEGIN: health-chart :kind staleness :person "alex" :cohort (cardio metabolic inflammation vitamins) :until "2025-09-30" :as-of "2025-09-30" :caption "Days since each indicator was drawn"
+#+CAPTION: Days since each indicator was drawn
+#+ATTR_HTML: :alt Days since each indicator was drawn
+[[file:full-health-report-assets/staleness-alex-cardio-metabolic-inflammation-vitamins-6b2760f1.svg]]
+#+END:
+
+* Genetics
+** Summary
+#+BEGIN: health-genetics :section summary :kit "alex"
+# genetics-summary failed: No genetics kit available: No loaded kit named "alex"
+# What to do: Load the kit with M-x genetics-open, or give the block :file "path/to/kit" (or :kit with a loaded kit's name).
+
+/Informational only, not medical advice./ Consumer genotyping and sequencing are not diagnostic; confirm any finding with a clinical-grade test and a clinician.
+#+END:
+
+** APOE
+#+BEGIN: health-genetics :section apoe :kit "alex"
+# genetics-apoe failed: No genetics kit available: No loaded kit named "alex"
+# What to do: Load the kit with M-x genetics-open, or give the block :file "path/to/kit" (or :kit with a loaded kit's name).
+
+/Informational only, not medical advice./ Consumer genotyping and sequencing are not diagnostic; confirm any finding with a clinical-grade test and a clinician.
+#+END:
