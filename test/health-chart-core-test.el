@@ -132,4 +132,18 @@
     (should (equal (health-chart-marker-category "vitamin-d")
                    (health-chart-marker-category "vitamin_d")))))
 
+(ert-deftest health-chart-core-test-draw-kinds-drop-daily-series ()
+  ;; Daily weigh-ins must not become lab "draws" in heatmaps and deltas.
+  (require 'health-chart-kind)
+  (let* ((lab (list :person "alex" :marker "ldl_c" :value 96 :date "2024-03-01" :category "lipids"))
+         (wt1 (list :person "alex" :marker "weight" :value 85 :date "2024-03-02" :category "body"))
+         (wt2 (list :person "alex" :marker "weight" :value 84 :date "2024-03-03"))
+         (ms (list lab wt1 wt2)))
+    (should (equal (health-chart--drop-series 'heatmap ms) (list lab)))
+    (should (equal (health-chart--drop-series 'panel ms) ms))
+    ;; only series left: keep them rather than draw nothing
+    (should (equal (health-chart--drop-series 'heatmap (list wt1 wt2)) (list wt1 wt2)))
+    (let ((health-chart-series-categories nil))
+      (should (equal (health-chart--drop-series 'heatmap ms) ms)))))
+
 ;;; health-chart-core-test.el ends here
