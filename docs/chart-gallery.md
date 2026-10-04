@@ -115,4 +115,4 @@ Drop `templates/vega-lite/NAME.vl.json` (and optionally
 `templates/gnuplot/NAME.gp`) into a template directory; the kind exists
 as soon as the file does and receives the generic spec body. To derive
 new fields, register the kind with a `:spec` builder, as
-`health-chart-spec-gallery.el` does for these six.
+`health-chart-spec-gallery.el` and `health-chart-spec-dual.el` do for these six.
