@@ -896,14 +896,22 @@ Faces: `health-chart-optimal`, `-normal`, `-suboptimal`,
 | `health-chart-kind.el` | kind and shape registries, example data, validate |
 | `health-chart-model.el` | per-kind models every renderer and spec draws from |
 | `health-chart-spec.el` | the chartspec/v1 builders, palettes, JSON round trip |
+| `health-chart-spec-gallery.el`, `health-chart-spec-dual.el` | spec bodies of the gallery kinds |
 | `health-chart-template.el` | template lookup, placeholder filling and escaping |
-| `health-chart-render.el` | backend registry and selection, vega-lite and gnuplot, `render`, `write` |
+| `health-chart-backend.el` | backend registry, rendering options, template lookup |
+| `health-chart-tools.el` | finding and running vl2svg, gnuplot and rsvg-convert (async, with a timeout) |
+| `health-chart-engines.el` | the vega-lite and gnuplot template backends |
+| `health-chart-render.el` | backend selection, `render`, `write`, render explain |
 | `templates/` | the bundled Vega-Lite and gnuplot templates |
 | `health-chart-text.el` | native unicode renderers |
 | `health-chart-svg.el` | native SVG renderers (obsolete) |
 | `health-chart-plot.el` | explain, plot, chart buffer, demo |
 | `health-chart-dashboard.el` | `health-charts` |
-| `health-chart-org.el`, `templates/org/` | Org dynamic blocks, report templates, export |
+| `health-chart-org.el`, `templates/org/` | Org dynamic block entry points, refresh, export |
+| `health-chart-org-base.el` | Org options, block parameters, query plans, asset files |
+| `health-chart-org-explain.el`, `health-chart-org-blocks.el` | pure block plans and the block writers |
+| `health-chart-org-genetics-labs.el` | the `health-genetics-labs` block |
+| `health-chart-org-report.el` | report templates and `health-chart-org-new-report` |
 | `health-chart-batch.el`, `bin/health-chart` | JSON command line |
 
 ## Tests

@@ -70,6 +70,7 @@
 (require 'health-chart-kind)
 (require 'health-chart-spec)
 (require 'health-chart-spec-gallery)
+(require 'health-chart-spec-dual)
 (require 'health-chart-template)
 (require 'health-chart-render)
 (require 'health-chart-plot)
