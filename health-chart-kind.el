@@ -311,7 +311,7 @@ into hundreds of \"draws\".  nil keeps every marker."
   "Kinds organised by lab draw date.")
 
 (defun health-chart--drop-series (kind data)
-  "DATA without `health-chart-series-categories' markers, for draw kinds.
+  "DATA without `health-chart-series-categories' markers when KIND is a draw kind.
 Unchanged for other kinds, when DATA is not a measurement list, or when
 nothing but series markers would remain."
   (if (and (memq kind health-chart-draw-kinds) health-chart-series-categories
