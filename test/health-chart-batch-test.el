@@ -27,13 +27,19 @@
   (health-chart-test-env
     (dolist (kind (mapcar #'car health-chart-kinds))
       (let* ((example (cdr (health-chart-batch-test--run "example" (symbol-name kind))))
-             (file (health-chart-batch-test--spec-file
-                    (health-chart-batch-test--json example))))
+             (spec (health-chart-batch-test--json example))
+             (file (health-chart-batch-test--spec-file spec)))
         (unwind-protect
             (let ((result (health-chart-batch-test--run "render" file)))
-              (should (= 0 (car result)))
-              (should (> (length (cdr result)) 5))
-              (should-not (string-match-p "\"ok\":false" (cdr result))))
+              (if (and (equal (alist-get 'backend spec) "gnuplot")
+                       (not (health-chart-gnuplot-available-p)))
+                  ;; template-only kinds need gnuplot; without it the
+                  ;; failure must be the typed one
+                  (progn (should (= 1 (car result)))
+                         (should (string-match-p "\"backend_missing\"" (cdr result))))
+                (should (= 0 (car result)))
+                (should (> (length (cdr result)) 5))
+                (should-not (string-match-p "\"ok\":false" (cdr result)))))
           (delete-file file))))))
 
 (ert-deftest health-chart-batch-test-render-matches-plot ()

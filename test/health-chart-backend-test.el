@@ -283,6 +283,96 @@
         (should (equal (plist-get (cddr err) :code) "unsupported_format")))
       (should-error (health-chart-select-backend 'timeseries 'nope) :type 'health-chart-backend-error))))
 
+(ert-deftest health-chart-backend-test-png-where-emacs-lacks-librsvg ()
+  (health-chart-test-env
+    (cl-letf (((symbol-function 'health-chart-vega-lite-available-p) (lambda () t))
+              ((symbol-function 'health-chart--graphic-context-p) (lambda () t))
+              ((symbol-function 'image-type-available-p) (lambda (type) (eq type 'png))))
+      (should (equal (butlast (health-chart-select-backend 'timeseries)) '(vega-lite png)))
+      (should (equal (butlast (health-chart-select-backend 'timeseries 'gnuplot)) '(gnuplot png)))
+      ;; nothing installed: the terminal renderer, not an error
+      (cl-letf (((symbol-function 'health-chart-vega-lite-available-p) (lambda () nil))
+                ((symbol-function 'health-chart-gnuplot-available-p) (lambda () nil)))
+        (should (equal (butlast (health-chart-select-backend 'timeseries)) '(text text)))))))
+
+(defun health-chart-backend-test--fake-tool (dir name)
+  "Write an executable NAME in DIR printing \"ok\"; return NAME.
+On Windows it is a .cmd file, as npm's shims are."
+  (if (eq system-type 'windows-nt)
+      (health-chart-backend-test--write (expand-file-name (concat name ".cmd") dir)
+                                        "@echo off\r\necho ok\r\n")
+    (let ((file (expand-file-name name dir)))
+      (health-chart-backend-test--write file "#!/bin/sh\necho ok\n")
+      (set-file-modes file #o755)))
+  name)
+
+(ert-deftest health-chart-backend-test-tools-found-in-tool-directories ()
+  (let* ((dir (make-temp-file "hc-tools" t))
+         (name (health-chart-backend-test--fake-tool dir "hc-fake-tool"))
+         (health-chart-tool-directories nil))
+    (unwind-protect
+        (progn
+          (should-not (health-chart-executable name))
+          (let ((err (should-error (health-chart--run (list name) "")
+                                   :type 'health-chart-backend-error)))
+            (should (equal (plist-get (cddr err) :code) "backend_missing")))
+          (let ((health-chart-tool-directories (list dir)))
+            (should (file-equal-p (file-name-directory (health-chart-executable name)) dir))
+            ;; run by its resolved name, without a shell; CRLF read as LF
+            (should (equal (health-chart--run (list name) "") "ok\n"))
+            (let ((health-chart-gnuplot-command (list name)))
+              (should (health-chart-gnuplot-available-p)))))
+      (delete-directory dir t))))
+
+(ert-deftest health-chart-backend-test-tools-get-stdin-and-time-out ()
+  (skip-unless (not (eq system-type 'windows-nt)))
+  (let* ((dir (make-temp-file "hc-tools" t))
+         (health-chart-tool-directories (list dir))
+         (health-chart-render-timeout 1))
+    (unwind-protect
+        (progn
+          (dolist (tool '(("hc-cat" . "#!/bin/sh\ncat\n")
+                          ("hc-fail" . "#!/bin/sh\necho 'bad input ✗' >&2\nexit 3\n")
+                          ("hc-hang" . "#!/bin/sh\nexec sleep 30\n")))
+            (let ((file (expand-file-name (car tool) dir)))
+              (health-chart-backend-test--write file (cdr tool))
+              (set-file-modes file #o755)))
+          (let ((big (concat (make-string 200000 ?x) "ε\n")))
+            (should (equal (health-chart--run '("hc-cat") big) big)))
+          (should (equal (health-chart--run '("hc-cat") "\211PNG" t) "\211PNG"))
+          (let ((err (should-error (health-chart--run '("hc-fail") "")
+                                   :type 'health-chart-backend-error)))
+            (should (equal (plist-get (cddr err) :code) "backend_failed"))
+            (should (equal (plist-get (cddr err) :exit) 3))
+            (should (string-match-p "bad input ✗" (cadr err))))
+          (let* ((start (float-time))
+                 (err (should-error (health-chart--run '("hc-hang") "")
+                                    :type 'health-chart-backend-error)))
+            (should (equal (plist-get (cddr err) :code) "backend_timeout"))
+            (should (< (- (float-time) start) 10))))
+      (delete-directory dir t))))
+
+(ert-deftest health-chart-backend-test-png-without-rsvg-says-svg-works ()
+  (health-chart-test-env
+    (let* ((dir (make-temp-file "hc-tools" t))
+           (health-chart-tool-directories (list dir))
+           (health-chart-vl2svg-command
+            (list (health-chart-backend-test--fake-tool dir "hc-fake-vl2svg")))
+           (health-chart-vl2png-command '("hc-no-such-vl2png"))
+           (health-chart-rsvg-convert-command '("hc-no-such-rsvg-convert"))
+           (health-chart-vega-lite-raster 'auto)
+           (health-chart--vl-canvas-broken nil))
+      (unwind-protect
+          (let ((err (should-error (health-chart-render 'bullet (health-chart-backend-test-sample)
+                                                        :backend 'vega-lite :format 'png
+                                                        :person "alex")
+                                   :type 'health-chart-backend-error)))
+            (should (equal (plist-get (cddr err) :code) "backend_missing"))
+            (should (string-match-p "hc-no-such-vl2png" (cadr err)))
+            (should (string-match-p "write SVG" (cadr err)))
+            (should-not health-chart--vl-canvas-broken))
+        (delete-directory dir t)))))
+
 (ert-deftest health-chart-backend-test-explain-is-a-pure-plan ()
   (health-chart-test-env
     (let* ((ms (health-chart-backend-test-sample))

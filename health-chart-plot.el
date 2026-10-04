@@ -383,7 +383,9 @@ PROPS as in `health-chart-plot', plus :buffer (name, default
    (list (if (image-type-available-p 'svg)
              (list :name "svg-display" :status 'pass :detail "this Emacs displays SVG")
            (list :name "svg-display" :status 'skip
-                 :detail "this Emacs cannot display SVG; charts fall back to text"
+                 :detail (if (image-type-available-p 'png)
+                             "this Emacs cannot display SVG; charts show as PNG"
+                           "this Emacs cannot display SVG or PNG; charts fall back to text")
                  :remediation "build Emacs with librsvg for inline SVG")))))
 
 (provide 'health-chart-plot)

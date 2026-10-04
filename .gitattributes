@@ -1,2 +1,10 @@
+# LF everywhere, also in a Windows checkout (core.autocrlf): templates,
+# Lisp and golden fixtures are compared and filled byte for byte.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.png binary
+*.pdf binary
+
 # Golden fixtures are byte-exact renderer output; trailing spaces are data.
 test/fixtures/* -whitespace -text
+test/fixtures/** -whitespace -text

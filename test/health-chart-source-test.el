@@ -19,9 +19,11 @@
   "The canonical plist of `health-chart-source-test--spec-json'.")
 
 (defmacro health-chart-source-test--with-fake-cli (&rest body)
-  "Run BODY with the CLI source pointed at the fake biomarker."
+  "Run BODY with the CLI source pointed at the fake biomarker.
+The fake is a bash script, which native Windows Emacs cannot run."
   (declare (indent 0))
-  `(let ((health-chart-source-executable (health-chart-test-fixture "fake-biomarker"))
+  `(let ((_ (skip-unless (not (eq system-type 'windows-nt))))
+         (health-chart-source-executable (health-chart-test-fixture "fake-biomarker"))
          (health-chart-source-function #'health-chart-source-cli)
          (health-chart-source-db nil)
          (health-chart-source-extra-args nil)
@@ -114,7 +116,8 @@
                      "--format" "json"))))
   (let ((health-chart-source-db "/tmp/bio.db") (health-chart-source-extra-args '("--quiet")))
     (should (equal (health-chart-source-cli-args 'flag :person "sam")
-                   '("--db" "/tmp/bio.db" "flag" "--person" "sam" "--quiet" "--format" "json")))))
+                   (list "--db" (expand-file-name "/tmp/bio.db") "flag" "--person" "sam" "--quiet"
+                         "--format" "json")))))
 
 (ert-deftest health-chart-source-test-cli-runs-and-parses ()
   (health-chart-source-test--with-fake-cli
