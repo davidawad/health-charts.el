@@ -33,7 +33,11 @@ Ask the package; don't read source to learn its state.
    their pure plans are `health-chart-cohort-values-explain` /
    `-cohort-plot-explain` (every effectful indicator call has an
    `-explain` twin).
-7. Health: `(health-chart-doctor-checks)` — rows
+7. Reports: Org dynamic blocks (`health-chart`, `health-table`,
+   `health-scorecard`, `health-flags`, `health-genetics`) and
+   templates/org; plan a block with `(health-chart-org-explain NAME
+   PARAMS)`, a report with `health-chart-org-new-report-explain`.
+8. Health: `(health-chart-doctor-checks)` — rows
    `(:name :status pass|fail|skip :detail :remediation)`.
 
 ## Changing it

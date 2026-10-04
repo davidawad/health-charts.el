@@ -1,0 +1,20 @@
+#+TITLE: Genetics summary · {{person}}
+#+DATE: {{date}}
+#+OPTIONS: toc:nil num:nil author:nil
+#+STARTUP: showall
+
+Filled by genetics.el when it is loaded; set =:kit= to a loaded kit's
+name or =:file= to a kit file, then refresh with
+=M-x health-chart-org-update=.
+
+* Summary
+#+BEGIN: health-genetics :section summary :kit "{{person}}"
+#+END:
+
+* Notable variants
+#+BEGIN: health-genetics :section hits :kit "{{person}}"
+#+END:
+
+* APOE
+#+BEGIN: health-genetics :section apoe :kit "{{person}}"
+#+END:

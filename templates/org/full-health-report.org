@@ -1,0 +1,46 @@
+#+TITLE: Health report · {{person}} · {{year}}
+#+SUBTITLE: {{period}}
+#+DATE: {{date}}
+#+OPTIONS: toc:2 num:nil author:nil
+#+STARTUP: showall
+
+Labs and genetics together: the latest draw, the year's trends, the
+cohorts and, when genetics.el is loaded, the genetic summary.
+
+* Labs
+** Out of range
+#+BEGIN: health-flags :person "{{person}}" :until "{{until}}"
+#+END:
+
+** Latest results
+#+BEGIN: health-table :person "{{person}}" :until "{{until}}"
+#+END:
+
+#+BEGIN: health-chart :kind bullet :person "{{person}}" :until "{{until}}" :caption "Latest value per marker against its reference and optimal ranges"
+#+END:
+
+** Trends over {{period}}
+#+BEGIN: health-chart :kind panel :person "{{person}}" :since "{{since}}" :until "{{until}}" :caption "Every marker over the period"
+#+END:
+
+#+BEGIN: health-chart :kind heatmap :person "{{person}}" :until "{{until}}" :caption "Each draw's status per marker"
+#+END:
+
+#+BEGIN: health-chart :kind delta :person "{{person}}" :baseline "{{since}}" :until "{{until}}" :caption "Change since the last draw before {{since}}"
+#+END:
+
+** Cohorts
+#+BEGIN: health-scorecard :person "{{person}}" :cohort (cardio metabolic inflammation vitamins) :until "{{until}}" :as-of "{{until}}"
+#+END:
+
+#+BEGIN: health-chart :kind staleness :person "{{person}}" :cohort (cardio metabolic inflammation vitamins) :until "{{until}}" :as-of "{{until}}" :caption "Days since each indicator was drawn"
+#+END:
+
+* Genetics
+** Summary
+#+BEGIN: health-genetics :section summary :kit "{{person}}"
+#+END:
+
+** APOE
+#+BEGIN: health-genetics :section apoe :kit "{{person}}"
+#+END:

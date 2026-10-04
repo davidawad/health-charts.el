@@ -10,6 +10,60 @@ bring your own templates. Around that: a kind registry, a shape
 registry, a validate / explain / describe surface for programs and
 agents, a JSON command line, and ert tests.
 
+[![LDL-C over four years for a synthetic person: points by status (▲ high, then ◐ suboptimal) falling through the shaded reference (0–100) and optimal (≤70) bands](docs/screenshots/vega-lite/timeseries.png)](docs/screenshots/vega-lite/timeseries.png)
+
+*`timeseries` with the Vega-Lite backend: one marker's draws, reference
+and optimal ranges shaded, each point's status shown as glyph and word.
+Data: [`examples/sample-panel.json`](examples/sample-panel.json) (two
+made-up people). Regenerate:
+[`examples/screenshots.el`](examples/screenshots.el).*
+
+| kind | Vega-Lite | gnuplot |
+|---|---|---|
+| `bullet`: each latest value in its ranges | <img src="docs/screenshots/vega-lite/bullet.png" width="260" alt="bullet, Vega-Lite"> | <img src="docs/screenshots/gnuplot/bullet.png" width="260" alt="bullet, gnuplot"> |
+| `heatmap`: every draw's status per marker | <img src="docs/screenshots/vega-lite/heatmap.png" width="260" alt="heatmap, Vega-Lite"> | <img src="docs/screenshots/gnuplot/heatmap.png" width="260" alt="heatmap, gnuplot"> |
+| `compare`: one marker, several people | <img src="docs/screenshots/vega-lite/compare.png" width="260" alt="compare, Vega-Lite"> | <img src="docs/screenshots/gnuplot/compare.png" width="260" alt="compare, gnuplot"> |
+| `delta`: change between two draws, toward or away from target | <img src="docs/screenshots/vega-lite/delta.png" width="260" alt="delta, Vega-Lite"> | <img src="docs/screenshots/gnuplot/delta.png" width="260" alt="delta, gnuplot"> |
+| `staleness`: days since each test, against due and stale | <img src="docs/screenshots/vega-lite/staleness.png" width="260" alt="staleness, Vega-Lite"> | <img src="docs/screenshots/gnuplot/staleness.png" width="260" alt="staleness, gnuplot"> |
+| `panel`: a small time series per marker | <img src="docs/screenshots/vega-lite/panel.png" width="170" alt="panel, Vega-Lite"> | <img src="docs/screenshots/gnuplot/panel.png" width="170" alt="panel, gnuplot"> |
+
+*The same spec through both backends, from
+[`examples/sample-panel.json`](examples/sample-panel.json); full size
+under [Screenshots](#screenshots). Regenerate:
+[`examples/screenshots.el`](examples/screenshots.el).*
+
+[<img src="docs/screenshots/org-report.png" width="460" alt="The lab-draw Org report exported to HTML: title, out-of-range list, latest-results table with status glyphs and words, and a bullet chart">](examples/reports/lab-draw.html)
+
+*An [Org report](#org-reports): the `lab-draw` template stamped for a
+synthetic person, its dynamic blocks refreshed, exported to HTML. Source:
+[`examples/reports/lab-draw.org`](examples/reports/lab-draw.org), data:
+[`examples/sample-panel.json`](examples/sample-panel.json). Regenerate:
+[`examples/reports.el`](examples/reports.el), then
+[`examples/report-screenshot.sh`](examples/report-screenshot.sh).*
+
+### 60-second usage
+
+```elisp
+(require 'health-chart)
+;; no biomarker CLI needed: serve the synthetic sample panel
+(setq health-chart-source-function #'health-chart-source-static
+      health-chart-source-static-data (json-read-file "examples/sample-panel.json"))
+
+(health-chart-write 'timeseries (health-chart-source-trend :person "alex" :marker "ldl-c")
+                    "ldl.svg")                                  ; image file
+(health-chart-plot 'bullet (health-chart-source-latest :person "alex")
+                   :backend 'text)                              ; unicode, any terminal
+(health-chart-org-new-report "lab-draw" "draw.org"
+                             :person "alex" :until "2025-09-30") ; a whole Org report
+```
+
+or in any Org file, then `C-c C-c` on the `#+BEGIN` line:
+
+```org
+#+BEGIN: health-chart :kind timeseries :person "alex" :marker "ldl-c" :caption "LDL-C"
+#+END:
+```
+
 Data comes from plain Lisp (plists or alists) or from
 [biomarker-cli](#data-source-biomarker-cli) through a thin, swappable
 source layer. Every example in this file uses synthetic data.
@@ -20,6 +74,7 @@ source layer. Every example in this file uses synthetic data.
 - [Backends](#backends)
 - [Screenshots](#screenshots)
 - [Templates](#templates)
+- [Org reports](#org-reports)
 - [The dashboard](#the-dashboard)
 - [Data: plain Lisp](#data-plain-lisp)
 - [Data source: biomarker-cli](#data-source-biomarker-cli)
@@ -318,6 +373,92 @@ for text), `set output`, `set encoding utf8`, `set datafile separator
 name: `plot $data using 'date':'value'`. An unknown placeholder fails
 with the template's file and line. Keep the house rule: every status
 shows its glyph and word (`{{legend.label}}`), never color alone.
+
+## Org reports
+
+`health-chart-org.el` composes charts, tables and indicator scorecards
+into Org documents with dynamic blocks. Refresh one block with `C-c C-c`
+on its `#+BEGIN` line, every health block with `M-x
+health-chart-org-update` (or `org-update-all-dblocks`). It loads on first
+use; plain charts never load Org.
+
+| block | writes |
+|---|---|
+| `health-chart` | the chart image, via `health-chart-write`, into the document's asset directory, and its `[[file:...]]` link (`#+CAPTION` from `:caption`). A kind no image template draws (`scorecard`, `cohort`, `table`), or `:backend text`, becomes a text chart in an example block |
+| `health-table` | the latest value per marker: marker, value, unit, date, status (glyph and word), reference, optimal; with a `#+PLOT` line (above the table, where org-plot reads it) so `C-c " g` charts it too |
+| `health-scorecard` | a cohort's indicator values with status and trend words |
+| `health-flags` | the markers whose latest value is out of range, as a list |
+| `health-genetics` | genetics.el's `genetics-summary`, `genetics-hits` or `genetics-apoe` block (`:section summary\|hits\|apoe`, `:kit NAME` or `:file KIT`) when genetics.el is loaded; never loads it, and writes a one-line note without it |
+
+Params: `:person :marker :markers :category :cohort :since :until
+:as-of` select the data (`:cohort` takes one name or a list);
+`:kind :backend :format (svg png pdf) :width :height :title :columns
+:file :caption` shape the chart, and `:baseline DATE` makes a `delta`
+compare the last draw on or before DATE with the latest. Without
+`:kind` a block with `:cohort` draws `staleness`, one `:marker` a
+`timeseries`, anything else a `panel`.
+
+```org
+#+BEGIN: health-flags :person "alex"
+- ▲ high · *Lp(a)* 144 nmol/L (2025-09-15), reference 0–75
+#+END:
+
+#+BEGIN: health-chart :kind delta :person "alex" :baseline "2024-10-01" :caption "Since last year"
+#+CAPTION: Since last year
+#+ATTR_HTML: :alt Since last year
+[[file:report-assets/delta-alex-b2c523aa.svg]]
+#+END:
+```
+
+Images go to `health-chart-org-asset-directory` (default `"%s-assets"`,
+`%s` the document's base name, next to it) under a stable name: the
+kind, person, markers and cohort plus a hash of every param that
+changes the picture. Re-running a block rewrites the same file;
+`:file` picks the path yourself. A block that fails writes one Org
+comment line with the error code and how to fix it, e.g.
+`# health-table (source_missing): cannot find biomarker; install
+biomarker-cli or set ...`, and never breaks the document.
+
+Each block has a pure explain twin that returns the data query (the
+source call or cohort plans, the local filter) and the output path
+without fetching or drawing: `health-chart-org-chart-explain`,
+`-table-explain`, `-scorecard-explain`, `-flags-explain`,
+`-genetics-explain`; `(health-chart-org-explain "health-chart" PARAMS
+[ORG-FILE])` dispatches by name and `M-x health-chart-org-explain-block`
+explains the block at point.
+
+**Report templates** are plain Org files in `templates/org/`; files in
+`health-chart-org-template-directories` come first and shadow them.
+
+| template | contents |
+|---|---|
+| `lab-draw` | one draw: flags, results table, bullet chart, per-category panels |
+| `annual-review` | a year: panel, heatmap, delta vs the year before, cohort scorecards, due tests (staleness), remaining flags |
+| `cardiometabolic` | the cardio and metabolic cohorts, a time series per marker, the latest values |
+| `genetics-summary` | genetics.el blocks only |
+| `full-health-report` | labs and genetics composed |
+
+They use the chart templates' placeholder syntax, filled once at stamp
+time: `{{person}}`, `{{date}}`, `{{since}}`, `{{until}}`, `{{period}}`
+(`"since – until"`) and `{{year}}`. `M-x health-chart-org-new-report`
+asks for a template, person, period and output file, stamps it,
+refreshes every block and opens it; from Lisp:
+
+```elisp
+(health-chart-org-new-report "annual-review" "~/notes/review-2025.org"
+                             :person "alex" :since "2024-10-01" :until "2025-09-30")
+(health-chart-org-new-report-explain "annual-review" "~/notes/review-2025.org"
+                                     :person "alex")   ; pure: context, assets, block plans
+(health-chart-org-templates)                           ; M-x lists them
+```
+
+**Export.** HTML export shows the SVG images inline. For LaTeX/PDF,
+`health-chart-org-latex-png` (on by default) re-runs the chart blocks
+in the export copy as PNG at 2× density, so the document keeps its SVG
+links; `:format png` on a block does the same permanently.
+[`examples/reports/`](examples/reports/) holds every template stamped
+for the sample panel with its images and HTML export; regenerate with
+`emacs -Q --batch -L . -l examples/reports.el`.
 
 ## The dashboard
 
@@ -680,6 +821,7 @@ Faces: `health-chart-optimal`, `-normal`, `-suboptimal`,
 | `health-chart-svg.el` | native SVG renderers (obsolete) |
 | `health-chart-plot.el` | explain, plot, chart buffer, demo |
 | `health-chart-dashboard.el` | `health-charts` |
+| `health-chart-org.el`, `templates/org/` | Org dynamic blocks, report templates, export |
 | `health-chart-batch.el`, `bin/health-chart` | JSON command line |
 
 ## Tests
@@ -700,7 +842,10 @@ it (`golden/vega-lite/`, `golden/gnuplot/`), all from the synthetic
 `examples/sample-panel.json`; regenerate with
 `HEALTH_CHART_UPDATE_GOLDEN=1 make test` and review the diff. Render
 tests run only where `gnuplot`, `vl2svg` and `rsvg-convert` are
-installed, and are skipped otherwise.
+installed, and are skipped otherwise. `test/health-chart-org-test.el`
+pins the Org blocks' output (`golden/org-blocks.org`) over a fake
+source and, with a backend installed, exports a stamped report to HTML
+and LaTeX.
 
 `make lint` accepts package-lint findings for exactly one name, on
 purpose: `health-charts`, the user-facing name of the customize group

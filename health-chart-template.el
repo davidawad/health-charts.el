@@ -36,6 +36,9 @@
 ;;            backquote substitution), numbers bare, nil as NaN, arrays
 ;;            of scalars as array literals ['a', 'b'], arrays of
 ;;            objects as tab-separated datablock lines with a header.
+;;   text     plain prose (Org report templates): strings as they are,
+;;            line breaks as spaces, numbers compact, nil as nothing,
+;;            arrays joined with ", ".
 ;;
 ;; Filters: `length' is an array's element count; `bare' inserts a
 ;; number or an identifier-like word unquoted (anything else is an
@@ -225,12 +228,20 @@ missing a member gets NaN.  Nested arrays and objects are skipped."
                   :code "template_bad_value")))
    (t (health-chart-template--gp-scalar value))))
 
+(defun health-chart-template--text (value)
+  "VALUE as plain text on one line."
+  (cond ((null value) "")
+        ((numberp value) (health-chart-fmt value))
+        ((vectorp value) (mapconcat #'health-chart-template--text value ", "))
+        (t (replace-regexp-in-string "[\n\r]+" " " (format "%s" value) t t))))
+
 (defun health-chart-template-escape (value language &optional filter)
-  "VALUE as source text in LANGUAGE (`json' or `gnuplot'), through FILTER."
+  "VALUE as source text in LANGUAGE (`json', `gnuplot' or `text'), through FILTER."
   (pcase filter
-    ((or 'nil "") (if (eq language 'gnuplot)
-                      (health-chart-template--gnuplot value)
-                    (health-chart-template--json value)))
+    ((or 'nil "") (pcase language
+                    ('gnuplot (health-chart-template--gnuplot value))
+                    ('text (health-chart-template--text value))
+                    (_ (health-chart-template--json value))))
     ("json" (health-chart-template--json value))
     ("length" (number-to-string (length (if (sequencep value) value nil))))
     ("data" (health-chart-template-datablock (append value nil)))

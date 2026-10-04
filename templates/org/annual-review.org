@@ -1,0 +1,45 @@
+#+TITLE: Annual review · {{person}} · {{year}}
+#+SUBTITLE: {{period}}
+#+DATE: {{date}}
+#+OPTIONS: toc:nil num:nil author:nil
+#+STARTUP: showall
+
+How the panel moved over {{period}}, what changed since the year
+before, and which tests are due.
+
+* The year at a glance
+#+BEGIN: health-chart :kind panel :person "{{person}}" :since "{{since}}" :until "{{until}}" :caption "Every marker over the review period"
+#+END:
+
+* Out-of-range map
+#+BEGIN: health-chart :kind heatmap :person "{{person}}" :until "{{until}}" :caption "Each draw's status per marker; every cell carries its glyph"
+#+END:
+
+* Change since last year
+#+BEGIN: health-chart :kind delta :person "{{person}}" :baseline "{{since}}" :until "{{until}}" :caption "Percent change from the last draw before {{since}} to the latest, judged toward target"
+#+END:
+
+* Cohort scorecards
+** Cardiovascular
+#+BEGIN: health-scorecard :person "{{person}}" :cohort cardio :until "{{until}}" :as-of "{{until}}"
+#+END:
+
+** Metabolic
+#+BEGIN: health-scorecard :person "{{person}}" :cohort metabolic :until "{{until}}" :as-of "{{until}}"
+#+END:
+
+** Inflammation
+#+BEGIN: health-scorecard :person "{{person}}" :cohort inflammation :until "{{until}}" :as-of "{{until}}"
+#+END:
+
+** Vitamins
+#+BEGIN: health-scorecard :person "{{person}}" :cohort vitamins :until "{{until}}" :as-of "{{until}}"
+#+END:
+
+* Due tests
+#+BEGIN: health-chart :kind staleness :person "{{person}}" :cohort (cardio metabolic inflammation vitamins) :until "{{until}}" :as-of "{{until}}" :caption "Days since each indicator was drawn, against the due and stale thresholds"
+#+END:
+
+* Still out of range
+#+BEGIN: health-flags :person "{{person}}" :until "{{until}}"
+#+END:
