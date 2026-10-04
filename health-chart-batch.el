@@ -98,7 +98,8 @@
         (let (line)
           (while (setq line (ignore-errors (read-from-minibuffer "")))
             (insert line "\n")))
-      (insert-file-contents file))
+      (let ((coding-system-for-read 'utf-8))
+        (insert-file-contents file)))
     (buffer-string)))
 
 (defun health-chart-batch--json (value)
@@ -273,7 +274,9 @@ describe, doctor, backends, templates, cohorts, cohort or cohort-explain" cmd)
 
 (defun health-chart-batch-main ()
   "Entry point for `emacs --batch -f health-chart-batch-main CMD [ARG...]'."
-  (let ((args command-line-args-left))
+  (let ((args command-line-args-left)
+        ;; stdout as UTF-8 with LF, not the locale's code page (Windows)
+        (coding-system-for-write 'utf-8-unix))
     (setq command-line-args-left nil)
     (kill-emacs (apply #'health-chart-batch-run (or (car args) "describe") (cdr args)))))
 

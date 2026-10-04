@@ -271,7 +271,9 @@ biomarker/v1 measurement object."
         (stderr (make-temp-file "health-chart-stderr")))
     (unwind-protect
         (with-temp-buffer
-          (let ((status (apply #'call-process exe nil (list t stderr) nil cli-args)))
+          ;; UTF-8 whatever the locale; CRLF line ends decode too
+          (let* ((coding-system-for-read 'utf-8)
+                 (status (apply #'call-process exe nil (list t stderr) nil cli-args)))
             (unless (eql status 0)
               (signal 'health-chart-source-error
                       (list (format "%s %s exited %s: %s" exe (string-join cli-args " ") status

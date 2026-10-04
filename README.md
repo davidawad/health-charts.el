@@ -92,16 +92,69 @@ source layer. Every example in this file uses synthetic data.
 
 ## Install
 
-Requires Emacs 29.1 or later and no Emacs packages. Images need at
-least one backend tool (see [Backends](#backends)); without any, every
-kind still renders as unicode text. Showing images inline needs an
-Emacs built with librsvg (SVG) or libpng.
+Requires Emacs 29.1 or later, on Linux, macOS or Windows (native
+Emacs; WSL works as Linux), and no Emacs packages. Images need at least
+one backend tool (see [Backends](#backends)); without any, every kind
+still renders as unicode text. Showing images inline needs an Emacs
+built with librsvg (SVG) or libpng (PNG).
+
+### Requirements per OS
+
+Every tool is optional. Tools are found with `executable-find` on
+`exec-path`, then in `health-chart-tool-directories` (by default
+gnuplot's install directory and npm's global directory on Windows,
+Homebrew's on macOS, for a GUI Emacs started without the shell's PATH).
+`M-x health-chart-doctor` (or `bin/health-chart doctor`) shows what was
+found.
+
+Linux (Debian/Ubuntu; other distributions have the same packages):
 
 ```sh
-npm i -g vega vega-lite vega-cli   # vega-lite backend (vl2svg, vl2png, vl2pdf)
-brew install gnuplot               # gnuplot backend, 5.4 or later (apt: gnuplot-nox)
-brew install librsvg               # rsvg-convert: vega-lite PNG/PDF without node-canvas
+sudo apt install gnuplot-nox librsvg2-bin   # gnuplot backend; rsvg-convert
+npm install -g vega vega-lite vega-cli      # vega-lite backend (needs Node.js)
 ```
+
+macOS (Homebrew):
+
+```sh
+brew install gnuplot librsvg node
+npm install -g vega vega-lite vega-cli
+```
+
+Windows (PowerShell; any one of winget, Chocolatey or Scoop):
+
+```powershell
+winget install gnuplot.gnuplot     # or: choco install gnuplot / scoop install gnuplot
+winget install OpenJS.NodeJS.LTS   # then:
+npm install -g vega vega-lite vega-cli
+choco install rsvg-convert         # optional, for vega-lite PNG/PDF without node-canvas
+```
+
+On Windows use `gnuplot.exe`, not `wgnuplot.exe` (the GUI build does
+not write charts to stdout); point `health-chart-gnuplot-command` at
+it if the installer did not put it on PATH or in `C:\Program
+Files\gnuplot\bin`. npm installs `vl2svg`/`vl2png` as `.cmd` shims,
+which Emacs runs directly; with no `vl2svg` at all the backend falls
+back to `npx`. `bin/health-chart.cmd` is the command line for cmd.exe
+and PowerShell.
+
+What degrades without each tool:
+
+| missing | effect |
+|---|---|
+| `vl2svg` (vega-cli) | vega-lite is skipped; images come from gnuplot. `health-chart-vl2svg-command` nil also tries `npx`, which downloads vega on first use |
+| `vl2png`/`vl2pdf` working (node-canvas) | vega-lite PNG/PDF go through `vl2svg \| rsvg-convert` |
+| `rsvg-convert` | with no node-canvas either, vega-lite writes SVG only; a PNG/PDF request fails with an error saying so (gnuplot still writes PNG/PDF itself) |
+| `gnuplot` | images come from vega-lite; kinds drawn only by templates (`trend`, `lollipop`, `strip`, `dumbbell`, `dual`, `inrange`) need one of the two |
+| both image backends | every kind with a native renderer draws as unicode text |
+| librsvg in Emacs | inline charts use PNG where Emacs has libpng, else text (`svg-display` in the doctor) |
+| `biomarker` CLI | no live data; plain Lisp data and `health-chart-source-static` still work |
+| `gzip` | nothing in this package runs gzip. Compressed genome kits are read by genetics.el (a soft dependency); where gzip is absent (Windows), decompress the kit first, read it through genome-cli, or rely on Emacs's own `zlib-decompress-region` when `(zlib-available-p)` |
+
+Data files the package writes (reports, templates' output, specs) are
+UTF-8 with LF line ends on every OS; input with CRLF line ends (a spec
+file, CLI output) is read as well. `.gitattributes` keeps a Windows
+checkout LF, which the golden fixtures need.
 
 ```elisp
 (use-package health-chart
@@ -290,8 +343,8 @@ data extent, so a saved file explains itself.
 
 | backend | formats | needs | role |
 |---|---|---|---|
-| `vega-lite` | svg, png, pdf, vega-lite | `vl2svg` (`npm i -g vega vega-lite vega-cli`); PNG/PDF via `vl2png`/`vl2pdf` (node-canvas) or `vl2svg` + `rsvg-convert` | first choice for images |
-| `gnuplot` | svg, png, pdf, text | `gnuplot` 5.4+ (`brew install gnuplot`) with the cairo terminals | images when Vega-Lite is missing; first choice in a terminal (`dumb`) |
+| `vega-lite` | svg, png, pdf, vega-lite | `vl2svg` (`npm install -g vega vega-lite vega-cli`); PNG/PDF via `vl2png`/`vl2pdf` (node-canvas) or `vl2svg` + `rsvg-convert` | first choice for images |
+| `gnuplot` | svg, png, pdf, text | `gnuplot` 5.4+ with the cairo terminals (see [Requirements per OS](#requirements-per-os)) | images when Vega-Lite is missing; first choice in a terminal (`dumb`) |
 | `text` | text | nothing | native unicode renderers; last-resort terminal fallback, and the only renderer of `table`, `sparkline`, `scorecard`, `cohort` |
 | `svg` | svg | nothing | native SVG renderers: **obsolete**, never chosen by default, no new features |
 
@@ -309,7 +362,8 @@ a template backend shows the template file, the generated program and
 the exact argv of each step. Programs go to the tools on stdin — no
 shell is involved, so no value is ever shell-interpolated. The Vega-Lite
 commands are `health-chart-vl2svg-command`, `-vl2png-command`,
-`-vl2pdf-command` (nil: the tool on `exec-path`, else
+`-vl2pdf-command` (nil: the tool on `exec-path` or in
+`health-chart-tool-directories`, else
 `npx -p vega -p vega-lite -p vega-cli vl2svg`); `vl2png`/`vl2pdf` need
 node-canvas, and when they fail the backend renders `vl2svg | rsvg-convert`
 instead (`health-chart-vega-lite-raster`). `M-x health-chart-doctor`
@@ -860,10 +914,16 @@ make compile    # byte-compile, warnings are errors
 make checkdoc
 make lint PACKAGE_LINT=/path/to/package-lint   # dir holding package-lint.el
 make check      # compile + checkdoc + test
+make test SELECTOR=backend   # an ERT selector regexp
+emacs -Q --batch -l test/run-tests.el   # the same suite without make (Windows)
 ```
 
+CI (`.github/workflows/test.yml`) runs the suite and the byte-compile
+on Linux, macOS and Windows with Emacs 29.1 and 30.1, with gnuplot and
+Vega-Lite installed, so the render tests run rather than skip.
+
 The CLI path runs `test/fixtures/fake-biomarker`, which answers from
-the JSON fixtures. Golden files in `test/fixtures/golden` pin every
+the JSON fixtures (a bash script: those tests skip on native Windows). Golden files in `test/fixtures/golden` pin every
 kind's text and native SVG output, the chartspec/v1 of every templated
 kind (`golden/chartspec/`) and the program each backend generates from
 it (`golden/vega-lite/`, `golden/gnuplot/`), all from the synthetic

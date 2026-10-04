@@ -101,9 +101,9 @@ Searches `health-chart-template-directories' first, then the bundled."
     (sort (nreverse found) (lambda (a b) (string< (car a) (car b))))))
 
 (defun health-chart-template-read (file)
-  "Contents of template FILE, read as UTF-8."
+  "Contents of template FILE, read as UTF-8 (CRLF line ends become LF)."
   (with-temp-buffer
-    (let ((coding-system-for-read 'utf-8-unix))
+    (let ((coding-system-for-read 'utf-8))
       (insert-file-contents file))
     (buffer-string)))
 

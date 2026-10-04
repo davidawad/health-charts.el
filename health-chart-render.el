@@ -121,6 +121,23 @@ rsvg-convert."
   :type '(repeat string)
   :group 'health-charts)
 
+(defcustom health-chart-tool-directories
+  (pcase system-type
+    ('windows-nt
+     (delq nil (list (when-let* ((pf (getenv "ProgramFiles")))
+                       (expand-file-name "gnuplot/bin" pf))
+                     (when-let* ((appdata (getenv "APPDATA")))
+                       (expand-file-name "npm" appdata)))))
+    ('darwin '("/opt/homebrew/bin" "/usr/local/bin")))
+  "Directories searched for tools after variable `exec-path'.
+A GUI Emacs often starts with a shorter PATH than a shell: on macOS it
+misses Homebrew, on Windows the gnuplot installer and npm's global
+directory are not always on PATH.  Tools are looked up with
+`executable-find', so on Windows gnuplot finds gnuplot.exe and vl2svg
+finds npm's vl2svg.cmd shim."
+  :type '(repeat directory)
+  :group 'health-charts)
+
 (defcustom health-chart-render-timeout 60
   "Seconds a backend tool may run before it is abandoned."
   :type 'natnum
@@ -138,7 +155,7 @@ rsvg-convert."
      :available-p health-chart-vega-lite-available-p
      :explain health-chart-vega-lite-explain
      :render health-chart-vega-lite-render
-     :install "npm i -g vega vega-lite vega-cli")
+     :install "npm install -g vega vega-lite vega-cli (needs Node.js; see the README's Requirements)")
     (gnuplot
      :doc "gnuplot templates rendered with the svg, pngcairo, pdfcairo or dumb terminal."
      :language gnuplot :extension ".gp" :graphic t
@@ -146,7 +163,7 @@ rsvg-convert."
      :available-p health-chart-gnuplot-available-p
      :explain health-chart-gnuplot-explain
      :render health-chart-gnuplot-render
-     :install "brew install gnuplot (or apt install gnuplot-nox), version 5.4 or later")
+     :install "gnuplot 5.4 or later: apt install gnuplot-nox, brew install gnuplot, or winget install gnuplot.gnuplot")
     (text
      :doc "Native unicode renderers: last-resort terminal fallback; every kind."
      :native :text :formats (text)
@@ -247,6 +264,10 @@ schema."
   (and (display-images-p)
        (or (image-type-available-p 'svg) (image-type-available-p 'png))))
 
+(defun health-chart--image-format ()
+  "The image format this Emacs displays: png when it lacks librsvg, else svg."
+  (if (and (not (image-type-available-p 'svg)) (image-type-available-p 'png)) 'png 'svg))
+
 (defun health-chart--supports-p (backend kind format)
   "Non-nil when BACKEND can draw KIND in FORMAT (nil: any of its formats)."
   (let ((plist (health-chart--backend backend)))
@@ -258,15 +279,17 @@ schema."
 (defun health-chart-select-backend (kind &optional backend format)
   "(BACKEND FORMAT REASON) for drawing KIND.
 BACKEND nil means `health-chart-backend'; FORMAT nil means the natural
-format: svg where images show (text for native text), text in a
-terminal.  REASON says why, for `health-chart-explain'."
+format: svg where images show (png when this Emacs was built without
+librsvg; text for native text), text in a terminal.  REASON says why,
+for `health-chart-explain'."
   (let* ((requested (or backend health-chart-backend))
          (graphic (if format (not (eq format 'text)) (health-chart--graphic-context-p))))
     (if (not (eq requested 'auto))
         (let* ((plist (health-chart--backend requested))
                (formats (plist-get plist :formats))
                (fmt (or format
-                        (cond ((and graphic (memq 'svg formats)) 'svg)
+                        (cond ((and graphic (memq (health-chart--image-format) formats))
+                               (health-chart--image-format))
                               ((memq 'text formats) 'text)
                               (t (car formats))))))
           (when (and (plist-get plist :native)
@@ -287,7 +310,7 @@ terminal.  REASON says why, for `health-chart-explain'."
                           :code "unsupported_format" :backend requested :format fmt)))
           (list requested fmt (format "requested %s" requested)))
       (let* ((order (if graphic health-chart-graphic-backends health-chart-terminal-backends))
-             (want (or format (if graphic 'svg 'text)))
+             (want (or format (if graphic (health-chart--image-format) 'text)))
              (pick (seq-find (lambda (b)
                                (and (assq b health-chart-backends)
                                     (health-chart--supports-p b kind want)
@@ -297,7 +320,8 @@ terminal.  REASON says why, for `health-chart-explain'."
          (pick (list pick want (format "auto: %s; %s is the first of %s installed with a %s template"
                                        (if graphic "images can be shown" "terminal")
                                        pick order kind)))
-         ((and (memq want '(text svg)) (health-chart--supports-p 'text kind 'text))
+         ((and (or (null format) (memq want '(text svg)))
+               (health-chart--supports-p 'text kind 'text))
           (list 'text 'text (format "auto: no backend of %s is installed with a %s template; native text"
                                     order kind)))
          (t (signal 'health-chart-backend-error
@@ -309,10 +333,19 @@ terminal.  REASON says why, for `health-chart-explain'."
 ;; Running tools
 ;; -----------------------------------------------------------------------
 
+(defun health-chart-executable (program)
+  "The absolute file name of PROGRAM, or nil when it is not installed.
+PROGRAM is a name looked up with `executable-find' on variable
+`exec-path' then `health-chart-tool-directories' (Windows suffixes such
+as .exe and .cmd included), or an absolute file name."
+  (or (executable-find program)
+      (let ((exec-path (append health-chart-tool-directories exec-path)))
+        (executable-find program))))
+
 (defun health-chart--command (custom default-exe &rest npx-tail)
   "Command list: CUSTOM, else DEFAULT-EXE when found, else npx with NPX-TAIL."
   (or custom
-      (and (executable-find default-exe) (list default-exe))
+      (and (health-chart-executable default-exe) (list default-exe))
       (append '("npx" "--yes" "-p" "vega" "-p" "vega-lite" "-p" "vega-cli") npx-tail)))
 
 (defvar health-chart--vl-canvas-broken nil
@@ -321,53 +354,81 @@ terminal.  REASON says why, for `health-chart-explain'."
 (defun health-chart-vega-lite-available-p ()
   "Non-nil when a Vega-Lite renderer is configured or vl2svg is installed."
   (let ((cmd (health-chart--command health-chart-vl2svg-command "vl2svg" "vl2svg")))
-    (and (not (equal (car cmd) "npx")) (executable-find (car cmd)) t)))
+    (and (not (equal (car cmd) "npx")) (health-chart-executable (car cmd)) t)))
 
 (defun health-chart-gnuplot-available-p ()
   "Non-nil when gnuplot is installed."
-  (and (executable-find (car health-chart-gnuplot-command)) t))
+  (and (health-chart-executable (car health-chart-gnuplot-command)) t))
 
 (defun health-chart--rsvg-available-p ()
   "Non-nil when rsvg-convert is installed."
-  (and (executable-find (car health-chart-rsvg-convert-command)) t))
+  (and (health-chart-executable (car health-chart-rsvg-convert-command)) t))
 
 (defun health-chart--run (argv input &optional binary)
   "Run ARGV with INPUT (a string) on stdin; return stdout as a string.
-BINARY keeps stdout as raw bytes.  Signals `health-chart-backend-error'
-with stderr when the tool is missing, fails or times out."
-  (unless (executable-find (car argv))
-    (signal 'health-chart-backend-error
-            (list (format "cannot find %s; install it or customize the backend's command (see `health-chart-doctor')"
-                          (car argv))
-                  :code "backend_missing" :argv argv)))
-  (let ((stderr (make-temp-file "health-chart-stderr")))
+BINARY keeps stdout as raw bytes; text output may end lines in CRLF
+\(gnuplot on Windows).  The program is resolved with
+`health-chart-executable' and run directly, without a shell; on Windows
+Emacs runs an npm .cmd shim through cmd.exe itself.  Signals
+`health-chart-backend-error' with stderr when the tool is missing,
+fails or times out."
+  (let ((exe (or (health-chart-executable (car argv))
+                 (signal 'health-chart-backend-error
+                         (list (format "cannot find %s; install it or customize the backend's command (see `health-chart-doctor')"
+                                       (car argv))
+                               :code "backend_missing" :argv argv))))
+        (errors (generate-new-buffer " *health-chart-stderr*" t)))
     (unwind-protect
         (with-temp-buffer
           (set-buffer-multibyte (not binary))
-          (let* ((coding-system-for-write 'utf-8-unix)
-                 (coding-system-for-read (if binary 'binary 'utf-8-unix))
-                 (process-environment (cons "LC_ALL=C.UTF-8" process-environment))
-                 (status (with-timeout (health-chart-render-timeout 'timeout)
-                           (let ((in (generate-new-buffer " *health-chart-in*" t)))
-                             (unwind-protect
-                                 (progn
-                                   (with-current-buffer in
-                                     (set-buffer-multibyte t)
-                                     (insert input))
-                                   (let ((out (current-buffer)))
-                                     (with-current-buffer in
-                                       (apply #'call-process-region (point-min) (point-max)
-                                              (car argv) nil (list out stderr) nil (cdr argv)))))
-                               (kill-buffer in))))))
+          (let ((status (health-chart--call exe (cdr argv) input binary errors)))
             (unless (eql status 0)
               (signal 'health-chart-backend-error
-                      (list (format "%s exited %s: %s" (string-join argv " ") status
-                                    (string-trim (with-temp-buffer
-                                                   (insert-file-contents stderr)
-                                                   (buffer-string))))
-                            :code "backend_failed" :argv argv :exit status)))
+                      (if (eq status 'timeout)
+                          (list (format "%s did not finish within %s seconds; raise `health-chart-render-timeout' or check the tool"
+                                        (string-join argv " ") health-chart-render-timeout)
+                                :code "backend_timeout" :argv argv)
+                        (list (format "%s exited %s: %s" (string-join argv " ") status
+                                      (string-trim (with-current-buffer errors (buffer-string))))
+                              :code "backend_failed" :argv argv :exit status))))
             (buffer-string)))
-      (delete-file stderr))))
+      (kill-buffer errors))))
+
+(defun health-chart--call (exe args input binary errors)
+  "Run EXE with ARGS, INPUT on stdin, stdout into the current buffer.
+BINARY keeps stdout as bytes, else it is decoded as UTF-8 with any line
+ends; stderr goes to buffer ERRORS.  Return the exit status, or
+`timeout' after `health-chart-render-timeout' seconds (the process is
+then killed).  An asynchronous process, so the timeout holds even
+while the tool blocks."
+  (let* ((done nil)
+         (process-environment (cons "LC_ALL=C.UTF-8" process-environment))
+         (proc (make-process :name "health-chart" :buffer (current-buffer)
+                             :command (cons exe args) :connection-type 'pipe
+                             :coding (cons (if binary 'binary 'utf-8) 'utf-8-unix)
+                             :stderr errors :noquery t
+                             :sentinel (lambda (_proc _event) (setq done t))))
+         (deadline (+ (float-time) health-chart-render-timeout)))
+    (when-let* ((err (get-buffer-process errors)))
+      (set-process-coding-system err 'utf-8 'utf-8-unix))
+    (unwind-protect
+        (progn
+          (process-send-string proc input)
+          (process-send-eof proc)
+          ;; the sentinel runs once stdout has been read to the end; under
+          ;; load it can be starved, so a reaped child also ends the wait
+          (while (and (not done) (process-live-p proc) (< (float-time) deadline))
+            (accept-process-output proc 0.05))
+          (if (or done (not (process-live-p proc)))
+              (progn
+                (while (accept-process-output proc 0.05))
+                ;; stderr arrives on its own pipe; drain it too
+                (when-let* ((err (get-buffer-process errors)))
+                  (while (accept-process-output err 0.05)))
+                (process-exit-status proc))
+            'timeout))
+      (when (process-live-p proc) (delete-process proc))
+      (when-let* ((err (get-buffer-process errors))) (delete-process err)))))
 
 (defun health-chart--write-bytes (string file)
   "Write STRING to FILE exactly (raw bytes when unibyte, else UTF-8)."
@@ -394,6 +455,22 @@ last output as bytes."
       (setq input (health-chart--run (plist-get step :argv) input (and binary (= i n)))))
     input))
 
+(defun health-chart--pipe-or-svg-only (commands program binary format primary)
+  "Run the fallback COMMANDS on PROGRAM as `health-chart--pipe' with BINARY.
+When one of their tools (rsvg-convert) is missing, signal that FORMAT
+cannot be made here but SVG can, naming PRIMARY, the direct tool's error."
+  (condition-case err
+      (health-chart--pipe commands program binary)
+    (health-chart-backend-error
+     (if (and (equal (plist-get (cddr err) :code) "backend_missing")
+              (equal (car (plist-get (cddr err) :argv)) (car health-chart-rsvg-convert-command)))
+         (signal 'health-chart-backend-error
+                 (list (format "cannot write %s: %s; the fallback through rsvg-convert cannot run either (%s); install rsvg-convert, or write SVG, which needs neither"
+                               format (cadr primary) (cadr err))
+                       :code "backend_missing" :format format
+                       :argv (plist-get (cddr err) :argv)))
+       (signal (car err) (cdr err))))))
+
 (defun health-chart--render-plan (plan format out)
   "Run PLAN (from a backend's explain) for FORMAT; write OUT or return a string.
 A failing primary run falls back to PLAN's :fallback steps when present."
@@ -405,7 +482,8 @@ A failing primary run falls back to PLAN's :fallback steps when present."
                 (health-chart--pipe (plist-get plan :steps) (plist-get plan :program) binary)
               (health-chart-backend-error
                (if-let* ((fallback (plist-get plan :fallback)))
-                   (prog1 (health-chart--pipe fallback (plist-get plan :program) binary)
+                   (prog1 (health-chart--pipe-or-svg-only fallback (plist-get plan :program)
+                                                          binary format err)
                      (setq health-chart--vl-canvas-broken t))
                  (signal (car err) (cdr err))))))))
     (if out
@@ -615,7 +693,7 @@ Returns nil when there is nothing to draw."
   (if (plist-get props :format)
       (nth 2 (apply #'health-chart-render-string kind data props))
     (let* ((graphic (health-chart--graphic-context-p))
-           (format (and graphic (if (image-type-available-p 'svg) 'svg 'png))))
+           (format (and graphic (health-chart--image-format))))
       (pcase-let ((`(,_backend ,fmt ,out)
                    (apply #'health-chart-render-string kind data
                           (if format
@@ -671,8 +749,8 @@ PROPS as in `health-chart-render'.  Signals when nothing can be drawn."
              (list :name "rsvg-convert" :status 'pass
                    :detail "PNG/PDF from SVG when node-canvas is missing")
            (list :name "rsvg-convert" :status 'skip
-                 :detail "not installed; vega-lite PNG/PDF then needs node-canvas"
-                 :remediation "brew install librsvg (or apt install librsvg2-bin)")))
+                 :detail "not installed; vega-lite PNG/PDF then needs node-canvas (vl2png), SVG works without it"
+                 :remediation "apt install librsvg2-bin, brew install librsvg, or choco install rsvg-convert")))
    (mapcar
     (lambda (tpl)
       (let* ((kind (plist-get tpl :kind))
