@@ -545,12 +545,24 @@ Interactively, show it in the echo area."
     (format "# %s%s: %s" block (if code (format " (%s)" code) "")
             (health-chart-org--message err))))
 
+(defun health-chart-org--prefer-utf-8 ()
+  "Make the buffer's undecided file coding UTF-8, keeping its line ends.
+Blocks insert glyphs such as ● that a locale code page cannot encode;
+an ASCII file visited as `undecided' would otherwise make Emacs (and
+org-persist, on killing the buffer) ask for a coding system."
+  (when (and buffer-file-name
+             (eq (coding-system-base buffer-file-coding-system) 'undecided))
+    (set-buffer-file-coding-system
+     (coding-system-change-text-conversion buffer-file-coding-system 'utf-8) nil t)))
+
 (defmacro health-chart-org--guard (block &rest body)
   "Insert BODY's string; on any error insert BLOCK's error comment instead."
   (declare (indent 1) (debug t))
-  `(insert (condition-case err
-               (progn ,@body)
-             (error (health-chart-org--error-line ,block err)))))
+  `(progn
+     (health-chart-org--prefer-utf-8)
+     (insert (condition-case err
+                 (progn ,@body)
+               (error (health-chart-org--error-line ,block err))))))
 
 (defun health-chart-org--render-props (params kind data)
   "Props for `health-chart-write' drawing KIND of DATA under block PARAMS."
@@ -843,6 +855,7 @@ See `health-chart-org-flags-explain' for the plan."
   "Org dynamic block: genetics.el's section for PARAMS, when it is loaded.
 Never loads genetics.el; without it, writes a one-line note.  See
 `health-chart-org-genetics-explain' for the plan."
+  (health-chart-org--prefer-utf-8)
   (let ((plan (health-chart-org-genetics-explain params)))
     (cond
      ((not (eq (plist-get plan :valid) t))
@@ -919,7 +932,8 @@ the document keeps its SVG links; see `health-chart-org-latex-png'."
 (defun health-chart-org--template-title (file)
   "The #+TITLE of template FILE, placeholders and all, or nil."
   (with-temp-buffer
-    (insert-file-contents file nil 0 2000)
+    (let ((coding-system-for-read 'utf-8))
+      (insert-file-contents file nil 0 2000))
     (when (re-search-forward "^#\\+TITLE:[ \t]*\\(.*\\)$" nil t)
       (string-trim (match-string 1)))))
 
@@ -1045,7 +1059,10 @@ existing OUTPUT.  See `health-chart-org-new-report-explain'."
     (let ((coding-system-for-write 'utf-8-unix))
       (write-region text nil output nil 'silent))
     (with-current-buffer (find-file-noselect output)
-      (revert-buffer t t t)
+      (let ((coding-system-for-read 'utf-8-unix))
+        (revert-buffer t t t))
+      ;; blocks insert non-ASCII glyphs; never prompt for a coding on save
+      (set-buffer-file-coding-system 'utf-8-unix)
       (health-chart-org-update)
       (save-buffer)
       (unless noninteractive (pop-to-buffer-same-window (current-buffer))))

@@ -364,14 +364,16 @@ as .exe and .cmd included), or an absolute file name."
   "Non-nil when rsvg-convert is installed."
   (and (health-chart-executable (car health-chart-rsvg-convert-command)) t))
 
-(defun health-chart--run (argv input &optional binary)
+(defun health-chart--run (argv input &optional binary writes-file)
   "Run ARGV with INPUT (a string) on stdin; return stdout as a string.
 BINARY keeps stdout as raw bytes; text output may end lines in CRLF
 \(gnuplot on Windows).  The program is resolved with
 `health-chart-executable' and run directly, without a shell; on Windows
 Emacs runs an npm .cmd shim through cmd.exe itself.  Signals
 `health-chart-backend-error' with stderr when the tool is missing,
-fails or times out."
+fails, times out, or writes nothing to stdout unless WRITES-FILE (the
+tool writes its own output file).  gnuplot on Windows exits 0 after a
+script error, so empty output is how that failure shows."
   (let ((exe (or (health-chart-executable (car argv))
                  (signal 'health-chart-backend-error
                          (list (format "cannot find %s; install it or customize the backend's command (see `health-chart-doctor')"
@@ -382,6 +384,11 @@ fails or times out."
         (with-temp-buffer
           (set-buffer-multibyte (not binary))
           (let ((status (health-chart--call exe (cdr argv) input binary errors)))
+            (when (and (eql status 0) (= (buffer-size) 0) (not writes-file))
+              (signal 'health-chart-backend-error
+                      (list (format "%s wrote no output: %s" (string-join argv " ")
+                                    (string-trim (with-current-buffer errors (buffer-string))))
+                            :code "backend_failed" :argv argv :exit 0)))
             (unless (eql status 0)
               (signal 'health-chart-backend-error
                       (if (eq status 'timeout)
@@ -413,8 +420,11 @@ while the tool blocks."
       (set-process-coding-system err 'utf-8 'utf-8-unix))
     (unwind-protect
         (progn
-          (process-send-string proc input)
-          (process-send-eof proc)
+          ;; a tool may exit without reading stdin; on Windows the write
+          ;; then fails, and its exit status is the answer
+          (ignore-error error
+            (process-send-string proc input)
+            (process-send-eof proc))
           ;; the sentinel runs once stdout has been read to the end; under
           ;; load it can be starved, so a reaped child also ends the wait
           (while (and (not done) (process-live-p proc) (< (float-time) deadline))
@@ -452,7 +462,8 @@ last output as bytes."
   (let ((input program) (n (length commands)) (i 0))
     (dolist (step commands)
       (cl-incf i)
-      (setq input (health-chart--run (plist-get step :argv) input (and binary (= i n)))))
+      (setq input (health-chart--run (plist-get step :argv) input (and binary (= i n))
+                                     (plist-get step :writes-file))))
     input))
 
 (defun health-chart--pipe-or-svg-only (commands program binary format primary)
@@ -598,7 +609,8 @@ OUT is nil); SVG and text come back on stdout."
           :program (concat (health-chart-gnuplot-preamble spec format out) (cdr filled)
                            (if (string-suffix-p "\n" (cdr filled)) "" "\n")
                            (if (memq format '(png pdf)) "unset output\n" ""))
-          :steps (list (list :argv health-chart-gnuplot-command)))))
+          :steps (list (list :argv health-chart-gnuplot-command
+                             :writes-file (and (memq format '(png pdf)) t))))))
 
 (defun health-chart-gnuplot-render (spec format out)
   "Render SPEC with gnuplot as FORMAT to OUT, or return the output.
@@ -664,7 +676,33 @@ with :fallback steps when PNG/PDF may need rsvg-convert."
   "Render KIND of DATA under PROPS; return (BACKEND FORMAT OUTPUT).
 OUTPUT is a string (bytes for png and pdf), or nil when there is
 nothing to draw.  PROPS' :out writes the output to that file instead,
-OUTPUT then being the file name."
+OUTPUT then being the file name.  When the backend is `auto' and the
+chosen one's tools cannot write the format (Vega-Lite PNG with neither
+a working vl2png nor rsvg-convert, as on Windows), the next installed
+backend of `health-chart-graphic-backends' draws it."
+  (condition-case err
+      (apply #'health-chart--render-string kind data props)
+    (health-chart-backend-error
+     (let ((next (and (equal (plist-get (cddr err) :code) "backend_missing")
+                      (health-chart--next-backend kind props))))
+       (if next
+           (apply #'health-chart-render-string kind data :backend next props)
+         (signal (car err) (cdr err)))))))
+
+(defun health-chart--next-backend (kind props)
+  "The installed backend after the one `auto' chose for KIND under PROPS.
+Nil unless PROPS leave the backend to `auto' and set a :format."
+  (let ((format (plist-get props :format)))
+    (when (and format (eq (or (plist-get props :backend) health-chart-backend) 'auto))
+      (let ((tried (car (health-chart-select-backend kind 'auto format))))
+        (seq-find (lambda (b)
+                    (and (assq b health-chart-backends)
+                         (health-chart--supports-p b kind format)
+                         (health-chart-backend-available-p b)))
+                  (cdr (memq tried health-chart-graphic-backends)))))))
+
+(defun health-chart--render-string (kind data &rest props)
+  "`health-chart-render-string' of KIND, DATA and PROPS without the fallback."
   (pcase-let* ((`(,backend ,format ,_reason)
                 (health-chart-select-backend kind (plist-get props :backend) (plist-get props :format)))
                (plist (health-chart--backend backend))

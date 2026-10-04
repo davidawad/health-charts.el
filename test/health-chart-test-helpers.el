@@ -30,6 +30,13 @@
       (insert-file-contents (health-chart-test-fixture name)))
     (buffer-string)))
 
+(defun health-chart-test-read-utf8 (file)
+  "Contents of FILE decoded as UTF-8, whatever the platform default."
+  (with-temp-buffer
+    (let ((coding-system-for-read 'utf-8))
+      (insert-file-contents file))
+    (buffer-string)))
+
 (defun health-chart-test-ms (&optional person)
   "Synthetic canonical measurements, for PERSON only when given."
   (let ((ms (health-chart--example-measurements)))

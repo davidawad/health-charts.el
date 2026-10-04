@@ -324,6 +324,28 @@ On Windows it is a .cmd file, as npm's shims are."
               (should (health-chart-gnuplot-available-p)))))
       (delete-directory dir t))))
 
+;; gnuplot on Windows exits 0 after a script error, printing nothing
+(ert-deftest health-chart-backend-test-empty-output-is-a-failure ()
+  (let* ((dir (make-temp-file "hc-tools" t))
+         (health-chart-tool-directories (list dir))
+         (name "hc-silent"))
+    (unwind-protect
+        (progn
+          ;; exits at once, never reading stdin
+          (if (eq system-type 'windows-nt)
+              (health-chart-backend-test--write (expand-file-name (concat name ".cmd") dir)
+                                                "@echo off\r\necho oops 1>&2\r\n")
+            (let ((file (expand-file-name name dir)))
+              (health-chart-backend-test--write file "#!/bin/sh\necho oops >&2\n")
+              (set-file-modes file #o755)))
+          (let ((err (should-error (health-chart--run (list name) "plot x")
+                                   :type 'health-chart-backend-error)))
+            (should (equal (plist-get (cddr err) :code) "backend_failed"))
+            (should (string-match-p "wrote no output: oops" (cadr err))))
+          ;; a tool writing its own file owes nothing on stdout
+          (should (equal (health-chart--run (list name) "plot x" nil t) "")))
+      (delete-directory dir t))))
+
 (ert-deftest health-chart-backend-test-tools-get-stdin-and-time-out ()
   (skip-unless (not (eq system-type 'windows-nt)))
   (let* ((dir (make-temp-file "hc-tools" t))
@@ -471,6 +493,29 @@ On Windows it is a .cmd file, as npm's shims are."
             (should (string-prefix-p "%PDF" (health-chart--read-bytes (expand-file-name "ts.pdf" dir))))
             (should (health-chart-backend-test--png-p
                      (health-chart--read-bytes (expand-file-name "ts.png" dir)))))
+        (delete-directory dir t)))))
+
+(ert-deftest health-chart-backend-test-auto-png-falls-back-to-gnuplot ()
+  ;; Windows: vl2svg works, but neither vl2png nor rsvg-convert does
+  (skip-unless (health-chart-gnuplot-available-p))
+  (health-chart-test-env
+    (let* ((dir (make-temp-file "hc-tools" t))
+           ;; keep the defaults: Windows finds gnuplot only through them
+           (health-chart-tool-directories (cons dir health-chart-tool-directories))
+           (health-chart-vl2svg-command
+            (list (health-chart-backend-test--fake-tool dir "hc-fake-vl2svg")))
+           (health-chart-vl2png-command '("hc-no-such-vl2png"))
+           (health-chart-rsvg-convert-command '("hc-no-such-rsvg-convert"))
+           (health-chart-vega-lite-raster 'auto)
+           (health-chart--vl-canvas-broken nil)
+           (health-chart-backend 'auto))
+      (unwind-protect
+          (pcase-let ((`(,backend ,format ,out)
+                       (health-chart-render-string 'bullet (health-chart-backend-test-sample)
+                                                   :format 'png :person "alex")))
+            (should (eq backend 'gnuplot))
+            (should (eq format 'png))
+            (should (health-chart-backend-test--png-p out)))
         (delete-directory dir t)))))
 
 (ert-deftest health-chart-backend-test-backend-errors-carry-stderr ()
