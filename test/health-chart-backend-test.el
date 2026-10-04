@@ -508,6 +508,12 @@ On Windows it is a .cmd file, as npm's shims are."
            (health-chart-vega-lite-raster 'auto)
            (health-chart--vl-canvas-broken nil)
            (health-chart-backend 'auto))
+      (message "DIAG gnuplot=%S avail=%S supports=%S tried=%S next=%S graphic=%S"
+               (health-chart-executable "gnuplot") (health-chart-backend-available-p 'gnuplot)
+               (health-chart--supports-p 'gnuplot 'bullet 'png)
+               (ignore-errors (health-chart-select-backend 'bullet 'auto 'png))
+               (ignore-errors (health-chart--next-backend 'bullet '(:format png)))
+               health-chart-graphic-backends)
       (unwind-protect
           (pcase-let ((`(,backend ,format ,out)
                        (health-chart-render-string 'bullet (health-chart-backend-test-sample)
