@@ -1,6 +1,7 @@
 ;;; screenshots.el --- Render every templated kind with every backend -*- lexical-binding: t; -*-
 
-;; Usage: emacs -Q --batch -L . -l examples/screenshots.el [OUT-DIR]
+;; Usage: [HEALTH_CHART_SCREENSHOT_KINDS="strip dual"] emacs -Q --batch -L . -l examples/screenshots.el [OUT-DIR]
+;; (the environment variable limits the kinds drawn).
 ;; Writes OUT-DIR/<backend>/<kind>.png (default docs/screenshots) at
 ;; 1200 pixels wide from the synthetic examples/sample-panel.json.
 ;; Needs vl2svg (+ rsvg-convert or node-canvas) and gnuplot.
@@ -50,7 +51,13 @@ and (for a marker the sample lacks) undated rows."
     (heatmap :person "alex")
     (compare :marker "vitamin-d")
     (delta :person "alex")
-    (staleness))
+    (staleness)
+    (trend :person "alex" :marker "ldl-c")
+    (lollipop :person "alex" :marker "hscrp")
+    (strip :person "alex")
+    (dumbbell :person "alex")
+    (dual :person "alex" :marker ("glucose" "hba1c"))
+    (inrange :person "alex"))
   "Each templated kind with its screenshot props.")
 
 (defun health-chart-screenshots (&optional dir)
@@ -62,15 +69,19 @@ and (for a marker the sample lacks) undated rows."
     (dolist (backend '(vega-lite gnuplot))
       (make-directory (expand-file-name (symbol-name backend) dir) t)
       (pcase-dolist (`(,kind . ,props) health-chart-screenshots-specs)
-        (let ((file (expand-file-name (format "%s/%s.png" backend kind) dir))
-              (data (if (eq kind 'staleness)
-                        (health-chart-screenshots-indicators alex)
-                      ms)))
-          (condition-case err
-              (progn (apply #'health-chart-write kind data file
-                            :backend backend :pixel-width 800 :scale 1.5 props)
-                     (message "wrote %s" file))
-            (error (message "FAILED %s/%s: %s" backend kind (error-message-string err)))))))))
+        (when (or (null (getenv "HEALTH_CHART_SCREENSHOT_KINDS"))
+                  (member (symbol-name kind)
+                          (split-string (getenv "HEALTH_CHART_SCREENSHOT_KINDS") "[ ,]+" t)))
+          (let ((file (expand-file-name (format "%s/%s.png" backend kind) dir))
+                (data (if (eq kind 'staleness)
+                          (health-chart-screenshots-indicators alex)
+                        ms)))
+            (condition-case err
+                (progn (apply #'health-chart-write kind data file
+                              :backend backend :pixel-width 800 :scale 1.5 props)
+                       (message "wrote %s" file))
+              (error (message "FAILED %s/%s: %s" backend kind
+                              (error-message-string err))))))))))
 
 (when noninteractive
   (health-chart-screenshots (car command-line-args-left))
