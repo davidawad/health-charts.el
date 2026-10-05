@@ -156,6 +156,22 @@ UTF-8 with LF line ends on every OS; input with CRLF line ends (a spec
 file, CLI output) is read as well. `.gitattributes` keeps a Windows
 checkout LF, which the golden fixtures need.
 
+With `package-vc` (built into Emacs 29+):
+
+```elisp
+(package-vc-install "https://github.com/davidawad/health-charts.el")
+```
+
+or with straight.el:
+
+```elisp
+(use-package health-chart
+  :straight (health-chart :host github :repo "davidawad/health-charts.el")
+  :commands (health-charts health-chart-plot health-chart-plot-view))
+```
+
+or from a local checkout:
+
 ```elisp
 (use-package health-chart
   :load-path "~/src/health-charts.el"
