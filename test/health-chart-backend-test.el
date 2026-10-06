@@ -208,20 +208,27 @@
     (should (string-match-p "x.vl.json:2: unknown placeholder {{nope}}" (cadr err)))))
 
 (ert-deftest health-chart-backend-test-every-kind-has-both-templates ()
+  "Every templated kind has a gnuplot template, an eas one (which the vega-lite
+backend exports) and no bundled Vega-Lite file of its own."
   (health-chart-test-env
     (dolist (kind '(timeseries panel bullet heatmap compare delta staleness
                     trend lollipop strip dumbbell dual inrange))
-      (dolist (backend '(vega-lite gnuplot))
-        (should (health-chart-template-for backend kind))))
+      (should (health-chart-template-for 'gnuplot kind))
+      (should-not (health-chart-template-for 'vega-lite kind))
+      (when (health-chart-test-eas-p)
+        (should (health-chart-template-for 'eas kind))
+        (should (health-chart--supports-p 'vega-lite kind 'svg))))
     (should (seq-every-p (lambda (tpl) (eq (plist-get tpl :source) 'bundled)) (health-chart-templates)))))
 
 (ert-deftest health-chart-backend-test-program-goldens ()
+  "The gnuplot program and, with eas, the Vega-Lite an eas template resolves to."
   (health-chart-test-env
     (pcase-dolist (`(,kind . ,props) health-chart-backend-test--specs)
       (let ((data (health-chart-backend-test--data kind)))
-        (let ((vl (apply #'health-chart-render kind data :backend 'vega-lite :format 'vega-lite props)))
-          (should (json-parse-string vl))
-          (health-chart-test-golden (format "vega-lite/%s.vl.json" kind) vl))
+        (when (health-chart-test-eas-p)
+          (let ((vl (apply #'health-chart-render kind data :backend 'vega-lite :format 'vega-lite props)))
+            (should (json-parse-string vl))
+            (health-chart-test-golden (format "vega-lite/%s.vl.json" kind) vl)))
         (health-chart-test-golden
          (format "gnuplot/%s.gp" kind)
          (plist-get (apply #'health-chart-render-explain kind data :backend 'gnuplot :format 'svg props)
@@ -259,6 +266,7 @@
 ;; -----------------------------------------------------------------------
 
 (ert-deftest health-chart-backend-test-selection ()
+  (skip-unless (health-chart-test-eas-p))
   (health-chart-test-env
     (cl-letf (((symbol-function 'health-chart-vega-lite-available-p) (lambda () t))
               ((symbol-function 'health-chart-gnuplot-available-p) (lambda () t))
@@ -284,6 +292,7 @@
       (should-error (health-chart-select-backend 'timeseries 'nope) :type 'health-chart-backend-error))))
 
 (ert-deftest health-chart-backend-test-png-where-emacs-lacks-librsvg ()
+  (skip-unless (health-chart-test-eas-p))
   (health-chart-test-env
     (cl-letf (((symbol-function 'health-chart-vega-lite-available-p) (lambda () t))
               ((symbol-function 'health-chart--graphic-context-p) (lambda () t))
@@ -296,6 +305,7 @@
         (should (equal (butlast (health-chart-select-backend 'timeseries)) '(text text)))))))
 
 (ert-deftest health-chart-backend-test-explain-is-a-pure-plan ()
+  (skip-unless (health-chart-test-eas-p))
   (health-chart-test-env
     (let* ((ms (health-chart-backend-test-sample))
            (health-chart-vl2svg-command '("vl2svg"))
@@ -360,7 +370,7 @@
           (should (> (length (split-string text "\n")) 5)))))))
 
 (ert-deftest health-chart-backend-test-vega-lite-renders ()
-  (skip-unless (health-chart-vega-lite-available-p))
+  (skip-unless (and (health-chart-vega-lite-available-p) (health-chart-test-eas-p)))
   (health-chart-test-env
     (pcase-dolist (`(,kind . ,props) health-chart-backend-test--specs)
       (let ((svg (apply #'health-chart-render kind (health-chart-backend-test--data kind)
@@ -371,7 +381,8 @@
           (should (string-match-p "suboptimal\\|optimal\\|high\\|low" svg)))))))
 
 (ert-deftest health-chart-backend-test-vega-lite-png ()
-  (skip-unless (and (health-chart-vega-lite-available-p) (health-chart--rsvg-available-p)))
+  (skip-unless (and (health-chart-vega-lite-available-p) (health-chart--rsvg-available-p)
+                    (health-chart-test-eas-p)))
   (health-chart-test-env
     (let ((health-chart-vega-lite-raster 'rsvg-convert))
       (should (health-chart-backend-test--png-p

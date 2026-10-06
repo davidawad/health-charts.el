@@ -63,9 +63,11 @@
     (health-chart-dashboard-toggle-backend)
     ;; text flips to the image choice: vega-lite or gnuplot when installed
     (should (memq health-chart-dashboard--backend '(vega-lite gnuplot svg)))
-    ;; the header names the backend actually drawn, text when images can't be shown
+    ;; the header names the backend actually drawn, text when images can't be
+    ;; shown (gnuplot's own text where vega-lite has nothing to draw: no eas)
     (unless (display-images-p)
-      (should (string-match-p "· text ·" (buffer-string))))
+      (should (string-match-p (if (health-chart-test-eas-p) "· text ·" "· gnuplot ·")
+                              (buffer-string))))
     (health-chart-dashboard-toggle-backend)
     (should (eq health-chart-dashboard--backend 'text))))
 

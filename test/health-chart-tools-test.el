@@ -95,6 +95,7 @@ On Windows it is a .cmd file, as npm's shims are."
       (delete-directory dir t))))
 
 (ert-deftest health-chart-backend-test-png-without-rsvg-says-svg-works ()
+  (skip-unless (health-chart-test-eas-p))
   (health-chart-test-env
     (let* ((dir (make-temp-file "hc-tools" t))
            (health-chart-tool-directories (list dir))

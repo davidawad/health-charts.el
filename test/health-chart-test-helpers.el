@@ -48,6 +48,12 @@
    (append props (list :person "alex" :marker "ldl_c" :value 100 :unit "mg/dL"
                        :date "2025-01-01"))))
 
+(defun health-chart-test-eas-p ()
+  "Non-nil when eas.el is installed and the eas route loads.
+The vega-lite backend draws the bundled kinds from their eas templates,
+so tests of those need it; run `make test EAS=/path/to/eas.el'."
+  (and (locate-library "eas") (progn (require 'health-chart-eas-route nil t) t)))
+
 (defun health-chart-test-golden (name actual)
   "Compare ACTUAL, without text properties, with golden fixture NAME."
   (let ((file (expand-file-name (concat "golden/" name) health-chart-test-fixtures))

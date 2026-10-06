@@ -51,11 +51,10 @@
         (should (plist-get entry :spec))
         (should-not (plist-get entry :text))
         (should-not (plist-get entry :svg)))
-      (should (health-chart-template-for 'vega-lite kind))
       (should (health-chart-template-for 'gnuplot kind))
       (should (plist-get (health-chart-describe-kind kind) :renderers-defined))
       (should (equal (plist-get (health-chart-describe-kind kind) :templates)
-                     '(vega-lite gnuplot))))))
+                     (if (health-chart-test-eas-p) '(eas gnuplot) '(gnuplot)))))))
 
 (ert-deftest health-chart-gallery-test-native-backends-decline-cleanly ()
   (health-chart-test-env
@@ -64,7 +63,10 @@
                                                            :backend backend :person "alex")
                                :type 'health-chart-backend-error)))
         (should (equal (plist-get (cddr err) :code) "unsupported_kind"))
-        (should (string-match-p "templates only; use vega-lite or gnuplot" (cadr err)))))
+        (should (string-match-p (if (health-chart-test-eas-p)
+                                    "templates only; use vega-lite or gnuplot"
+                                  "templates only; use gnuplot")
+                                (cadr err)))))
     ;; auto in a terminal with no template backend names the fix too
     (let ((health-chart-terminal-backends '(text)))
       (let ((err (should-error (health-chart-select-backend 'strip)
@@ -320,7 +322,7 @@
 ;; -----------------------------------------------------------------------
 
 (ert-deftest health-chart-gallery-test-vega-lite-draws-words-not-just-colors ()
-  (skip-unless (health-chart-vega-lite-available-p))
+  (skip-unless (and (health-chart-vega-lite-available-p) (health-chart-test-eas-p)))
   (health-chart-test-env
     (dolist (kind health-chart-gallery-test--kinds)
       (let ((svg (apply #'health-chart-render kind (health-chart-backend-test-sample)
@@ -344,7 +346,7 @@
 
 (ert-deftest health-chart-gallery-test-write-png-for-every-kind ()
   (skip-unless (and (health-chart-gnuplot-available-p) (health-chart-vega-lite-available-p)
-                    (health-chart--rsvg-available-p)))
+                    (health-chart--rsvg-available-p) (health-chart-test-eas-p)))
   (health-chart-test-env
     (let ((dir (make-temp-file "hc-gallery" t))
           (health-chart-vega-lite-raster 'rsvg-convert))
