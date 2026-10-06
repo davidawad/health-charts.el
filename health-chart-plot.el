@@ -287,7 +287,10 @@ Falls back to text when an image is requested but cannot be displayed."
 
 (defun health-chart--toggled-backend (kind backend)
   "The backend to switch to from BACKEND for KIND: text <-> the image choice."
-  (if (eq (cadr (health-chart--backend-decision backend kind)) 'text)
+  (if (and (eq (cadr (health-chart--backend-decision backend kind)) 'text)
+           ;; an image backend that wrote text (gnuplot in a terminal) is not
+           ;; "text": the next flip goes to the text backend
+           (memq backend '(nil auto text)))
       (let ((b (car (ignore-errors (health-chart-select-backend kind 'auto 'svg)))))
         ;; no image backend installed: the native SVG renderer, as before
         (if (memq b '(nil text)) 'svg b))
