@@ -36,7 +36,8 @@
 ;;   plan       `health-chart-explain' -> backend + why, renderer, args,
 ;;              data summary; pure, never renders
 ;;   render     `health-chart-plot' (string), `-plot-insert' (at point),
-;;              `-plot-view' (buffer), `-plot-spec' (from a spec)
+;;              `-plot-view' (buffer), `-plot-spec' (from a spec),
+;;              `health-chart-show' (a live, interactive eas view)
 ;;   fetch      `health-chart-source-query', `-trend', `-latest', `-flag'
 ;;   indicators `health-chart-indicator-list' / `-describe' (catalog),
 ;;              `health-chart-list-cohorts', `health-chart-describe-cohort',
@@ -78,6 +79,10 @@
 (require 'health-chart-dashboard)
 (require 'health-chart-genetics)
 
+;; The eas backend loads on first use, and only when eas.el is installed
+;; (it is a soft dependency: `health-chart-eas-available-p').
+(autoload 'health-chart-show "health-chart-eas-route" nil t)
+
 ;; The Org report layer loads on first use (it requires Org).
 (dolist (fn '(health-chart-org-new-report health-chart-org-update health-chart-org-templates))
   (autoload fn "health-chart-org" nil t))
@@ -103,7 +108,7 @@
           health-chart-cohort-values-explain health-chart-cohort-plot-explain)
     (render health-chart-render health-chart-write health-chart-plot
             health-chart-plot-spec health-chart-plot-insert
-            health-chart-plot-view health-chart-sparkline health-chart-demo
+            health-chart-plot-view health-chart-show health-chart-sparkline health-chart-demo
             health-chart-cohort-plot health-chart-cohort-view)
     (fetch health-chart-source-query health-chart-source-trend health-chart-source-latest
            health-chart-source-flag health-chart-source-normalize-list

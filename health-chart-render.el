@@ -13,6 +13,11 @@
 ;; turns data into a neutral chart spec (chartspec/v1); a BACKEND fills
 ;; its template for the chart's kind with that spec and runs its tool:
 ;;
+;;   eas        templates/eas/health-KIND.json: eas.el chart documents
+;;              with health-chart's adapters and domain transforms
+;;              (health-chart-eas.el), drawn as SVG or text in Emacs;
+;;              the chart's own range and status logic runs inside the
+;;              document, so there is no chartspec/v1 step
 ;;   vega-lite  templates/vega-lite/KIND.vl.json -> vl2svg / vl2png /
 ;;              vl2pdf (PNG and PDF fall back to vl2svg | rsvg-convert
 ;;              when node-canvas is missing); format vega-lite returns
@@ -51,20 +56,37 @@
 (require 'health-chart-tools)
 (require 'health-chart-engines)
 
+;; The eas backend loads on first use (`health-chart-eas-available-p').
+(declare-function health-chart-eas-render "health-chart-eas-route")
+(declare-function health-chart-eas-vega-lite "health-chart-eas-route")
+(declare-function health-chart-eas-explain "health-chart-eas-route")
+(declare-function health-chart-eas-template-file "health-chart-eas-route")
+(declare-function health-chart-eas-kind-p "health-chart-eas-route")
+(defvar health-chart-eas-kinds)
+
 ;;;###autoload
 (defun health-chart-templates ()
   "Every available template as (:backend :kind :path :source), backend order.
 :source is user for a file in `health-chart-template-directories', else
-bundled.  A user's file shadows the bundled template of the same kind."
+bundled.  A user's file shadows the bundled template of the same kind.
+The `eas' templates are listed when eas.el is installed."
   (cl-loop for (name . plist) in health-chart-backends
            for ext = (plist-get plist :extension)
-           when ext
-           append (mapcar (lambda (entry)
-                            (list :backend name :kind (car entry) :path (cdr entry)
-                                  :source (if (file-in-directory-p (cdr entry)
-                                                                   health-chart-template-bundled-directory)
-                                              'bundled 'user)))
-                          (health-chart-template-list name ext))))
+           append (cond
+                   (ext (mapcar (lambda (entry)
+                                  (list :backend name :kind (car entry) :path (cdr entry)
+                                        :source (if (file-in-directory-p (cdr entry)
+                                                                         health-chart-template-bundled-directory)
+                                                    'bundled 'user)))
+                                (health-chart-template-list name ext)))
+                   ((and (plist-get plist :eas) (health-chart-backend-available-p name))
+                    (mapcar (lambda (entry)
+                              (let ((file (health-chart-eas-template-file (car entry))))
+                                (list :backend name :kind (car entry) :path file
+                                      :source (if (file-in-directory-p
+                                                   file health-chart-template-bundled-directory)
+                                                  'bundled 'user))))
+                            health-chart-eas-kinds)))))
 
 (defun health-chart--template-kind-p (kind)
   "Non-nil when some template backend has a template for KIND."
@@ -120,9 +142,14 @@ schema."
   "Non-nil when BACKEND can draw KIND in FORMAT (nil: any of its formats)."
   (let ((plist (health-chart--backend backend)))
     (and (or (null format) (memq format (plist-get plist :formats)))
-         (if (plist-get plist :native)
-             (fboundp (plist-get (health-chart--kind kind) (plist-get plist :native)))
-           (health-chart-template-for backend kind)))))
+         (cond ((plist-get plist :native)
+                (fboundp (plist-get (health-chart--kind kind) (plist-get plist :native))))
+               ((plist-get plist :eas)
+                (and (health-chart-backend-available-p backend) (health-chart-eas-kind-p kind)))
+               ((eq backend 'vega-lite)
+                (or (health-chart-template-for backend kind)
+                    (health-chart--eas-serves-vega-lite-p kind)))
+               (t (health-chart-template-for backend kind))))))
 
 (defun health-chart-select-backend (kind &optional backend format)
   "(BACKEND FORMAT REASON) for drawing KIND.
@@ -134,20 +161,22 @@ for `health-chart-explain'."
          (graphic (if format (not (eq format 'text)) (health-chart--graphic-context-p))))
     (if (not (eq requested 'auto))
         (let* ((plist (health-chart--backend requested))
-               (formats (plist-get plist :formats))
+               (formats (progn (when (plist-get plist :eas) (health-chart--require-eas requested))
+                               (plist-get plist :formats)))
                (fmt (or format
                         (cond ((and graphic (memq (health-chart--image-format) formats))
                                (health-chart--image-format))
                               ((memq 'text formats) 'text)
                               (t (car formats))))))
-          (when (and (plist-get plist :native)
-                     (not (functionp (plist-get (health-chart--kind kind) (plist-get plist :native)))))
+          (when (or (and (plist-get plist :native)
+                         (not (functionp (plist-get (health-chart--kind kind) (plist-get plist :native)))))
+                    (and (plist-get plist :eas) (not (health-chart--supports-p requested kind nil))))
             (signal 'health-chart-backend-error
                     (list (format "backend %s has no renderer for %s, a kind drawn by templates only; use %s"
                                   requested kind
                                   (mapconcat #'symbol-name
                                              (seq-filter (lambda (b) (and (assq b health-chart-backends)
-                                                                          (health-chart-template-for b kind)))
+                                                                          (health-chart--supports-p b kind nil)))
                                                          health-chart-graphic-backends)
                                              " or "))
                           :code "unsupported_kind" :backend requested :kind kind)))
@@ -186,6 +215,27 @@ for `health-chart-explain'."
   "PROPS without the render-only ones."
   (health-chart--plist-drop props :backend :format :scale))
 
+(defun health-chart--eas-serves-vega-lite-p (kind)
+  "Non-nil when the vega-lite backend draws KIND from its eas template.
+That is every eas kind without a user template of its own: the eas
+template resolves to standalone Vega-Lite, which vl2svg draws."
+  (and (health-chart-backend-available-p 'eas) (health-chart-eas-kind-p kind)
+       (not (health-chart-template-for 'vega-lite kind))))
+
+(defun health-chart--vega-lite-eas-plan (kind data format props)
+  "The vega-lite plan drawing KIND's eas template for DATA as FORMAT, or nil.
+PROPS are the render props."
+  (when-let* ((program (health-chart-eas-vega-lite kind data props)))
+    (health-chart--vega-lite-plan (cons (health-chart-eas-template-file kind) program)
+                                  format (or (plist-get props :scale) health-chart-image-scale))))
+
+(defun health-chart--require-eas (backend)
+  "Signal `backend_missing' unless eas, the engine of BACKEND, is installed."
+  (unless (health-chart-backend-available-p backend)
+    (signal 'health-chart-backend-error
+            (list (format "cannot find eas.el; %s" (plist-get (health-chart--backend backend) :install))
+                  :code "backend_missing" :backend backend))))
+
 (defun health-chart-render-explain (kind data &rest props)
   "The plan `health-chart-render' follows for KIND, DATA and PROPS.  Pure.
 A plist: :backend :format :reason, and for template backends :template,
@@ -196,13 +246,27 @@ with :fallback steps when PNG/PDF may need rsvg-convert."
                 (health-chart-select-backend kind (plist-get props :backend) (plist-get props :format)))
                (plist (health-chart--backend backend)))
     (append (list :backend backend :format format :reason reason)
-            (if (plist-get plist :native)
-                (list :renderer (plist-get (health-chart--kind kind) (plist-get plist :native)))
+            (cond
+             ((plist-get plist :native)
+              (list :renderer (plist-get (health-chart--kind kind) (plist-get plist :native))))
+             ((plist-get plist :eas)
+              (health-chart--require-eas backend)
+              (health-chart--plist-drop
+               (health-chart-eas-explain kind (health-chart-normalize kind data) format
+                                         (health-chart--render-props props))
+               :backend :format))
+             ((and (eq backend 'vega-lite) (health-chart--eas-serves-vega-lite-p kind))
+              (health-chart--plist-drop
+               (or (health-chart--vega-lite-eas-plan kind (health-chart-normalize kind data) format
+                                                     (health-chart--plist-drop props :backend :format))
+                   (list :backend backend :format format :steps nil))
+               :backend :format))
+             (t
               (let ((spec (append (apply #'health-chart-spec kind data (health-chart--render-props props))
                                   (list :scale (or (plist-get props :scale) health-chart-image-scale)))))
                 (health-chart--plist-drop (funcall (plist-get plist :explain) spec format
                                                    (plist-get props :out))
-                                          :backend :format))))))
+                                          :backend :format)))))))
 
 (defun health-chart--render-native (backend kind data props)
   "Native BACKEND (text or svg) drawing KIND of DATA under PROPS."
@@ -253,14 +317,28 @@ Nil unless PROPS leave the backend to `auto' and set a :format."
                (plist (health-chart--backend backend))
                (out (plist-get props :out)))
     (list backend format
-          (if (plist-get plist :native)
-              (let ((s (health-chart--render-native backend kind data props)))
-                (if (and out s) (progn (health-chart--write-bytes (substring-no-properties s) out) out) s))
+          (cond
+           ((plist-get plist :native)
+            (let ((s (health-chart--render-native backend kind data props)))
+              (if (and out s) (progn (health-chart--write-bytes (substring-no-properties s) out) out) s)))
+           ((plist-get plist :eas)
+            (health-chart--require-eas backend)
+            (apply #'health-chart-validate kind data (health-chart--plist-drop props :format :scale :out))
+            (let ((s (health-chart-eas-render kind data format
+                                              (health-chart--plist-drop props :out))))
+              (if (and out s) (progn (health-chart--write-bytes (substring-no-properties s) out) out) s)))
+           ((and (eq backend 'vega-lite) (health-chart--eas-serves-vega-lite-p kind))
+            (apply #'health-chart-validate kind data (health-chart--plist-drop props :format :scale :out))
+            (when-let* ((plan (health-chart--vega-lite-eas-plan
+                               kind (health-chart-normalize kind data) format
+                               (health-chart--plist-drop props :backend :format :out))))
+              (health-chart--render-plan plan format out)))
+           (t
             (let ((spec (append (apply #'health-chart-spec kind data (health-chart--render-props
                                                                      (health-chart--plist-drop props :out)))
                                 (list :scale (or (plist-get props :scale) health-chart-image-scale)))))
               (when (> (length (plist-get spec :rows)) 0)
-                (funcall (plist-get plist :render) spec format out)))))))
+                (funcall (plist-get plist :render) spec format out))))))))
 
 ;;;###autoload
 (defun health-chart-render (kind data &rest props)
@@ -341,12 +419,18 @@ PROPS as in `health-chart-render'.  Signals when nothing can be drawn."
               (condition-case err
                   (let* ((entry (health-chart--kind kind))
                          (example (plist-get (alist-get (plist-get entry :shape) health-chart-shapes)
-                                             :example))
-                         (spec (health-chart-spec kind example))
-                         (plan (funcall (plist-get (health-chart--backend (plist-get tpl :backend)) :explain)
-                                        spec (if (eq (plist-get tpl :backend) 'vega-lite) 'vega-lite 'svg))))
-                    (when (eq (plist-get tpl :backend) 'vega-lite)
-                      (ignore (json-parse-string (plist-get plan :program))))
+                                             :example)))
+                    (if (eq (plist-get tpl :backend) 'eas)
+                        ;; the template resolves to Vega-Lite for the kind's example
+                        (ignore (json-parse-string
+                                 (plist-get (health-chart-eas-explain
+                                             kind (health-chart-normalize kind example) 'svg)
+                                            :program)))
+                      (let* ((spec (health-chart-spec kind example))
+                             (plan (funcall (plist-get (health-chart--backend (plist-get tpl :backend)) :explain)
+                                            spec (if (eq (plist-get tpl :backend) 'vega-lite) 'vega-lite 'svg))))
+                        (when (eq (plist-get tpl :backend) 'vega-lite)
+                          (ignore (json-parse-string (plist-get plan :program))))))
                     nil)
                 (error (error-message-string err)))))
         (list :name (format "template %s/%s" (plist-get tpl :backend) kind)

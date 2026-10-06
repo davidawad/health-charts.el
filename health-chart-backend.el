@@ -28,22 +28,23 @@
 ;; -----------------------------------------------------------------------
 
 (defcustom health-chart-backend 'auto
-  "Rendering backend: `auto', `vega-lite', `gnuplot', `text' or `svg'.
+  "Rendering backend: `auto', `eas', `vega-lite', `gnuplot', `text' or `svg'.
 `auto' picks per chart: in a frame that shows images the first of
 `health-chart-graphic-backends' that is installed and has a template for
 the kind, in a terminal the first of `health-chart-terminal-backends',
-else native text.  `svg' (the native SVG renderer) is obsolete.
-Override per call with the :backend prop."
-  :type '(choice (const auto) (const vega-lite) (const gnuplot) (const text)
+else native text.  `eas' draws with the eas.el chart engine (SVG and
+text, interactive through `health-chart-show'); `svg' (the native SVG
+renderer) is obsolete.  Override per call with the :backend prop."
+  :type '(choice (const auto) (const eas) (const vega-lite) (const gnuplot) (const text)
                  (const :tag "svg (native, obsolete)" svg))
   :group 'health-charts)
 
-(defcustom health-chart-graphic-backends '(vega-lite gnuplot)
+(defcustom health-chart-graphic-backends '(eas vega-lite gnuplot)
   "Backends `auto' tries, in order, where images can be shown."
   :type '(repeat symbol)
   :group 'health-charts)
 
-(defcustom health-chart-terminal-backends '(gnuplot text)
+(defcustom health-chart-terminal-backends '(eas gnuplot text)
   "Backends `auto' tries, in order, in a terminal (text output)."
   :type '(repeat symbol)
   :group 'health-charts)
@@ -120,7 +121,12 @@ finds npm's vl2svg.cmd shim."
 ;; -----------------------------------------------------------------------
 
 (defvar health-chart-backends
-  '((vega-lite
+  '((eas
+     :doc "eas.el chart engine: eas templates with health-chart's domain transforms, drawn as SVG or text in Emacs, interactive with `health-chart-show'."
+     :eas t :formats (svg text)
+     :available-p health-chart-eas-available-p
+     :install "install eas.el (https://github.com/davidawad/eas.el) and put its src/ directory on `load-path'")
+    (vega-lite
      :doc "Vega-Lite templates rendered by vl2svg/vl2png/vl2pdf (npm vega-cli)."
      :language json :extension ".vl.json" :graphic t
      :formats (svg png pdf vega-lite)
@@ -151,7 +157,9 @@ backends :language (json or gnuplot) and :extension (of its template
 files), :explain (SPEC FORMAT &optional OUT) -> plan with the generated
 :program and the exact :steps (argv and stdin), and :render (SPEC
 FORMAT OUT) -> OUT, or the output as a string when OUT is nil; for
-native backends :native, the `health-chart-kinds' renderer key.")
+native backends :native, the `health-chart-kinds' renderer key; the
+`eas' backend (:eas t) draws from a kind's data directly, through
+health-chart-eas-route.el, and has no chartspec/v1 step.")
 
 (defconst health-chart-formats
   '((svg . ".svg") (png . ".png") (pdf . ".pdf") (text . ".txt") (vega-lite . ".vl.json"))
@@ -170,10 +178,16 @@ native backends :native, the `health-chart-kinds' renderer key.")
   (let ((fn (plist-get (health-chart--backend name) :available-p)))
     (and fn (funcall fn) t)))
 
+(declare-function health-chart-eas-template-file "health-chart-eas-route")
+(declare-function health-chart-eas-kind-p "health-chart-eas-route")
+
 (defun health-chart-template-for (backend kind)
   "Return the template file of BACKEND for KIND, or nil (always for natives)."
-  (when-let* ((ext (plist-get (health-chart--backend backend) :extension)))
-    (health-chart-template-find backend kind ext)))
+  (let ((plist (health-chart--backend backend)))
+    (if (plist-get plist :eas)
+        (and (health-chart-backend-available-p backend) (health-chart-eas-template-file kind))
+      (when-let* ((ext (plist-get plist :extension)))
+        (health-chart-template-find backend kind ext)))))
 
 (provide 'health-chart-backend)
 ;;; health-chart-backend.el ends here

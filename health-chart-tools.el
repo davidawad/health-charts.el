@@ -47,6 +47,15 @@ as .exe and .cmd included), or an absolute file name."
   (let ((cmd (health-chart--command health-chart-vl2svg-command "vl2svg" "vl2svg")))
     (and (not (equal (car cmd) "npx")) (health-chart-executable (car cmd)) t)))
 
+(defun health-chart-eas-available-p ()
+  "Non-nil when eas.el is installed, so `health-chart-eas-route' can load.
+eas is a soft dependency; without it the other backends draw."
+  (and (or (featurep 'health-chart-eas-route)
+           (and (locate-library "eas")
+                (condition-case nil (require 'health-chart-eas-route nil t)
+                  (error nil))))
+       t))
+
 (defun health-chart-gnuplot-available-p ()
   "Non-nil when gnuplot is installed."
   (and (health-chart-executable (car health-chart-gnuplot-command)) t))
