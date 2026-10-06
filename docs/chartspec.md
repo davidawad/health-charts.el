@@ -6,6 +6,16 @@ which words. A template only lays it out. The same spec feeds every
 backend, so a Vega-Lite chart and a gnuplot chart of the same data can
 never disagree about a value or a status.
 
+The `eas` backend (the default where eas.el is installed) does not fill
+templates from this spec: its templates take the measurements and the
+range and status logic runs inside the chart document as domain
+transforms (`health-chart-eas.el`, docs/design/eas-migration.md). The
+spec still feeds the gnuplot backend and the native renderers, and it is
+what `health-chart-eas-parity` checks the eas templates against, row by
+row, so the two paths cannot drift. The `vega-lite` backend draws the eas
+template exported as standalone Vega-Lite; only a Vega-Lite template of
+your own is filled from the spec.
+
 ```elisp
 (health-chart-spec KIND DATA &rest PROPS)   ; -> plist, pure
 (health-chart-spec-to-json SPEC &optional PRETTY)

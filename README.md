@@ -1,13 +1,17 @@
 # health-charts.el
 
-Biomarker charts in Emacs: lab results in, chart out — an image drawn
-by [Vega-Lite](https://vega.github.io/vega-lite/) or
-[gnuplot](http://gnuplot.info) in a GUI or an Org file, propertized
-unicode text in a terminal. Lisp never draws: it turns the data into a
-neutral [chart spec](docs/chartspec.md) and fills a template written in
-the backend's own language. Pick a backend per chart or globally, and
-bring your own templates. Around that: a kind registry, a shape
-registry, a validate / explain / describe surface for programs and
+Biomarker charts in Emacs: lab results in, chart out — an image in a
+GUI or an Org file, propertized unicode text in a terminal. Lisp never
+draws. The default engine is [eas.el](https://github.com/davidawad/eas.el):
+each kind is an [eas template](docs/design/eas-migration.md) (a
+Vega-Lite document with typed slots) plus a few domain transforms that
+do the range and status logic inside the chart, so the same document is
+an interactive SVG view in a GUI, text in a terminal, and plain
+Vega-Lite for [vl2svg](https://vega.github.io/vega-lite/). A
+[gnuplot](http://gnuplot.info) backend fills its own templates from a
+neutral [chart spec](docs/chartspec.md). Pick a backend per chart or
+globally, and bring your own templates. Around that: a kind registry, a
+shape registry, a validate / explain / describe surface for programs and
 agents, a JSON command line, and ert tests.
 
 [![LDL-C over four years for a synthetic person: points by status (▲ high, then ◐ suboptimal) falling through the shaded reference (0–100) and optimal (≤70) bands](docs/screenshots/vega-lite/timeseries.png)](docs/screenshots/vega-lite/timeseries.png)
@@ -93,10 +97,12 @@ source layer. Every example in this file uses synthetic data.
 ## Install
 
 Requires Emacs 29.1 or later, on Linux, macOS or Windows (native
-Emacs; WSL works as Linux), and no Emacs packages. Images need at least
-one backend tool (see [Backends](#backends)); without any, every kind
-still renders as unicode text. Showing images inline needs an Emacs
-built with librsvg (SVG) or libpng (PNG).
+Emacs; WSL works as Linux), and no Emacs packages. eas.el (Emacs 30.1)
+is optional and is the best backend when present: put its `src/`
+directory on `load-path`. Without it, images need at least one other
+backend tool (see [Backends](#backends)); without any, every kind still
+renders as unicode text. Showing images inline needs an Emacs built with
+librsvg (SVG) or libpng (PNG).
 
 ### Requirements per OS
 
@@ -142,11 +148,12 @@ What degrades without each tool:
 
 | missing | effect |
 |---|---|
-| `vl2svg` (vega-cli) | vega-lite is skipped; images come from gnuplot. `health-chart-vl2svg-command` nil also tries `npx`, which downloads vega on first use |
+| eas.el | the `eas` backend is unavailable and `auto` falls through; the `vega-lite` backend then draws only your own templates (the bundled kinds are eas templates it exports), so images come from gnuplot |
+| `vl2svg` (vega-cli) | vega-lite is skipped; images come from eas or gnuplot. `health-chart-vl2svg-command` nil also tries `npx`, which downloads vega on first use |
 | `vl2png`/`vl2pdf` working (node-canvas) | vega-lite PNG/PDF go through `vl2svg \| rsvg-convert` |
 | `rsvg-convert` | with no node-canvas either, vega-lite writes SVG only; a PNG/PDF request fails with an error saying so (gnuplot still writes PNG/PDF itself) |
-| `gnuplot` | images come from vega-lite; kinds drawn only by templates (`trend`, `lollipop`, `strip`, `dumbbell`, `dual`, `inrange`) need one of the two |
-| both image backends | every kind with a native renderer draws as unicode text |
+| `gnuplot` | images come from eas (or vega-lite); kinds drawn only by templates (`trend`, `lollipop`, `strip`, `dumbbell`, `dual`, `inrange`) need one of the three |
+| every image backend | every kind with a native renderer draws as unicode text |
 | librsvg in Emacs | inline charts use PNG where Emacs has libpng, else text (`svg-display` in the doctor) |
 | `biomarker` CLI | no live data; plain Lisp data and `health-chart-source-static` still work |
 | `gzip` | nothing in this package runs gzip. Compressed genome kits are read by genetics.el (a soft dependency); where gzip is absent (Windows), decompress the kit first, read it through genome-cli, or rely on Emacs's own `zlib-decompress-region` when `(zlib-available-p)` |
@@ -244,7 +251,7 @@ Common props:
 
 | prop | meaning |
 |---|---|
-| `:backend` | `auto` (default `health-chart-backend`), `vega-lite`, `gnuplot`, `text`, or `svg` (native, obsolete) |
+| `:backend` | `auto` (default `health-chart-backend`), `eas`, `vega-lite`, `gnuplot`, `text`, or `svg` (native, obsolete) |
 | `:format` | `svg`, `png`, `pdf`, `text` or `vega-lite` (the filled Vega-Lite JSON, for Org or the web) |
 | `:width` `:height` | text columns overall / plot rows |
 | `:pixel-width` `:pixel-height` | image size in CSS pixels (default `health-chart-image-width`, 720) |
@@ -359,18 +366,20 @@ data extent, so a saved file explains itself.
 
 | backend | formats | needs | role |
 |---|---|---|---|
-| `vega-lite` | svg, png, pdf, vega-lite | `vl2svg` (`npm install -g vega vega-lite vega-cli`); PNG/PDF via `vl2png`/`vl2pdf` (node-canvas) or `vl2svg` + `rsvg-convert` | first choice for images |
-| `gnuplot` | svg, png, pdf, text | `gnuplot` 5.4+ with the cairo terminals (see [Requirements per OS](#requirements-per-os)) | images when Vega-Lite is missing; first choice in a terminal (`dumb`) |
+| `eas` | svg, text | [eas.el](https://github.com/davidawad/eas.el) on `load-path` (Emacs 30.1), no external tool | first choice everywhere it is installed: images in a GUI, text in a terminal, live views with `health-chart-show` |
+| `vega-lite` | svg, png, pdf, vega-lite | `vl2svg` (`npm install -g vega vega-lite vega-cli`); PNG/PDF via `vl2png`/`vl2pdf` (node-canvas) or `vl2svg` + `rsvg-convert`; eas.el for the bundled kinds | PNG and PDF; draws the eas templates exported as standalone Vega-Lite, and your own `vega-lite/` templates |
+| `gnuplot` | svg, png, pdf, text | `gnuplot` 5.4+ with the cairo terminals (see [Requirements per OS](#requirements-per-os)) | images and text without eas; PNG/PDF without Node |
 | `text` | text | nothing | native unicode renderers; last-resort terminal fallback, and the only renderer of `table`, `sparkline`, `scorecard`, `cohort` |
 | `svg` | svg | nothing | native SVG renderers: **obsolete**, never chosen by default, no new features |
 
 `health-chart-backend` (or `:backend` per call) is `auto` by default:
 
 - where images can be shown (GUI frame, or an image `:format`): the
-  first of `health-chart-graphic-backends` (`vega-lite`, `gnuplot`)
-  that is installed and has a template for the kind;
+  first of `health-chart-graphic-backends` (`eas`, `vega-lite`,
+  `gnuplot`) that is installed, writes the format and has a template for
+  the kind (eas writes svg and text, so PNG and PDF go to the next);
 - in a terminal: the first of `health-chart-terminal-backends`
-  (`gnuplot`, `text`);
+  (`eas`, `gnuplot`, `text`);
 - otherwise native text.
 
 `(health-chart-explain KIND DATA)` says which backend and why, and for
@@ -384,6 +393,74 @@ commands are `health-chart-vl2svg-command`, `-vl2png-command`,
 node-canvas, and when they fail the backend renders `vl2svg | rsvg-convert`
 instead (`health-chart-vega-lite-raster`). `M-x health-chart-doctor`
 reports which tools are installed and checks every template.
+
+## The eas backend
+
+Every templated kind has an eas template in `templates/eas/` (named
+`health-KIND`: eas's template registry is one namespace and it ships
+`heatmap`, `line` and others). A template is Vega-Lite with typed
+slots; the range and status logic that the chart spec used to compute in
+Lisp runs inside the document as registered domain transforms
+(`health-chart-eas.el`):
+
+| piece | what it does |
+|---|---|
+| adapter `biomarker` | measurements (plists, alists, JSON, snake_case or kebab-case, a biomarker/v1 envelope) to tidy rows; a draw with no ranges takes its marker's |
+| adapter `indicator-values` | indicator values to rows (staleness) |
+| transform `status` | status, glyph, `status_label` (glyph and word), `value_label` per row, from `health-chart-status` |
+| transform `reference-band` | band extents in value units (`scale: value`), 0..1 positions in a padded domain (`domain`, bullet) or on the reference range (`range`, strip and dumbbell) |
+| transform `change` | first to last draw per marker: percent, verdict (`health-chart-model--verdict`) |
+| transforms `staleness`, `trend` | days and freshness state; rolling mean and least-squares line |
+
+The transforms call the package's own rules, so "high", "optimal" and
+"improved" have one definition across every backend, and
+`(health-chart-eas-parity KIND DATA)` checks, as data, that a template
+plots the numbers `health-chart-spec` has for the kind (the tests do, for
+all thirteen). In Lisp:
+
+```elisp
+(health-chart-render 'panel data :backend 'eas :format 'text :person "alex")  ; a string
+(health-chart-show 'timeseries data :person "alex" :marker "ldl-c")          ; live eas view
+(health-chart-eas-resolve 'bullet data :person "alex")  ; the pure Vega-Lite spec
+```
+
+`health-chart-show` opens an eas view: hover tooltips, crosshair, zoom
+and pan work in a GUI, and `eas-agent` (`inspect`, `dispatch`, `log`,
+`selection`) reads and drives it as data. After `(require
+'health-chart-eas)` the templates are in eas's registry, so
+`(eas-agent "describe" "templates")`, `"example"`, `"check"` and
+`"render"` work on `health-bullet` and the rest.
+
+```
+                              Panel · alex
+                  4 markers, 2021-11-08 to 2025-09-15
+         LDL-C · mg/dL                HDL-C · mg/dL
+   │▲⠒⠤▲⢄⡀                    60┤██████████████████⢀◆⠤⠔●  ● ● optimal
+   │     ⠈▲⠒⠒▲⢄⣀                │█████████████⢀⡠⠔◆⠉⠁████  ◆ ◐ suboptimal
+100┤████████████▲⠉⠑⠒◆⠢⠤◆⢄⣀◆   50┤█████████◆⠤⠒◆⠁█████████  ▼ ▼ low
+   │███████████████████████     │████⢀⡠◆⠒⠉██████████████  ▲ ▲ high
+   │███████████████████████   40┤▼⠔⠒◆⠁┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+  0└─┬──────────┬──────────     └─┬──────────┬──────────
+    2022       2024              2022       2024
+
+       Vitamin D · ng/mL               TSH · mIU/L
+ 60┤███████████████████████  2.5┤███████████████████████
+   │█████████████████⣀⡠●⠒⠊●     │█████████●⠢⡀███████●███
+   │██████████████⡠⠒●██████     │████████⡜██⠈●⡀███⢀⠜⠈⠢⡀█
+ 40┤██████◆⠤⠒●⠉⠒◆⠉█████████     │███●⢄██⡜█████⠈⠒⢄⢠⠊███⠈●
+   │    ⡠⠊                   2.0┤█⢀⠎██⠣●█████████●██████
+ 20┤▼⠔⠒▼┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈     │●⠃█████████████████████
+   └─┬──────────┬──────────     └─┬──────────┬──────────
+    2022       2024              2022       2024
+```
+
+*`panel` as eas text: four markers of the synthetic sample, each on its
+own scale, bands shaded, every point a status glyph.*
+
+Write your own kind the same way: `templates/eas/health-KIND.json` with
+the example in `examples/eas/` (`examples/eas-examples.el` regenerates
+the bundled ones), then an entry in `health-chart-eas-kinds` naming the
+template and the function that builds its slots from the data.
 
 ## Screenshots
 
@@ -415,11 +492,14 @@ patterns were taken or rejected, and why, is in
 
 ## Templates
 
-A template is a chart program in the backend's own language with
-placeholders where the [chart spec](docs/chartspec.md) goes:
-`templates/vega-lite/KIND.vl.json` (a Vega-Lite spec, data inlined
-under `"data": {"values": {{data}}}`) and `templates/gnuplot/KIND.gp`
-(a gnuplot script, data inlined as `$data << EOD … EOD` blocks).
+A template is a chart program with slots or placeholders where the data
+goes. The bundled eas templates are described under
+[The eas backend](#the-eas-backend). The gnuplot backend (and a
+Vega-Lite template of your own) fills placeholders from the
+[chart spec](docs/chartspec.md): `templates/gnuplot/KIND.gp` (a gnuplot
+script, data inlined as `$data << EOD … EOD` blocks) and
+`vega-lite/KIND.vl.json` in a template directory of yours (a Vega-Lite
+spec, data inlined under `"data": {"values": {{data}}}`).
 
 Templates are looked up in `health-chart-template-directories` first,
 then the bundled `templates/`; the first `DIR/BACKEND/KIND.EXT` wins.
@@ -872,7 +952,7 @@ and exit 1. Set `EMACS` to choose the Emacs binary.
 | option | default |
 |---|---|
 | `health-chart-backend` | `auto` |
-| `health-chart-graphic-backends`, `-terminal-backends` | `(vega-lite gnuplot)`, `(gnuplot text)` |
+| `health-chart-graphic-backends`, `-terminal-backends` | `(eas vega-lite gnuplot)`, `(eas gnuplot text)` |
 | `health-chart-template-directories` | nil (bundled templates only) |
 | `health-chart-theme`, `health-chart-colors` | `auto`, per-role overrides |
 | `health-chart-image-width`, `-image-height`, `-image-scale` | 720, 360, 1 |
@@ -917,8 +997,10 @@ Faces: `health-chart-optimal`, `-normal`, `-suboptimal`,
 | `health-chart-backend.el` | backend registry, rendering options, template lookup |
 | `health-chart-tools.el` | finding and running vl2svg, gnuplot and rsvg-convert (async, with a timeout) |
 | `health-chart-engines.el` | the vega-lite and gnuplot template backends |
+| `health-chart-eas.el` | the eas adapters and domain transforms (status, reference-band, change, staleness, trend) |
+| `health-chart-eas-route.el` | kinds to eas templates, their bindings, render, live views, parity |
 | `health-chart-render.el` | backend selection, `render`, `write`, render explain |
-| `templates/` | the bundled Vega-Lite and gnuplot templates |
+| `templates/` | the bundled eas (`eas/`), gnuplot and Org templates; `examples/eas/` their example bindings |
 | `health-chart-text.el` | native unicode renderers |
 | `health-chart-svg.el` | native SVG renderers (obsolete) |
 | `health-chart-plot.el` | explain, plot, chart buffer, demo |
@@ -934,7 +1016,8 @@ Faces: `health-chart-optimal`, `-normal`, `-suboptimal`,
 
 ```sh
 make test       # ert, batch Emacs, offline; no biomarker install needed
-make compile    # byte-compile, warnings are errors
+make test EAS=/path/to/eas.el   # with the eas backend (default ../eas.el); its tests skip without
+make compile    # byte-compile, warnings are errors (the eas files only with eas.el)
 make checkdoc
 make lint PACKAGE_LINT=/path/to/package-lint   # dir holding package-lint.el
 make check      # compile + checkdoc + test
