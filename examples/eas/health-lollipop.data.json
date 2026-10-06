@@ -1,0 +1,73 @@
+{
+  "data": [
+    {
+      "date": "2024-03-04",
+      "flag": "normal",
+      "marker": "crp",
+      "opt-high": 1.0,
+      "person": "alex",
+      "ref-high": 3.0,
+      "unit": "mg/L",
+      "value": 2.4
+    },
+    {
+      "date": "2024-06-03",
+      "flag": "high",
+      "marker": "crp",
+      "opt-high": 1.0,
+      "person": "alex",
+      "ref-high": 3.0,
+      "unit": "mg/L",
+      "value": 3.6
+    },
+    {
+      "date": "2024-09-02",
+      "flag": "normal",
+      "marker": "crp",
+      "opt-high": 1.0,
+      "person": "alex",
+      "ref-high": 3.0,
+      "unit": "mg/L",
+      "value": 1.8
+    },
+    {
+      "date": "2024-12-02",
+      "flag": "normal",
+      "marker": "crp",
+      "opt-high": 1.0,
+      "person": "alex",
+      "ref-high": 3.0,
+      "unit": "mg/L",
+      "value": 1.2
+    },
+    {
+      "date": "2025-03-03",
+      "flag": "normal",
+      "marker": "crp",
+      "opt-high": 1.0,
+      "person": "alex",
+      "ref-high": 3.0,
+      "unit": "mg/L",
+      "value": 2.1
+    },
+    {
+      "date": "2025-06-02",
+      "flag": "high",
+      "marker": "crp",
+      "opt-high": 1.0,
+      "person": "alex",
+      "ref-high": 3.0,
+      "unit": "mg/L",
+      "value": 3.4
+    }
+  ],
+  "status_domain": ["◐ suboptimal", "▲ high"],
+  "status_range": ["#e09a00", "#d03b3b"],
+  "status_shape": ["diamond", "triangle-up"],
+  "subtitle": "latest 3.4 mg/L on 2025-06-02 · ▲ high",
+  "title": "hs-CRP · alex",
+  "x_format": "%b %Y",
+  "x_ticks": 6,
+  "y_title": "mg/L"
+}
+

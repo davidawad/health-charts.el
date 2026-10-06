@@ -1,0 +1,67 @@
+{
+  "data": [
+    {
+      "date": "2025-06-02",
+      "flag": "normal",
+      "marker": "ldl_c",
+      "opt-high": 70,
+      "person": "alex",
+      "ref-high": 100,
+      "ref-low": 0,
+      "unit": "mg/dL",
+      "value": 88
+    },
+    {
+      "date": "2025-06-02",
+      "flag": "normal",
+      "marker": "hdl_c",
+      "opt-low": 60,
+      "person": "alex",
+      "ref-low": 40,
+      "unit": "mg/dL",
+      "value": 61
+    },
+    {
+      "date": "2025-06-02",
+      "flag": "normal",
+      "marker": "glucose",
+      "opt-high": 90,
+      "opt-low": 72,
+      "person": "alex",
+      "ref-high": 99,
+      "ref-low": 70,
+      "unit": "mg/dL",
+      "value": 93
+    },
+    {
+      "date": "2025-06-02",
+      "flag": "normal",
+      "marker": "vitamin_d",
+      "opt-high": 60,
+      "opt-low": 40,
+      "person": "alex",
+      "ref-high": 100,
+      "ref-low": 30,
+      "unit": "ng/mL",
+      "value": 48
+    },
+    {
+      "date": "2025-06-02",
+      "flag": "normal",
+      "marker": "tsh",
+      "opt-high": 2.5,
+      "opt-low": 0.5,
+      "person": "alex",
+      "ref-high": 4.0,
+      "ref-low": 0.4,
+      "unit": "mIU/L",
+      "value": 2.1
+    }
+  ],
+  "status_domain": ["● optimal", "◐ suboptimal"],
+  "status_range": ["#0ca30c", "#e09a00"],
+  "status_shape": ["circle", "diamond"],
+  "subtitle": "latest draw per marker, each on its own scale",
+  "title": "Latest vs range · alex"
+}
+

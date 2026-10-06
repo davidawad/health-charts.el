@@ -1,0 +1,331 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "health-delta",
+    "version": "1.0.0",
+    "doc": "Percent change per marker between two draws, judged toward or away from target.",
+    "slots": {
+      "data": {
+        "shape": "biomarker",
+        "required": true,
+        "doc": "health-chart measurements (the biomarker adapter)"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Percent change per marker between two draws, judged toward or away from target.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "ref_color": {
+        "type": "string",
+        "default": "#b8b7ad",
+        "doc": "reference band"
+      },
+      "opt_color": {
+        "type": "string",
+        "default": "#0ca30c",
+        "doc": "optimal band"
+      },
+      "status_domain": {
+        "type": "array",
+        "items": "string",
+        "default": [
+          "\u25cf optimal",
+          "\u25cb normal",
+          "\u25d0 suboptimal",
+          "\u25bc low",
+          "\u25b2 high",
+          "? n/a"
+        ],
+        "doc": "status legend entries, glyph and word (never color alone)"
+      },
+      "status_range": {
+        "type": "array",
+        "items": "string",
+        "default": [
+          "#0ca30c",
+          "#2a78d6",
+          "#e09a00",
+          "#d03b3b",
+          "#d03b3b",
+          "#898781"
+        ]
+      },
+      "status_shape": {
+        "type": "array",
+        "items": "string",
+        "default": [
+          "circle",
+          "square",
+          "diamond",
+          "triangle-down",
+          "triangle-up",
+          "cross"
+        ]
+      },
+      "x_format": {
+        "type": "string",
+        "default": "%Y",
+        "doc": "time axis label format"
+      },
+      "x_ticks": {
+        "type": "integer",
+        "default": 5,
+        "doc": "about this many time axis ticks"
+      },
+      "verdict_domain": {
+        "type": "array",
+        "items": "string",
+        "default": [
+          "\u2714 improved",
+          "\u25cf on-target",
+          "\u2192 steady",
+          "\u2716 worsened",
+          "? n/a"
+        ]
+      },
+      "verdict_range": {
+        "type": "array",
+        "items": "string",
+        "default": [
+          "#0ca30c",
+          "#2a78d6",
+          "#898781",
+          "#d03b3b",
+          "#898781"
+        ]
+      }
+    },
+    "example": "../examples/eas/health-delta.data.json"
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": {
+    "step": 28
+  },
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "x-eas:transform": "status"
+    },
+    {
+      "x-eas:transform": "change"
+    },
+    {
+      "calculate": "datum.pct_label + ' ' + datum.verdict_glyph",
+      "as": "readout"
+    },
+    {
+      "calculate": "datum.label + '  ' + datum.change_label",
+      "as": "row_label"
+    }
+  ],
+  "encoding": {
+    "y": {
+      "field": "row_label",
+      "type": "nominal",
+      "sort": null,
+      "title": null,
+      "axis": {
+        "domain": false,
+        "ticks": false,
+        "labelLimit": 300
+      }
+    }
+  },
+  "layer": [
+    {
+      "name": "limits",
+      "mark": {
+        "type": "rule",
+        "opacity": 0
+      },
+      "transform": [
+        {
+          "calculate": "-datum.lim",
+          "as": "neg_lim"
+        }
+      ],
+      "encoding": {
+        "x": {
+          "field": "lim",
+          "type": "quantitative"
+        },
+        "x2": {
+          "field": "neg_lim"
+        }
+      }
+    },
+    {
+      "name": "change",
+      "mark": {
+        "type": "bar",
+        "cornerRadius": 2
+      },
+      "encoding": {
+        "x": {
+          "field": "pct",
+          "type": "quantitative",
+          "title": "% change since the earlier draw",
+          "scale": {
+            "zero": true,
+            "nice": false
+          }
+        },
+        "x2": {
+          "datum": 0
+        },
+        "color": {
+          "field": "verdict_label",
+          "type": "nominal",
+          "scale": {
+            "domain": {
+              "x-eas:slot": "verdict_domain"
+            },
+            "range": {
+              "x-eas:slot": "verdict_range"
+            }
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "tooltip": [
+          {
+            "field": "label",
+            "title": "marker"
+          },
+          {
+            "field": "pct_label",
+            "title": "change"
+          },
+          {
+            "field": "change_label",
+            "title": "values"
+          },
+          {
+            "field": "verdict_label",
+            "title": "verdict"
+          }
+        ]
+      }
+    },
+    {
+      "name": "zero",
+      "mark": {
+        "type": "rule",
+        "strokeWidth": 1.5,
+        "color": {
+          "x-eas:slot": "secondary"
+        }
+      },
+      "encoding": {
+        "x": {
+          "datum": 0,
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "name": "read-pos",
+      "transform": [
+        {
+          "filter": "datum.side == 'pos'"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "baseline": "middle",
+        "dx": 7,
+        "fontSize": 11.5,
+        "color": {
+          "x-eas:slot": "ink"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "pct",
+          "type": "quantitative"
+        },
+        "text": {
+          "field": "readout"
+        }
+      }
+    },
+    {
+      "name": "read-neg",
+      "transform": [
+        {
+          "filter": "datum.side == 'neg'"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "align": "right",
+        "baseline": "middle",
+        "dx": -7,
+        "fontSize": 11.5,
+        "color": {
+          "x-eas:slot": "ink"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "pct",
+          "type": "quantitative"
+        },
+        "text": {
+          "field": "readout"
+        }
+      }
+    }
+  ]
+}

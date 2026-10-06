@@ -1,0 +1,614 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "health-compare",
+    "version": "1.0.0",
+    "doc": "One marker over time for several people, overlaid on its reference and optimal bands.",
+    "slots": {
+      "data": {
+        "shape": "biomarker",
+        "required": true,
+        "doc": "health-chart measurements (the biomarker adapter)"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "One marker over time for several people, overlaid on its reference and optimal bands.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "ref_color": {
+        "type": "string",
+        "default": "#b8b7ad",
+        "doc": "reference band"
+      },
+      "opt_color": {
+        "type": "string",
+        "default": "#0ca30c",
+        "doc": "optimal band"
+      },
+      "status_domain": {
+        "type": "array",
+        "items": "string",
+        "default": [
+          "\u25cf optimal",
+          "\u25cb normal",
+          "\u25d0 suboptimal",
+          "\u25bc low",
+          "\u25b2 high",
+          "? n/a"
+        ],
+        "doc": "status legend entries, glyph and word (never color alone)"
+      },
+      "status_range": {
+        "type": "array",
+        "items": "string",
+        "default": [
+          "#0ca30c",
+          "#2a78d6",
+          "#e09a00",
+          "#d03b3b",
+          "#d03b3b",
+          "#898781"
+        ]
+      },
+      "status_shape": {
+        "type": "array",
+        "items": "string",
+        "default": [
+          "circle",
+          "square",
+          "diamond",
+          "triangle-down",
+          "triangle-up",
+          "cross"
+        ]
+      },
+      "x_format": {
+        "type": "string",
+        "default": "%Y",
+        "doc": "time axis label format"
+      },
+      "x_ticks": {
+        "type": "integer",
+        "default": 5,
+        "doc": "about this many time axis ticks"
+      },
+      "ref": {
+        "type": "boolean",
+        "default": true,
+        "doc": "show the reference band"
+      },
+      "optimal": {
+        "type": "boolean",
+        "default": true,
+        "doc": "show the optimal band"
+      },
+      "y_title": {
+        "type": "string",
+        "default": "",
+        "doc": "value axis title (the unit)"
+      },
+      "series_domain": {
+        "type": "array",
+        "items": "string",
+        "default": [
+          "alex",
+          "sam"
+        ],
+        "doc": "the people, in legend order"
+      },
+      "series_range": {
+        "type": "array",
+        "items": "string",
+        "default": [
+          "#2a78d6",
+          "#eb6834"
+        ]
+      },
+      "series_shape": {
+        "type": "array",
+        "items": "string",
+        "default": [
+          "circle",
+          "square"
+        ]
+      }
+    },
+    "example": "../examples/eas/health-compare.data.json"
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": 240,
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "x-eas:transform": "status"
+    },
+    {
+      "x-eas:transform": "reference-band",
+      "scale": "value",
+      "ref": {
+        "x-eas:slot": "ref"
+      },
+      "optimal": {
+        "x-eas:slot": "optimal"
+      }
+    },
+    {
+      "window": [
+        {
+          "op": "row_number",
+          "as": "rn"
+        }
+      ],
+      "sort": [
+        {
+          "field": "date",
+          "order": "descending"
+        }
+      ],
+      "groupby": [
+        "marker",
+        "person"
+      ]
+    },
+    {
+      "calculate": "datum.rn == 1 ? 1 : 0",
+      "as": "latest"
+    }
+  ],
+  "layer": [
+    {
+      "name": "frame",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "min",
+              "field": "x_lo",
+              "as": "x0"
+            },
+            {
+              "op": "max",
+              "field": "x_hi",
+              "as": "x1"
+            },
+            {
+              "op": "min",
+              "field": "y_lo",
+              "as": "y0"
+            },
+            {
+              "op": "max",
+              "field": "y_hi",
+              "as": "y1"
+            }
+          ]
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0
+      },
+      "encoding": {
+        "x": {
+          "field": "x0",
+          "type": "temporal"
+        },
+        "x2": {
+          "field": "x1"
+        },
+        "y": {
+          "field": "y0",
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": false
+          }
+        },
+        "y2": {
+          "field": "y1"
+        }
+      }
+    },
+    {
+      "name": "ref-band",
+      "transform": [
+        {
+          "filter": "isValid(datum.ref_y) && isValid(datum.ref_y2)"
+        },
+        {
+          "aggregate": [
+            {
+              "op": "min",
+              "field": "ref_y",
+              "as": "band_y"
+            },
+            {
+              "op": "max",
+              "field": "ref_y2",
+              "as": "band_y2"
+            }
+          ],
+          "groupby": [
+            "ref_label"
+          ]
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.28,
+        "color": {
+          "x-eas:slot": "ref_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "field": "band_y",
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": false
+          }
+        },
+        "y2": {
+          "field": "band_y2"
+        },
+        "tooltip": [
+          {
+            "field": "ref_label",
+            "title": "range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "opt-band",
+      "transform": [
+        {
+          "filter": "isValid(datum.opt_y) && isValid(datum.opt_y2)"
+        },
+        {
+          "aggregate": [
+            {
+              "op": "min",
+              "field": "opt_y",
+              "as": "band_y"
+            },
+            {
+              "op": "max",
+              "field": "opt_y2",
+              "as": "band_y2"
+            }
+          ],
+          "groupby": [
+            "opt_label"
+          ]
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.16,
+        "color": {
+          "x-eas:slot": "opt_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "field": "band_y",
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": false
+          }
+        },
+        "y2": {
+          "field": "band_y2"
+        },
+        "tooltip": [
+          {
+            "field": "opt_label",
+            "title": "range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "band-note",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "min",
+              "field": "date",
+              "as": "note_x"
+            },
+            {
+              "op": "max",
+              "field": "y_hi",
+              "as": "note_y"
+            }
+          ],
+          "groupby": [
+            "band_note"
+          ]
+        },
+        {
+          "filter": "datum.band_note != ''"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "baseline": "top",
+        "dx": 4,
+        "dy": 2,
+        "fontSize": 11,
+        "color": {
+          "x-eas:slot": "secondary"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "note_x",
+          "type": "temporal"
+        },
+        "y": {
+          "field": "note_y",
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": false
+          }
+        },
+        "text": {
+          "field": "band_note"
+        }
+      }
+    },
+    {
+      "name": "series",
+      "mark": {
+        "type": "line",
+        "strokeWidth": 2
+      },
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            },
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "y_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": false
+          }
+        },
+        "color": {
+          "field": "person",
+          "type": "nominal",
+          "scale": {
+            "domain": {
+              "x-eas:slot": "series_domain"
+            },
+            "range": {
+              "x-eas:slot": "series_range"
+            }
+          },
+          "legend": {
+            "title": null
+          }
+        }
+      }
+    },
+    {
+      "name": "draws",
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 100,
+        "opacity": 1,
+        "stroke": {
+          "x-eas:slot": "surface"
+        },
+        "strokeWidth": 1.5
+      },
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            },
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": false
+          }
+        },
+        "color": {
+          "field": "person",
+          "type": "nominal",
+          "scale": {
+            "domain": {
+              "x-eas:slot": "series_domain"
+            },
+            "range": {
+              "x-eas:slot": "series_range"
+            }
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "shape": {
+          "field": "person",
+          "type": "nominal",
+          "scale": {
+            "domain": {
+              "x-eas:slot": "series_domain"
+            },
+            "range": {
+              "x-eas:slot": "series_shape"
+            }
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "tooltip": [
+          {
+            "field": "person",
+            "title": "person"
+          },
+          {
+            "field": "date",
+            "type": "temporal",
+            "format": "%Y-%m-%d"
+          },
+          {
+            "field": "value_label",
+            "title": "value"
+          },
+          {
+            "field": "status_label",
+            "title": "status"
+          }
+        ]
+      }
+    },
+    {
+      "name": "latest",
+      "transform": [
+        {
+          "filter": "datum.latest == 1"
+        },
+        {
+          "calculate": "datum.person + ' ' + datum.value_label",
+          "as": "latest_text"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "align": "right",
+        "baseline": "middle",
+        "dx": -8,
+        "fontSize": 12,
+        "fontWeight": "bold"
+      },
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            },
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": false
+          }
+        },
+        "text": {
+          "field": "latest_text"
+        },
+        "color": {
+          "field": "person",
+          "type": "nominal",
+          "scale": {
+            "domain": {
+              "x-eas:slot": "series_domain"
+            },
+            "range": {
+              "x-eas:slot": "series_range"
+            }
+          },
+          "legend": {
+            "title": null
+          }
+        }
+      }
+    }
+  ]
+}
