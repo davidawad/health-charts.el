@@ -44,9 +44,14 @@
 
 (defun health-chart-vega-lite-explain (spec format &optional _out)
   "Return the vega-lite plan for SPEC in FORMAT (see `health-chart-backends')."
-  (let* ((filled (health-chart--template-program 'vega-lite spec format))
-         (scale (or (plist-get spec :scale) health-chart-image-scale))
-         (svg (health-chart--command health-chart-vl2svg-command "vl2svg" "vl2svg"))
+  (health-chart--vega-lite-plan (health-chart--template-program 'vega-lite spec format)
+                                format (or (plist-get spec :scale) health-chart-image-scale)))
+
+(defun health-chart--vega-lite-plan (filled format scale)
+  "The vega-lite plan writing FORMAT at pixel ratio SCALE from FILLED.
+FILLED is (TEMPLATE-FILE . PROGRAM): a filled user template, or the
+Vega-Lite an eas template resolves to."
+  (let* ((svg (health-chart--command health-chart-vl2svg-command "vl2svg" "vl2svg"))
          (rsvg (lambda (fmt)
                  (list (list :argv svg)
                        (list :argv (append health-chart-rsvg-convert-command
