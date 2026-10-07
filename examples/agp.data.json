@@ -1,5 +1,6 @@
 {
  "title": "Ambulatory glucose profile, 14 days (synthetic)",
+ "subtitle": "synthetic data; the target range is illustrative (the data source or care team supplies the real one)",
  "low": 70,
  "high": 180,
  "unit": "mg/dL",

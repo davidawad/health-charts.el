@@ -3,7 +3,7 @@
   "x-eas": {
     "template": "time-in-range",
     "version": "1.0.0",
-    "doc": "Time in range: the share of glucose readings very low, low, in range, high and very high per period (weeks, days, any label you give), computed from the raw readings; the consensus target is over 70 percent in range.",
+    "doc": "Time in range: the share of glucose readings very low, low, in range, high and very high per period (weeks, days, any label you give), computed from the raw readings against the four cut-offs from the data source (all required). Out-of-range shares are red (very low and very high solid, low and high tinted), in range is green. Shares have no warning margin, so there is no yellow. An optional target_pct draws a target tick on the in-range share.",
     "slots": {
       "data": {
         "shape": "plist",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "Time in range: the share of glucose readings very low, low, in range, high and very high per period (weeks, days, any label you give), computed from the raw readings; the consensus target is over 70 percent in range.",
+        "default": "Time in range: the share of glucose readings very low, low, in range, high and very high per period (weeks, days, any label you give), computed from the raw readings against the four cut-offs from the data source (all required). Out-of-range shares are red (very low and very high solid, low and high tinted), in range is green. Shares have no warning margin, so there is no yellow. An optional target_pct draws a target tick on the in-range share.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,44 +29,52 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "very_low": {
         "type": "number",
-        "default": 54,
-        "doc": "below this: very low (consensus level 2 hypoglycemia, mg/dL)"
+        "required": true,
+        "doc": "below this: very low; from the data source or care team (no built-in default)"
       },
       "low": {
         "type": "number",
-        "default": 70,
-        "doc": "below this: low; the bottom of the target range (mg/dL)"
+        "required": true,
+        "doc": "below this: low; the bottom of the in-range band; from the data source or care team (no built-in default)"
       },
       "high": {
         "type": "number",
-        "default": 180,
-        "doc": "above this: high; the top of the target range (mg/dL)"
+        "required": true,
+        "doc": "above this: high; the top of the in-range band; from the data source or care team (no built-in default)"
       },
       "very_high": {
         "type": "number",
-        "default": 250,
-        "doc": "above this: very high (mg/dL)"
+        "required": true,
+        "doc": "above this: very high; from the data source or care team (no built-in default)"
+      },
+      "target_pct": {
+        "type": "number",
+        "default": null,
+        "doc": "optional goal for the in-range share, in percent, from the data source or care team; when given a tick marks it on the in-range segment of each period (null: nothing is drawn)"
+      },
+      "bad_color": {
+        "type": "string",
+        "doc": "out of range: very low and very high solid, low and high tinted (the theme's red)"
+      },
+      "ok_color": {
+        "type": "string",
+        "doc": "in range (the theme's green)"
       }
     },
     "example": "examples/time-in-range.data.json",
@@ -112,7 +120,10 @@
           ],
           "code": "range_inverted"
         }
-      ]
+      ],
+      "slots": {
+        "target_pct": "range:0:100"
+      }
     }
   },
   "title": {
@@ -148,7 +159,7 @@
       "as": "per"
     },
     {
-      "calculate": "datum.ord == 0 ? '\u25c6 very low' : datum.ord == 1 ? '\u25bc low' : datum.ord == 2 ? '\u25cf in range' : datum.ord == 3 ? '\u25b2 high' : '\u25a0 very high'",
+      "calculate": "datum.ord == 0 ? 'very low' : datum.ord == 1 ? 'low' : datum.ord == 2 ? 'in range' : datum.ord == 3 ? 'high' : 'very high'",
       "as": "zone"
     },
     {
@@ -196,6 +207,10 @@
     {
       "calculate": "(datum.s0 + datum.s1) / 2",
       "as": "mid"
+    },
+    {
+      "calculate": "datum.ord == 1 || datum.ord == 3 ? 0.5 : 1",
+      "as": "tint"
     },
     {
       "calculate": "format(100 * datum.count / datum.total, '.0f') + '%'",
@@ -263,18 +278,28 @@
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25c6 very low",
-              "\u25bc low",
-              "\u25cf in range",
-              "\u25b2 high",
-              "\u25a0 very high"
+              "very low",
+              "low",
+              "in range",
+              "high",
+              "very high"
             ],
             "range": [
-              "#8b1e1e",
-              "#d03b3b",
-              "#2a78d6",
-              "#e09a00",
-              "#b35c00"
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "ok_color"
+              },
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "bad_color"
+              }
             ]
           },
           "legend": {
@@ -290,7 +315,13 @@
             "field": "detail",
             "title": "readings"
           }
-        ]
+        ],
+        "opacity": {
+          "field": "tint",
+          "type": "quantitative",
+          "scale": null,
+          "legend": null
+        }
       }
     },
     {
@@ -316,6 +347,51 @@
         },
         "text": {
           "field": "pct"
+        }
+      }
+    },
+    {
+      "x-eas:when": "target_pct",
+      "spec": {
+        "name": "target",
+        "transform": [
+          {
+            "filter": "datum.ord == 2"
+          },
+          {
+            "calculate": {
+              "x-eas:expr": "datum.s0 + {{target_pct}} / 100"
+            },
+            "as": "tx"
+          },
+          {
+            "filter": "datum.tx <= 1"
+          }
+        ],
+        "mark": {
+          "type": "tick",
+          "orient": "vertical",
+          "thickness": 2,
+          "height": {
+            "band": 0.9
+          },
+          "color": {
+            "x-eas:slot": "ink"
+          }
+        },
+        "encoding": {
+          "x": {
+            "field": "tx",
+            "type": "quantitative"
+          },
+          "tooltip": [
+            {
+              "value": {
+                "x-eas:text": "target {{target_pct}}% in range (tick: where the in-range share would meet it)"
+              },
+              "title": "target"
+            }
+          ]
         }
       }
     }

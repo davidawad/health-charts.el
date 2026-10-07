@@ -1,5 +1,6 @@
 {
  "title": "Vitals dashboard (synthetic)",
+ "subtitle": "synthetic data; ranges illustrative, the data source owns the real ones; rr has an upper limit only",
  "hr_low": 60,
  "hr_high": 100,
  "sbp_low": 90,
@@ -10,7 +11,6 @@
  "temp_high": 37.2,
  "spo2_low": 95,
  "spo2_high": 100,
- "rr_low": 12,
  "rr_high": 20,
  "data": [
   {

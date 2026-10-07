@@ -3,12 +3,12 @@
   "x-eas": {
     "template": "bp-trend",
     "version": "1.0.0",
-    "doc": "Blood pressure over time: each reading is a bar from diastolic to systolic, drawn over the normal systolic and diastolic bands; readings outside either band are flagged by color and shape.",
+    "doc": "Blood pressure over time: each reading is a bar from diastolic to systolic, drawn over the systolic and diastolic ranges (green, yellow near each limit). Systolic and diastolic are judged separately; the reading is colored by the worse of the two: red out of range (triangle-down L low, triangle-up H high), yellow near a limit, green in range, grey when neither has a range. The ranges come from the data source via the sys_low/sys_high/dia_low/dia_high slots.",
     "slots": {
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {time, systolic, diastolic}: an ISO date or datetime and two mmHg values, oldest first"
+        "doc": "rows {time, systolic, diastolic, warn_margin?}: an ISO date or datetime and two mmHg values, oldest first; warn_margin (a fraction) overrides the warning margin for that reading"
       },
       "title": {
         "type": "string",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "Blood pressure over time: each reading is a bar from diastolic to systolic, drawn over the normal systolic and diastolic bands; readings outside either band are flagged by color and shape.",
+        "default": "Blood pressure over time: each reading is a bar from diastolic to systolic, drawn over the systolic and diastolic ranges (green, yellow near each limit). Systolic and diastolic are judged separately; the reading is colored by the worse of the two: red out of range (triangle-down L low, triangle-up H high), yellow near a limit, green in range, grey when neither has a range. The ranges come from the data source via the sys_low/sys_high/dia_low/dia_high slots.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,44 +29,39 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "sys_low": {
         "type": "number",
-        "doc": "lower limit of the normal systolic range",
-        "required": true
+        "default": null,
+        "doc": "lower limit of the systolic range, from the data source; null leaves that side open (both null: that pressure is not judged)"
       },
       "sys_high": {
         "type": "number",
-        "doc": "upper limit of the normal systolic range",
-        "required": true
+        "default": null,
+        "doc": "upper limit of the systolic range, from the data source; null leaves that side open (both null: that pressure is not judged)"
       },
       "dia_low": {
         "type": "number",
-        "doc": "lower limit of the normal diastolic range",
-        "required": true
+        "default": null,
+        "doc": "lower limit of the diastolic range, from the data source; null leaves that side open (both null: that pressure is not judged)"
       },
       "dia_high": {
         "type": "number",
-        "doc": "upper limit of the normal diastolic range",
-        "required": true
+        "default": null,
+        "doc": "upper limit of the diastolic range, from the data source; null leaves that side open (both null: that pressure is not judged)"
       },
       "band_label": {
         "type": "string",
@@ -79,17 +74,27 @@
       },
       "line_color": {
         "type": "string",
-        "default": "#2a78d6"
+        "doc": "neutral line color (the theme's)"
       },
-      "flag_color": {
+      "bad_color": {
         "type": "string",
-        "default": "#d03b3b",
-        "doc": "out-of-range readings"
+        "doc": "out of range (the theme's red)"
       },
-      "band_color": {
+      "warn_color": {
         "type": "string",
-        "default": "#2a9d8f",
-        "doc": "normal range bands"
+        "doc": "near a limit (the theme's yellow)"
+      },
+      "ok_color": {
+        "type": "string",
+        "doc": "in range (the theme's green)"
+      },
+      "unknown_color": {
+        "type": "string",
+        "doc": "no range to judge by (the theme's grey)"
+      },
+      "warn_margin": {
+        "type": "number",
+        "doc": "width of the yellow zone inside each limit, as a fraction of the range width (of the one bound for a one-sided range)"
       },
       "x_format": {
         "type": "string",
@@ -118,7 +123,8 @@
           "fields": {
             "time": "time",
             "systolic": "nonneg",
-            "diastolic": "nonneg"
+            "diastolic": "nonneg",
+            "warn_margin": "?range:0:1"
           },
           "order": "time",
           "rows": [
@@ -147,7 +153,10 @@
           ],
           "code": "range_inverted"
         }
-      ]
+      ],
+      "slots": {
+        "warn_margin": "range:0:1"
+      }
     }
   },
   "title": {
@@ -171,14 +180,44 @@
   },
   "transform": [
     {
-      "calculate": {
-        "x-eas:expr": "datum.systolic > {{sys_high}} || datum.diastolic > {{dia_high}} ? '\u25b2 high' : datum.systolic < {{sys_low}} || datum.diastolic < {{dia_low}} ? '\u25bc low' : '\u25cf in range'"
+      "x-eas:transform": "health-status",
+      "value": "systolic",
+      "prefix": "sys",
+      "low": {
+        "x-eas:slot": "sys_low"
       },
-      "as": "status"
+      "high": {
+        "x-eas:slot": "sys_high"
+      },
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      }
+    },
+    {
+      "x-eas:transform": "health-status",
+      "value": "diastolic",
+      "prefix": "dia",
+      "low": {
+        "x-eas:slot": "dia_low"
+      },
+      "high": {
+        "x-eas:slot": "dia_high"
+      },
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      }
     },
     {
       "calculate": "datum.systolic + '/' + datum.diastolic",
       "as": "reading"
+    },
+    {
+      "calculate": "(datum.sys_label == 'low' || datum.sys_label == 'high') ? datum.sys_label : (datum.dia_label == 'low' || datum.dia_label == 'high') ? datum.dia_label : (datum.sys_label == 'near limit' || datum.dia_label == 'near limit') ? 'near limit' : (datum.sys_label == 'in range' || datum.dia_label == 'in range') ? 'in range' : 'no range'",
+      "as": "status_label"
+    },
+    {
+      "calculate": "datum.status_label == 'low' ? 'L' : datum.status_label == 'high' ? 'H' : ''",
+      "as": "status_flag"
     }
   ],
   "layer": [
@@ -188,49 +227,209 @@
         {
           "aggregate": [
             {
-              "op": "count",
-              "as": "n"
+              "op": "max",
+              "field": "sys_band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "sys_band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "sys_zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "sys_zone_high",
+              "as": "zh"
             }
           ]
         },
         {
-          "calculate": {
-            "x-eas:expr": "{{sys_low}}"
-          },
-          "as": "lo"
+          "filter": "isValid(datum.lo)"
         },
         {
-          "calculate": {
-            "x-eas:expr": "{{sys_high}}"
-          },
-          "as": "hi"
+          "calculate": "isValid(datum.zl) ? datum.zl : datum.lo",
+          "as": "y0"
+        },
+        {
+          "calculate": "isValid(datum.zh) ? datum.zh : datum.hi",
+          "as": "y1"
+        },
+        {
+          "filter": "true"
         }
       ],
       "mark": {
         "type": "rect",
-        "opacity": 0.18,
+        "opacity": 0.22,
         "color": {
-          "x-eas:slot": "band_color"
+          "x-eas:slot": "ok_color"
         }
       },
       "encoding": {
         "y": {
-          "field": "lo",
           "type": "quantitative",
           "scale": {
             "zero": false,
             "nice": true
-          }
+          },
+          "field": "y0"
         },
         "y2": {
-          "field": "hi"
+          "field": "y1"
         },
         "tooltip": [
           {
             "value": {
               "x-eas:text": "{{band_label}}"
             },
-            "title": "range"
+            "title": "systolic range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "systolic-warn-low",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "max",
+              "field": "sys_band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "sys_band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "sys_zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "sys_zone_high",
+              "as": "zh"
+            }
+          ]
+        },
+        {
+          "filter": "isValid(datum.lo)"
+        },
+        {
+          "calculate": "datum.lo",
+          "as": "y0"
+        },
+        {
+          "calculate": "datum.zl",
+          "as": "y1"
+        },
+        {
+          "filter": "isValid(datum.zl)"
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.35,
+        "color": {
+          "x-eas:slot": "warn_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          },
+          "field": "y0"
+        },
+        "y2": {
+          "field": "y1"
+        },
+        "tooltip": [
+          {
+            "value": {
+              "x-eas:text": "{{band_label}}"
+            },
+            "title": "systolic range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "systolic-warn-high",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "max",
+              "field": "sys_band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "sys_band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "sys_zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "sys_zone_high",
+              "as": "zh"
+            }
+          ]
+        },
+        {
+          "filter": "isValid(datum.lo)"
+        },
+        {
+          "calculate": "datum.zh",
+          "as": "y0"
+        },
+        {
+          "calculate": "datum.hi",
+          "as": "y1"
+        },
+        {
+          "filter": "isValid(datum.zh)"
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.35,
+        "color": {
+          "x-eas:slot": "warn_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          },
+          "field": "y0"
+        },
+        "y2": {
+          "field": "y1"
+        },
+        "tooltip": [
+          {
+            "value": {
+              "x-eas:text": "{{band_label}}"
+            },
+            "title": "systolic range"
           }
         ]
       }
@@ -241,49 +440,209 @@
         {
           "aggregate": [
             {
-              "op": "count",
-              "as": "n"
+              "op": "max",
+              "field": "dia_band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "dia_band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "dia_zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "dia_zone_high",
+              "as": "zh"
             }
           ]
         },
         {
-          "calculate": {
-            "x-eas:expr": "{{dia_low}}"
-          },
-          "as": "lo"
+          "filter": "isValid(datum.lo)"
         },
         {
-          "calculate": {
-            "x-eas:expr": "{{dia_high}}"
-          },
-          "as": "hi"
+          "calculate": "isValid(datum.zl) ? datum.zl : datum.lo",
+          "as": "y0"
+        },
+        {
+          "calculate": "isValid(datum.zh) ? datum.zh : datum.hi",
+          "as": "y1"
+        },
+        {
+          "filter": "true"
         }
       ],
       "mark": {
         "type": "rect",
-        "opacity": 0.18,
+        "opacity": 0.22,
         "color": {
-          "x-eas:slot": "band_color"
+          "x-eas:slot": "ok_color"
         }
       },
       "encoding": {
         "y": {
-          "field": "lo",
           "type": "quantitative",
           "scale": {
             "zero": false,
             "nice": true
-          }
+          },
+          "field": "y0"
         },
         "y2": {
-          "field": "hi"
+          "field": "y1"
         },
         "tooltip": [
           {
             "value": {
               "x-eas:text": "{{band_label}}"
             },
-            "title": "range"
+            "title": "diastolic range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "diastolic-warn-low",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "max",
+              "field": "dia_band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "dia_band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "dia_zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "dia_zone_high",
+              "as": "zh"
+            }
+          ]
+        },
+        {
+          "filter": "isValid(datum.lo)"
+        },
+        {
+          "calculate": "datum.lo",
+          "as": "y0"
+        },
+        {
+          "calculate": "datum.zl",
+          "as": "y1"
+        },
+        {
+          "filter": "isValid(datum.zl)"
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.35,
+        "color": {
+          "x-eas:slot": "warn_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          },
+          "field": "y0"
+        },
+        "y2": {
+          "field": "y1"
+        },
+        "tooltip": [
+          {
+            "value": {
+              "x-eas:text": "{{band_label}}"
+            },
+            "title": "diastolic range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "diastolic-warn-high",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "max",
+              "field": "dia_band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "dia_band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "dia_zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "dia_zone_high",
+              "as": "zh"
+            }
+          ]
+        },
+        {
+          "filter": "isValid(datum.lo)"
+        },
+        {
+          "calculate": "datum.zh",
+          "as": "y0"
+        },
+        {
+          "calculate": "datum.hi",
+          "as": "y1"
+        },
+        {
+          "filter": "isValid(datum.zh)"
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.35,
+        "color": {
+          "x-eas:slot": "warn_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          },
+          "field": "y0"
+        },
+        "y2": {
+          "field": "y1"
+        },
+        "tooltip": [
+          {
+            "value": {
+              "x-eas:text": "{{band_label}}"
+            },
+            "title": "diastolic range"
           }
         ]
       }
@@ -337,8 +696,16 @@
             "title": "systolic/diastolic"
           },
           {
-            "field": "status",
+            "field": "status_label",
             "title": "status"
+          },
+          {
+            "field": "sys_label",
+            "title": "systolic"
+          },
+          {
+            "field": "dia_label",
+            "title": "diastolic"
           }
         ]
       }
@@ -380,23 +747,31 @@
           "field": "systolic"
         },
         "color": {
-          "field": "status",
+          "field": "status_label",
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25bc low",
-              "\u25cf in range",
-              "\u25b2 high"
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
             ],
             "range": [
               {
-                "x-eas:slot": "flag_color"
+                "x-eas:slot": "bad_color"
               },
               {
-                "x-eas:slot": "line_color"
+                "x-eas:slot": "warn_color"
               },
               {
-                "x-eas:slot": "flag_color"
+                "x-eas:slot": "ok_color"
+              },
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "unknown_color"
               }
             ]
           },
@@ -405,18 +780,22 @@
           }
         },
         "shape": {
-          "field": "status",
+          "field": "status_label",
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25bc low",
-              "\u25cf in range",
-              "\u25b2 high"
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
             ],
             "range": [
               "triangle-down",
+              "diamond",
               "circle",
-              "triangle-up"
+              "triangle-up",
+              "square"
             ]
           },
           "legend": null
@@ -432,8 +811,16 @@
             "title": "systolic/diastolic"
           },
           {
-            "field": "status",
+            "field": "status_label",
             "title": "status"
+          },
+          {
+            "field": "sys_label",
+            "title": "systolic"
+          },
+          {
+            "field": "dia_label",
+            "title": "diastolic"
           }
         ]
       }
@@ -475,23 +862,31 @@
           "field": "diastolic"
         },
         "color": {
-          "field": "status",
+          "field": "status_label",
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25bc low",
-              "\u25cf in range",
-              "\u25b2 high"
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
             ],
             "range": [
               {
-                "x-eas:slot": "flag_color"
+                "x-eas:slot": "bad_color"
               },
               {
-                "x-eas:slot": "line_color"
+                "x-eas:slot": "warn_color"
               },
               {
-                "x-eas:slot": "flag_color"
+                "x-eas:slot": "ok_color"
+              },
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "unknown_color"
               }
             ]
           },
@@ -500,18 +895,22 @@
           }
         },
         "shape": {
-          "field": "status",
+          "field": "status_label",
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25bc low",
-              "\u25cf in range",
-              "\u25b2 high"
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
             ],
             "range": [
               "triangle-down",
+              "diamond",
               "circle",
-              "triangle-up"
+              "triangle-up",
+              "square"
             ]
           },
           "legend": null
@@ -527,10 +926,64 @@
             "title": "systolic/diastolic"
           },
           {
-            "field": "status",
+            "field": "status_label",
             "title": "status"
+          },
+          {
+            "field": "sys_label",
+            "title": "systolic"
+          },
+          {
+            "field": "dia_label",
+            "title": "diastolic"
           }
         ]
+      }
+    },
+    {
+      "name": "flags",
+      "transform": [
+        {
+          "filter": "datum.status_flag != ''"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "baseline": "bottom",
+        "dy": -9,
+        "fontSize": 12,
+        "fontWeight": "bold",
+        "color": {
+          "x-eas:slot": "bad_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "time",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "grid": false,
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            }
+          }
+        },
+        "y": {
+          "field": "systolic",
+          "type": "quantitative",
+          "title": null,
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "text": {
+          "field": "status_flag"
+        }
       }
     }
   ]

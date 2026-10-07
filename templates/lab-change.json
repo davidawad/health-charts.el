@@ -3,12 +3,12 @@
   "x-eas": {
     "template": "lab-change",
     "version": "1.0.0",
-    "doc": "Before and after for each analyte on its own reference range: a dumbbell from the earlier result (hollow) to the later one (filled). Improved means nearer the range (or, inside it, nearer its middle); worsened means further; marked by color, glyph and label.",
+    "doc": "Before and after for each analyte on its own reference range: a dumbbell from the earlier result (hollow) to the later one (filled) over the range bar (green, yellow near each limit). Each marker is colored by its own status (red out of range, yellow near a limit, green in range, grey with no range) and shaped by direction. The connecting line and the word at the right say how the result moved, in neutral colors: improved (nearer the range, or inside it nearer its middle), worsened, unchanged, or no range when no direction can be decided; this is not a health status.",
     "slots": {
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {analyte, unit?, before, after, ref_low, ref_high}: two results per analyte"
+        "doc": "rows {analyte, unit?, before, after, ref_low?, ref_high?, warn_low?, warn_high?, warn_margin?}: two results per analyte; ref_low and ref_high come from the data source (either may be missing: one-sided; both missing: grey markers and no direction); the warn fields override the yellow zone of that analyte"
       },
       "title": {
         "type": "string",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "Before and after for each analyte on its own reference range: a dumbbell from the earlier result (hollow) to the later one (filled). Improved means nearer the range (or, inside it, nearer its middle); worsened means further; marked by color, glyph and label.",
+        "default": "Before and after for each analyte on its own reference range: a dumbbell from the earlier result (hollow) to the later one (filled) over the range bar (green, yellow near each limit). Each marker is colored by its own status (red out of range, yellow near a limit, green in range, grey with no range) and shaped by direction. The connecting line and the word at the right say how the result moved, in neutral colors: improved (nearer the range, or inside it nearer its middle), worsened, unchanged, or no range when no direction can be decided; this is not a health status.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,44 +29,43 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
-      "band_color": {
+      "line_color": {
         "type": "string",
-        "default": "#2a9d8f",
-        "doc": "reference range bar"
+        "doc": "the connecting line of an improved result (the theme's neutral line color)"
       },
-      "improved_color": {
+      "bad_color": {
         "type": "string",
-        "default": "#0ca30c",
-        "doc": "improved"
+        "doc": "out of range (the theme's red)"
       },
-      "worsened_color": {
+      "warn_color": {
         "type": "string",
-        "default": "#d03b3b",
-        "doc": "worsened"
+        "doc": "near a limit (the theme's yellow)"
       },
-      "same_color": {
+      "ok_color": {
         "type": "string",
-        "default": "#898781",
-        "doc": "unchanged"
+        "doc": "in range (the theme's green)"
+      },
+      "unknown_color": {
+        "type": "string",
+        "doc": "no range to judge by (the theme's grey)"
+      },
+      "warn_margin": {
+        "type": "number",
+        "doc": "width of the yellow zone inside each limit, as a fraction of the range width (of the one bound for a one-sided range); a row's warn_margin overrides it"
       },
       "before_title": {
         "type": "string",
@@ -89,8 +88,11 @@
             "unit": "?string",
             "before": "number",
             "after": "number",
-            "ref_low": "number",
-            "ref_high": "number"
+            "ref_low": "?number",
+            "ref_high": "?number",
+            "warn_low": "?number",
+            "warn_high": "?number",
+            "warn_margin": "?range:0:1"
           },
           "rows": [
             {
@@ -99,6 +101,20 @@
                 "ref_high"
               ],
               "code": "range_inverted"
+            },
+            {
+              "le": [
+                "ref_low",
+                "warn_low"
+              ],
+              "code": "warn_outside_range"
+            },
+            {
+              "le": [
+                "warn_high",
+                "ref_high"
+              ],
+              "code": "warn_outside_range"
             }
           ]
         }
@@ -110,7 +126,10 @@
       "svg_size": [
         1000,
         400
-      ]
+      ],
+      "slots": {
+        "warn_margin": "range:0:1"
+      }
     }
   },
   "title": {
@@ -136,24 +155,58 @@
   },
   "transform": [
     {
-      "calculate": "max(datum.ref_low - datum.after, datum.after - datum.ref_high, 0) < max(datum.ref_low - datum.before, datum.before - datum.ref_high, 0) ? '\u2714 improved' : max(datum.ref_low - datum.after, datum.after - datum.ref_high, 0) > max(datum.ref_low - datum.before, datum.before - datum.ref_high, 0) ? '\u2716 worsened' : (abs(datum.after - (datum.ref_low + datum.ref_high) / 2) < abs(datum.before - (datum.ref_low + datum.ref_high) / 2) ? '\u2714 improved' : abs(datum.after - (datum.ref_low + datum.ref_high) / 2) > abs(datum.before - (datum.ref_low + datum.ref_high) / 2) ? '\u2716 worsened' : '\u25cf unchanged')",
+      "x-eas:transform": "health-status",
+      "value": "before",
+      "low_field": "ref_low",
+      "high_field": "ref_high",
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      },
+      "prefix": "bef",
+      "normalize": true
+    },
+    {
+      "x-eas:transform": "health-status",
+      "value": "after",
+      "low_field": "ref_low",
+      "high_field": "ref_high",
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      },
+      "prefix": "aft",
+      "normalize": true
+    },
+    {
+      "calculate": "max(isValid(datum.ref_low) ? datum.ref_low - datum.before : 0, isValid(datum.ref_high) ? datum.before - datum.ref_high : 0, 0)",
+      "as": "dist_before"
+    },
+    {
+      "calculate": "max(isValid(datum.ref_low) ? datum.ref_low - datum.after : 0, isValid(datum.ref_high) ? datum.after - datum.ref_high : 0, 0)",
+      "as": "dist_after"
+    },
+    {
+      "calculate": "(isValid(datum.ref_low) && isValid(datum.ref_high)) ? abs(datum.before - (datum.ref_low + datum.ref_high) / 2) : 0",
+      "as": "mid_before"
+    },
+    {
+      "calculate": "(isValid(datum.ref_low) && isValid(datum.ref_high)) ? abs(datum.after - (datum.ref_low + datum.ref_high) / 2) : 0",
+      "as": "mid_after"
+    },
+    {
+      "calculate": "!isValid(datum.ref_low) && !isValid(datum.ref_high) ? 'no range' : datum.dist_after < datum.dist_before ? 'improved' : datum.dist_after > datum.dist_before ? 'worsened' : datum.after == datum.before ? 'unchanged' : (isValid(datum.ref_low) && isValid(datum.ref_high)) ? (datum.mid_after < datum.mid_before ? 'improved' : datum.mid_after > datum.mid_before ? 'worsened' : 'unchanged') : datum.dist_after > 0 ? 'unchanged' : 'no range'",
       "as": "verdict"
-    },
-    {
-      "calculate": "max(-0.5, min(1.5, (datum.before - datum.ref_low) / (datum.ref_high - datum.ref_low)))",
-      "as": "pos_before"
-    },
-    {
-      "calculate": "max(-0.5, min(1.5, (datum.after - datum.ref_low) / (datum.ref_high - datum.ref_low)))",
-      "as": "pos_after"
     },
     {
       "calculate": "datum.analyte + '  ' + datum.before + ' > ' + datum.after + (isValid(datum.unit) ? ' ' + datum.unit : '')",
       "as": "row_label"
     },
     {
-      "calculate": "datum.ref_low + ' to ' + datum.ref_high",
+      "calculate": "datum.bef_range_text",
       "as": "range_text"
+    },
+    {
+      "calculate": "datum.verdict",
+      "as": "verdict_text"
     }
   ],
   "encoding": {
@@ -172,14 +225,19 @@
   "layer": [
     {
       "name": "range",
+      "transform": [
+        {
+          "filter": "isValid(datum.bef_pos)"
+        }
+      ],
       "mark": {
         "type": "rect",
         "height": {
           "band": 0.5
         },
-        "opacity": 0.3,
+        "opacity": 0.35,
         "color": {
-          "x-eas:slot": "band_color"
+          "x-eas:slot": "ok_color"
         }
       },
       "encoding": {
@@ -188,18 +246,106 @@
           "scale": {
             "domain": [
               -0.6,
-              1.6
+              2.1
             ],
             "nice": false,
             "zero": false
           },
-          "datum": 0,
-          "title": "position within each reference range (left edge = low limit, right edge = high limit)",
+          "title": "position within each reference range (green in range, yellow near a limit)",
           "axis": {
             "labels": false,
             "ticks": false,
             "grid": false
+          },
+          "field": "bef_ok_from"
+        },
+        "x2": {
+          "field": "bef_ok_to"
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "range_text",
+            "title": "reference range"
           }
+        ]
+      }
+    },
+    {
+      "name": "warn-low",
+      "transform": [
+        {
+          "filter": "isValid(datum.bef_warn_lo_pos)"
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "height": {
+          "band": 0.5
+        },
+        "opacity": 0.6,
+        "color": {
+          "x-eas:slot": "warn_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              2.1
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "datum": 0
+        },
+        "x2": {
+          "field": "bef_warn_lo_pos"
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "range_text",
+            "title": "reference range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "warn-high",
+      "transform": [
+        {
+          "filter": "isValid(datum.bef_warn_hi_pos)"
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "height": {
+          "band": 0.5
+        },
+        "opacity": 0.6,
+        "color": {
+          "x-eas:slot": "warn_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              2.1
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "field": "bef_warn_hi_pos"
         },
         "x2": {
           "datum": 1
@@ -216,10 +362,18 @@
       }
     },
     {
-      "name": "change",
+      "name": "improved",
+      "transform": [
+        {
+          "filter": "isValid(datum.bef_pos) && isValid(datum.aft_pos) && (datum.verdict == 'improved')"
+        }
+      ],
       "mark": {
         "type": "rule",
-        "strokeWidth": 3
+        "strokeWidth": 3,
+        "color": {
+          "x-eas:slot": "line_color"
+        }
       },
       "encoding": {
         "x": {
@@ -227,40 +381,15 @@
           "scale": {
             "domain": [
               -0.6,
-              1.6
+              2.1
             ],
             "nice": false,
             "zero": false
           },
-          "field": "pos_before"
+          "field": "bef_pos"
         },
         "x2": {
-          "field": "pos_after"
-        },
-        "color": {
-          "field": "verdict",
-          "type": "nominal",
-          "scale": {
-            "domain": [
-              "\u2714 improved",
-              "\u2716 worsened",
-              "\u25cf unchanged"
-            ],
-            "range": [
-              {
-                "x-eas:slot": "improved_color"
-              },
-              {
-                "x-eas:slot": "worsened_color"
-              },
-              {
-                "x-eas:slot": "same_color"
-              }
-            ]
-          },
-          "legend": {
-            "title": null
-          }
+          "field": "aft_pos"
         },
         "tooltip": [
           {
@@ -273,7 +402,8 @@
             "field": "after"
           },
           {
-            "field": "verdict"
+            "field": "verdict",
+            "title": "direction"
           },
           {
             "field": "range_text",
@@ -283,12 +413,15 @@
       }
     },
     {
-      "name": "earlier",
+      "name": "worsened",
+      "transform": [
+        {
+          "filter": "isValid(datum.bef_pos) && isValid(datum.aft_pos) && (datum.verdict == 'worsened')"
+        }
+      ],
       "mark": {
-        "type": "point",
-        "filled": false,
-        "size": 100,
-        "strokeWidth": 2,
+        "type": "rule",
+        "strokeWidth": 3,
         "color": {
           "x-eas:slot": "ink"
         }
@@ -299,12 +432,167 @@
           "scale": {
             "domain": [
               -0.6,
-              1.6
+              2.1
             ],
             "nice": false,
             "zero": false
           },
-          "field": "pos_before"
+          "field": "bef_pos"
+        },
+        "x2": {
+          "field": "aft_pos"
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "before"
+          },
+          {
+            "field": "after"
+          },
+          {
+            "field": "verdict",
+            "title": "direction"
+          },
+          {
+            "field": "range_text",
+            "title": "reference range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "same",
+      "transform": [
+        {
+          "filter": "isValid(datum.bef_pos) && isValid(datum.aft_pos) && (datum.verdict != 'improved' && datum.verdict != 'worsened')"
+        }
+      ],
+      "mark": {
+        "type": "rule",
+        "strokeWidth": 3,
+        "color": {
+          "x-eas:slot": "muted"
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              2.1
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "field": "bef_pos"
+        },
+        "x2": {
+          "field": "aft_pos"
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "before"
+          },
+          {
+            "field": "after"
+          },
+          {
+            "field": "verdict",
+            "title": "direction"
+          },
+          {
+            "field": "range_text",
+            "title": "reference range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "earlier",
+      "transform": [
+        {
+          "filter": "isValid(datum.bef_pos)"
+        }
+      ],
+      "mark": {
+        "type": "point",
+        "filled": false,
+        "size": 100,
+        "strokeWidth": 2.2
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              2.1
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "field": "bef_pos"
+        },
+        "color": {
+          "field": "bef_label",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "warn_color"
+              },
+              {
+                "x-eas:slot": "ok_color"
+              },
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "unknown_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "shape": {
+          "field": "bef_label",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
+            ],
+            "range": [
+              "triangle-down",
+              "diamond",
+              "circle",
+              "triangle-up",
+              "square"
+            ]
+          },
+          "legend": null
         },
         "tooltip": [
           {
@@ -313,20 +601,26 @@
           {
             "field": "before",
             "title": "earlier"
+          },
+          {
+            "field": "bef_label",
+            "title": "status"
           }
         ]
       }
     },
     {
       "name": "later",
+      "transform": [
+        {
+          "filter": "isValid(datum.aft_pos)"
+        }
+      ],
       "mark": {
         "type": "point",
         "filled": true,
-        "size": 110,
+        "size": 120,
         "opacity": 1,
-        "color": {
-          "x-eas:slot": "ink"
-        },
         "stroke": {
           "x-eas:slot": "surface"
         },
@@ -338,12 +632,64 @@
           "scale": {
             "domain": [
               -0.6,
-              1.6
+              2.1
             ],
             "nice": false,
             "zero": false
           },
-          "field": "pos_after"
+          "field": "aft_pos"
+        },
+        "color": {
+          "field": "aft_label",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "warn_color"
+              },
+              {
+                "x-eas:slot": "ok_color"
+              },
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "unknown_color"
+              }
+            ]
+          },
+          "legend": null
+        },
+        "shape": {
+          "field": "aft_label",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
+            ],
+            "range": [
+              "triangle-down",
+              "diamond",
+              "circle",
+              "triangle-up",
+              "square"
+            ]
+          },
+          "legend": null
         },
         "tooltip": [
           {
@@ -352,6 +698,96 @@
           {
             "field": "after",
             "title": "later"
+          },
+          {
+            "field": "aft_label",
+            "title": "status"
+          }
+        ]
+      }
+    },
+    {
+      "name": "direction",
+      "transform": [
+        {
+          "filter": "isValid(datum.bef_pos)"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "align": "right",
+        "fontSize": 11,
+        "color": {
+          "x-eas:slot": "secondary"
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              2.1
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "datum": 2.08
+        },
+        "text": {
+          "field": "verdict_text"
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "verdict",
+            "title": "direction"
+          }
+        ]
+      }
+    },
+    {
+      "name": "no-range",
+      "transform": [
+        {
+          "filter": "!isValid(datum.bef_pos)"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "align": "center",
+        "fontSize": 11,
+        "color": {
+          "x-eas:slot": "unknown_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              2.1
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "datum": 0.5
+        },
+        "text": {
+          "value": "no range"
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "before"
+          },
+          {
+            "field": "after"
           }
         ]
       }

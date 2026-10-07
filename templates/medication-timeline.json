@@ -3,7 +3,7 @@
   "x-eas": {
     "template": "medication-timeline",
     "version": "1.0.0",
-    "doc": "Medication courses as bars on a timeline, each scheduled dose marked taken, late or missed (shape and colour), with the adherence share per medication.",
+    "doc": "Medication courses as neutral bars on a timeline, each scheduled dose marked taken (blue circle), late (light blue diamond) or missed (grey cross), with the adherence share per medication.",
     "slots": {
       "title": {
         "type": "string",
@@ -15,7 +15,7 @@
       },
       "description": {
         "type": "string",
-        "default": "Medication courses as bars on a timeline, each scheduled dose marked taken, late or missed (shape and colour), with the adherence share per medication.",
+        "default": "Medication courses as neutral bars on a timeline, each scheduled dose marked taken (blue circle), late (light blue diamond) or missed (grey cross), with the adherence share per medication.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -24,24 +24,23 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
+        "type": "string"
+      },
+      "line_color": {
         "type": "string",
-        "default": "#e1e0d9"
+        "doc": "the theme's neutral line color"
       },
       "courses": {
         "shape": "plist",
@@ -53,17 +52,15 @@
         "required": true,
         "doc": "rows {medication, time, status}: scheduled doses with taken, late or missed"
       },
-      "taken_color": {
-        "type": "string",
-        "default": "#2a78d6"
-      },
       "late_color": {
         "type": "string",
-        "default": "#e09a00"
+        "default": "#7fb2ee",
+        "doc": "late doses (light blue diamond)"
       },
       "missed_color": {
         "type": "string",
-        "default": "#d03b3b"
+        "default": "#898781",
+        "doc": "missed doses (grey cross)"
       },
       "bar_color": {
         "type": "string",
@@ -321,7 +318,7 @@
             ],
             "range": [
               {
-                "x-eas:slot": "taken_color"
+                "x-eas:slot": "line_color"
               },
               {
                 "x-eas:slot": "late_color"

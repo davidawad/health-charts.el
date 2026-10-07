@@ -1,43 +1,43 @@
 {
  "title": "eGFR (synthetic)",
- "y_title": "eGFR (mL/min/1.73 m\u00b2)",
+ "y_title": "eGFR (mL/min/1.73 m²)",
  "x_format": "%b %Y",
  "bands": [
   {
    "label": "G5",
    "low": 0,
    "high": 15,
-   "color": "#8b1e1e"
+   "status": "low"
   },
   {
    "label": "G4",
    "low": 15,
    "high": 30,
-   "color": "#d03b3b"
+   "status": "low"
   },
   {
    "label": "G3b",
    "low": 30,
    "high": 45,
-   "color": "#e07a00"
+   "status": "low"
   },
   {
    "label": "G3a",
    "low": 45,
    "high": 60,
-   "color": "#e09a00"
+   "status": "near"
   },
   {
    "label": "G2",
    "low": 60,
    "high": 90,
-   "color": "#8ab04a"
+   "status": "ok"
   },
   {
    "label": "G1",
    "low": 90,
    "high": 120,
-   "color": "#2a9d8f"
+   "status": "ok"
   }
  ],
  "data": [
@@ -81,5 +81,6 @@
    "time": "2025-12-25",
    "value": 40
   }
- ]
+ ],
+ "subtitle": "illustrative bands and statuses; synthetic data. Real bands come from the data source."
 }

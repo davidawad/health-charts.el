@@ -29,24 +29,19 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "markers": {
         "shape": "plist",
@@ -55,19 +50,23 @@
       },
       "menstruation_color": {
         "type": "string",
-        "default": "#d03b3b"
+        "default": "#b83b8f",
+        "doc": "menstruation phase (a categorical color, not a health status)"
       },
       "follicular_color": {
         "type": "string",
-        "default": "#2a78d6"
+        "default": "#2a78d6",
+        "doc": "follicular phase (a categorical color, not a health status)"
       },
       "ovulation_color": {
         "type": "string",
-        "default": "#e09a00"
+        "default": "#1b9aaa",
+        "doc": "ovulation window (a categorical color, not a health status)"
       },
       "luteal_color": {
         "type": "string",
-        "default": "#7b5ea7"
+        "default": "#7b5ea7",
+        "doc": "luteal phase (a categorical color, not a health status)"
       },
       "x_title": {
         "type": "string",

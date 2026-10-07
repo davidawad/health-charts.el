@@ -29,34 +29,28 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
-      "intake_color": {
+      "line_color": {
         "type": "string",
-        "default": "#2a78d6",
-        "doc": "intake bars"
+        "doc": "the theme's neutral line color"
       },
       "output_color": {
         "type": "string",
-        "default": "#e09a00",
-        "doc": "output bars"
+        "default": "#8e5bd0",
+        "doc": "output bars (violet)"
       }
     },
     "example": "examples/fluid-balance.data.json",
@@ -179,7 +173,7 @@
             ],
             "range": [
               {
-                "x-eas:slot": "intake_color"
+                "x-eas:slot": "line_color"
               },
               {
                 "x-eas:slot": "output_color"

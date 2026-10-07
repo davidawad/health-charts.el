@@ -8,19 +8,19 @@
    "label": "normal",
    "low": 4.0,
    "high": 5.7,
-   "color": "#2a9d8f"
+   "status": "ok"
   },
   {
    "label": "prediabetes",
    "low": 5.7,
    "high": 6.5,
-   "color": "#e09a00"
+   "status": "near"
   },
   {
    "label": "diabetes",
    "low": 6.5,
    "high": 9.0,
-   "color": "#d03b3b"
+   "status": "high"
   }
  ],
  "data": [
@@ -64,5 +64,6 @@
    "time": "2026-04-13",
    "value": 5.9
   }
- ]
+ ],
+ "subtitle": "illustrative bands and statuses; synthetic data. Real bands come from the data source."
 }

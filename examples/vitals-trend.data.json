@@ -3,7 +3,7 @@
  "y_title": "Heart rate (bpm)",
  "low": 60,
  "high": 100,
- "band_label": "adult resting 60-100 bpm (illustrative)",
+ "band_label": "illustrative range 60-100 bpm",
  "x_format": "%b %d",
  "data": [
   {
@@ -118,5 +118,6 @@
    "time": "2026-03-08T01:00:00",
    "value": 77
   }
- ]
+ ],
+ "subtitle": "synthetic data; the range is illustrative, the data source owns the real one"
 }

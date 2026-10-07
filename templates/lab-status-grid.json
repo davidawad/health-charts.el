@@ -3,12 +3,12 @@
   "x-eas": {
     "template": "lab-status-grid",
     "version": "1.0.0",
-    "doc": "A grid of analytes by draw date, each cell colored and marked low, in range or high against that row's own reference range, with the glyph and the value in the cell.",
+    "doc": "A grid of analytes by draw date: each cell is filled with its status color at partial opacity (red out of range, yellow near a limit, green in range, grey with no range) and carries a glyph (low, near, in range, high, ?) and the value, judged against that row's own reference range. Ranges come from the data, either limit may be missing.",
     "slots": {
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {time, analyte, value, ref_low, ref_high}: every result, oldest first; rows of one analyte share a line"
+        "doc": "rows {time, analyte, value, ref_low?, ref_high?, warn_low?, warn_high?, warn_margin?}: every result, oldest first; rows of one analyte share a line; ref_low and ref_high come from the data source (either may be missing: one-sided; both missing: a grey ? cell); the warn fields override the yellow zone of that result"
       },
       "title": {
         "type": "string",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "A grid of analytes by draw date, each cell colored and marked low, in range or high against that row's own reference range, with the glyph and the value in the cell.",
+        "default": "A grid of analytes by draw date: each cell is filled with its status color at partial opacity (red out of range, yellow near a limit, green in range, grey with no range) and carries a glyph (low, near, in range, high, ?) and the value, judged against that row's own reference range. Ranges come from the data, either limit may be missing.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,39 +29,44 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
-      "low_color": {
+      "bad_color": {
         "type": "string",
-        "default": "#9ec5f0",
-        "doc": "below range"
+        "doc": "out of range (the theme's red)"
       },
-      "in_color": {
+      "warn_color": {
         "type": "string",
-        "default": "#cfe8d5",
-        "doc": "inside range"
+        "doc": "near a limit (the theme's yellow)"
       },
-      "high_color": {
+      "ok_color": {
         "type": "string",
-        "default": "#f0a9a0",
-        "doc": "above range"
+        "doc": "in range (the theme's green)"
+      },
+      "unknown_color": {
+        "type": "string",
+        "doc": "no range to judge by (the theme's grey)"
+      },
+      "warn_margin": {
+        "type": "number",
+        "doc": "width of the yellow zone inside each limit, as a fraction of the range width (of the one bound for a one-sided range); a row's warn_margin overrides it"
+      },
+      "fill_opacity": {
+        "type": "number",
+        "default": 0.4,
+        "doc": "opacity of the status fill, so the glyph and value stay readable"
       },
       "row_step": {
         "type": "integer",
@@ -83,8 +88,11 @@
             "time": "time",
             "analyte": "string",
             "value": "number",
-            "ref_low": "number",
-            "ref_high": "number"
+            "ref_low": "?number",
+            "ref_high": "?number",
+            "warn_low": "?number",
+            "warn_high": "?number",
+            "warn_margin": "?range:0:1"
           },
           "order": "time",
           "rows": [
@@ -94,6 +102,20 @@
                 "ref_high"
               ],
               "code": "range_inverted"
+            },
+            {
+              "le": [
+                "ref_low",
+                "warn_low"
+              ],
+              "code": "warn_outside_range"
+            },
+            {
+              "le": [
+                "warn_high",
+                "ref_high"
+              ],
+              "code": "warn_outside_range"
             }
           ]
         }
@@ -105,7 +127,11 @@
       "svg_size": [
         900,
         380
-      ]
+      ],
+      "slots": {
+        "warn_margin": "range:0:1",
+        "fill_opacity": "range:0:1"
+      }
     }
   },
   "title": {
@@ -137,24 +163,21 @@
   },
   "transform": [
     {
-      "calculate": "datum.value < datum.ref_low ? '\u25bc low' : datum.value > datum.ref_high ? '\u25b2 high' : '\u25cf in range'",
-      "as": "status"
+      "x-eas:transform": "health-status",
+      "value": "value",
+      "low_field": "ref_low",
+      "high_field": "ref_high",
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      }
     },
     {
-      "calculate": "datum.value < datum.ref_low ? '\u25bc' : datum.value > datum.ref_high ? '\u25b2' : '\u25cf'",
-      "as": "glyph"
-    },
-    {
-      "calculate": "datum.glyph + ' ' + datum.value",
+      "calculate": "datum.status_glyph + ' ' + datum.value",
       "as": "cell"
     },
     {
       "calculate": "substring(datum.time, 0, 10)",
       "as": "day"
-    },
-    {
-      "calculate": "datum.ref_low + ' to ' + datum.ref_high",
-      "as": "range_text"
     }
   ],
   "encoding": {
@@ -192,27 +215,38 @@
         "stroke": {
           "x-eas:slot": "surface"
         },
-        "strokeWidth": 2
+        "strokeWidth": 2,
+        "opacity": {
+          "x-eas:slot": "fill_opacity"
+        }
       },
       "encoding": {
         "color": {
-          "field": "status",
+          "field": "status_label",
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25bc low",
-              "\u25cf in range",
-              "\u25b2 high"
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
             ],
             "range": [
               {
-                "x-eas:slot": "low_color"
+                "x-eas:slot": "bad_color"
               },
               {
-                "x-eas:slot": "in_color"
+                "x-eas:slot": "warn_color"
               },
               {
-                "x-eas:slot": "high_color"
+                "x-eas:slot": "ok_color"
+              },
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "unknown_color"
               }
             ]
           },
@@ -232,7 +266,8 @@
             "field": "value"
           },
           {
-            "field": "status"
+            "field": "status_label",
+            "title": "status"
           },
           {
             "field": "range_text",

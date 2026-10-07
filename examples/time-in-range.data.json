@@ -1,5 +1,6 @@
 {
  "title": "Time in range by week (synthetic)",
+ "subtitle": "synthetic data; the cut-offs and the target are illustrative (the data source or care team supplies the real ones); tick: illustrative 70% target",
  "very_low": 54,
  "low": 70,
  "high": 180,
@@ -5045,5 +5046,6 @@
    "glucose": 96,
    "period": "Week 3"
   }
- ]
+ ],
+ "target_pct": 70
 }

@@ -3,12 +3,12 @@
   "x-eas": {
     "template": "lab-recency",
     "version": "1.0.0",
-    "doc": "How long ago each test was last drawn, against how often it should be: a bar of days since the last draw and a tick at the recommended interval. Fresh is within the interval, due within 1.5 times it, stale beyond that. The reference date as_of is supplied, never read from a clock.",
+    "doc": "How long ago each test was last drawn, against how often it is due: a bar of days since the last draw and a tick at the interval. Staleness is not a health status, so it is drawn in blues only: lighter within the interval, deeper when overdue (up to overdue_factor times the interval), darkest when long overdue, grey when never drawn; each state is also written next to its bar. The reference date as_of is supplied, never read from a clock.",
     "slots": {
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {test, last_drawn? (ISO date, omit if never), interval_days}: one row per test"
+        "doc": "rows {test, last_drawn? (ISO date, omit if never), interval_days}: one row per test; interval_days is how often the test is due and comes from the data source"
       },
       "title": {
         "type": "string",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "How long ago each test was last drawn, against how often it should be: a bar of days since the last draw and a tick at the recommended interval. Fresh is within the interval, due within 1.5 times it, stale beyond that. The reference date as_of is supplied, never read from a clock.",
+        "default": "How long ago each test was last drawn, against how often it is due: a bar of days since the last draw and a tick at the interval. Staleness is not a health status, so it is drawn in blues only: lighter within the interval, deeper when overdue (up to overdue_factor times the interval), darkest when long overdue, grey when never drawn; each state is also written next to its bar. The reference date as_of is supplied, never read from a clock.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,49 +29,48 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
+        "type": "string"
+      },
+      "unknown_color": {
         "type": "string",
-        "default": "#e1e0d9"
+        "doc": "never drawn (the theme's grey)"
       },
       "as_of": {
         "type": "string",
         "doc": "reference date, ISO YYYY-MM-DD: days are counted up to it",
         "required": true
       },
-      "fresh_color": {
+      "overdue_factor": {
+        "type": "number",
+        "default": 1.5,
+        "doc": "a test is overdue up to this many times its interval and long overdue beyond it; a presentation default, not a clinical threshold"
+      },
+      "within_color": {
+        "type": "string",
+        "default": "#9ec5f0",
+        "doc": "within the interval (light blue)"
+      },
+      "overdue_color": {
         "type": "string",
         "default": "#2a78d6",
-        "doc": "within the interval"
+        "doc": "overdue, up to overdue_factor times the interval (deeper blue)"
       },
-      "due_color": {
+      "long_overdue_color": {
         "type": "string",
-        "default": "#e09a00",
-        "doc": "up to 1.5 times the interval"
-      },
-      "stale_color": {
-        "type": "string",
-        "default": "#d03b3b",
-        "doc": "beyond that"
-      },
-      "never_color": {
-        "type": "string",
-        "default": "#898781",
-        "doc": "no draw on record"
+        "default": "#123f7a",
+        "doc": "long overdue, beyond overdue_factor times the interval (darkest blue)"
       }
     },
     "example": "examples/lab-recency.data.json",
@@ -95,7 +94,8 @@
         360
       ],
       "slots": {
-        "as_of": "date"
+        "as_of": "date",
+        "overdue_factor": "range:1:1000"
       }
     }
   },
@@ -128,7 +128,9 @@
       "as": "days"
     },
     {
-      "calculate": "!isValid(datum.last_drawn) ? '? never drawn' : datum.days <= datum.interval_days ? '\u25cf fresh' : datum.days <= datum.interval_days * 1.5 ? '\u25d0 due' : '\u25b2 stale'",
+      "calculate": {
+        "x-eas:expr": "!isValid(datum.last_drawn) ? '? never drawn' : datum.days <= datum.interval_days ? '\u25cb within interval' : datum.days <= datum.interval_days * {{overdue_factor}} ? '\u25d0 overdue' : '\u25cf long overdue'"
+      },
       "as": "state"
     },
     {
@@ -136,8 +138,16 @@
       "as": "ratio"
     },
     {
-      "calculate": "datum.test + '  (every ' + datum.interval_days + ' d)  ' + (isValid(datum.last_drawn) ? datum.days + ' d ago' : 'never drawn')",
+      "calculate": "datum.test + '  (every ' + datum.interval_days + ' d)' + (isValid(datum.last_drawn) ? '  ' + datum.days + ' d ago' : '')",
       "as": "row_label"
+    },
+    {
+      "calculate": "datum.state",
+      "as": "state_text"
+    },
+    {
+      "calculate": "max(datum.days, datum.interval_days)",
+      "as": "word_x"
     }
   ],
   "encoding": {
@@ -183,23 +193,23 @@
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25cf fresh",
-              "\u25d0 due",
-              "\u25b2 stale",
+              "\u25cb within interval",
+              "\u25d0 overdue",
+              "\u25cf long overdue",
               "? never drawn"
             ],
             "range": [
               {
-                "x-eas:slot": "fresh_color"
+                "x-eas:slot": "within_color"
               },
               {
-                "x-eas:slot": "due_color"
+                "x-eas:slot": "overdue_color"
               },
               {
-                "x-eas:slot": "stale_color"
+                "x-eas:slot": "long_overdue_color"
               },
               {
-                "x-eas:slot": "never_color"
+                "x-eas:slot": "unknown_color"
               }
             ]
           },
@@ -258,6 +268,75 @@
           {
             "field": "interval_days",
             "title": "should be drawn every (days)"
+          }
+        ]
+      }
+    },
+    {
+      "name": "state-word",
+      "transform": [
+        {
+          "filter": "isValid(datum.last_drawn)"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "dx": 6,
+        "fontSize": 11,
+        "color": {
+          "x-eas:slot": "secondary"
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "zero": true,
+            "nice": true
+          },
+          "field": "word_x"
+        },
+        "text": {
+          "field": "state_text"
+        }
+      }
+    },
+    {
+      "name": "never",
+      "transform": [
+        {
+          "filter": "!isValid(datum.last_drawn)"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "dx": 6,
+        "fontSize": 11,
+        "color": {
+          "x-eas:slot": "secondary"
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "zero": true,
+            "nice": true
+          },
+          "datum": 0
+        },
+        "text": {
+          "field": "state_text"
+        },
+        "tooltip": [
+          {
+            "field": "test"
+          },
+          {
+            "field": "interval_days",
+            "title": "every (days)"
           }
         ]
       }

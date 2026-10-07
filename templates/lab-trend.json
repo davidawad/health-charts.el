@@ -3,12 +3,12 @@
   "x-eas": {
     "template": "lab-trend",
     "version": "1.0.0",
-    "doc": "One lab analyte over time against its reference range: the range as a band, an optional optimal band inside it, and results outside the range flagged L or H by color, shape and letter.",
+    "doc": "One lab analyte over time against its reference range: the range as a band (green, yellow near each limit), an optional optimal band inside it, and each result colored red out of range, yellow near a limit, green in range, grey with no range, and flagged L or H by shape and letter.",
     "slots": {
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {time, value}: an ISO date or datetime and a number, oldest first"
+        "doc": "rows {time, value, warn_low?, warn_high?, warn_margin?}: an ISO date or datetime and a number, oldest first; the warn fields override the warning zone for that result"
       },
       "title": {
         "type": "string",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "One lab analyte over time against its reference range: the range as a band, an optional optimal band inside it, and results outside the range flagged L or H by color, shape and letter.",
+        "default": "One lab analyte over time against its reference range: the range as a band (green, yellow near each limit), an optional optimal band inside it, and each result colored red out of range, yellow near a limit, green in range, grey with no range, and flagged L or H by shape and letter.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,34 +29,29 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "low": {
         "type": "number",
-        "doc": "lower limit of the reference range",
-        "required": true
+        "default": null,
+        "doc": "lower limit of the reference range, from the data source; null for a range with only an upper limit"
       },
       "high": {
         "type": "number",
-        "doc": "upper limit of the reference range",
-        "required": true
+        "default": null,
+        "doc": "upper limit of the reference range, from the data source; null for a range with only a lower limit"
       },
       "show_optimal": {
         "type": "boolean",
@@ -65,12 +60,12 @@
       },
       "opt_low": {
         "type": "number",
-        "default": 0,
+        "default": null,
         "doc": "lower limit of the optimal band"
       },
       "opt_high": {
         "type": "number",
-        "default": 0,
+        "default": null,
         "doc": "upper limit of the optimal band"
       },
       "band_label": {
@@ -88,25 +83,6 @@
         "default": "",
         "doc": "y-axis title, e.g. LDL cholesterol (mg/dL)"
       },
-      "line_color": {
-        "type": "string",
-        "default": "#2a78d6"
-      },
-      "flag_color": {
-        "type": "string",
-        "default": "#d03b3b",
-        "doc": "out-of-range results"
-      },
-      "band_color": {
-        "type": "string",
-        "default": "#2a9d8f",
-        "doc": "reference range band"
-      },
-      "opt_color": {
-        "type": "string",
-        "default": "#0ca30c",
-        "doc": "optimal band"
-      },
       "x_format": {
         "type": "string",
         "default": "%b %Y",
@@ -116,6 +92,40 @@
         "type": "integer",
         "default": 5,
         "doc": "about this many time axis ticks"
+      },
+      "line_color": {
+        "type": "string",
+        "doc": "the optimal band (the theme's neutral line color)"
+      },
+      "bad_color": {
+        "type": "string",
+        "doc": "out of range (the theme's red)"
+      },
+      "warn_color": {
+        "type": "string",
+        "doc": "near a limit (the theme's yellow)"
+      },
+      "ok_color": {
+        "type": "string",
+        "doc": "in range (the theme's green)"
+      },
+      "unknown_color": {
+        "type": "string",
+        "doc": "no range to judge by (the theme's grey)"
+      },
+      "warn_margin": {
+        "type": "number",
+        "doc": "width of the yellow zone inside each limit, as a fraction of the range width (of the one bound for a one-sided range)"
+      },
+      "warn_low": {
+        "type": "number",
+        "default": null,
+        "doc": "optional: the value below which a result is yellow, replacing low + margin"
+      },
+      "warn_high": {
+        "type": "number",
+        "default": null,
+        "doc": "optional: the value above which a result is yellow, replacing high - margin"
       }
     },
     "example": "examples/lab-trend.data.json",
@@ -125,9 +135,21 @@
         "data": {
           "fields": {
             "time": "time",
-            "value": "number"
+            "value": "number",
+            "warn_low": "?number",
+            "warn_high": "?number",
+            "warn_margin": "?range:0:1"
           },
-          "order": "time"
+          "order": "time",
+          "rows": [
+            {
+              "le": [
+                "warn_low",
+                "warn_high"
+              ],
+              "code": "range_inverted"
+            }
+          ]
         }
       },
       "rules": [
@@ -144,6 +166,20 @@
             "opt_high"
           ],
           "code": "range_inverted"
+        },
+        {
+          "le": [
+            "low",
+            "warn_low"
+          ],
+          "code": "warn_outside_range"
+        },
+        {
+          "le": [
+            "warn_high",
+            "high"
+          ],
+          "code": "warn_outside_range"
         }
       ],
       "text_size": [
@@ -153,7 +189,10 @@
       "svg_size": [
         1000,
         420
-      ]
+      ],
+      "slots": {
+        "warn_margin": "range:0:1"
+      }
     }
   },
   "title": {
@@ -177,16 +216,23 @@
   },
   "transform": [
     {
-      "calculate": {
-        "x-eas:expr": "datum.value < {{low}} ? '\u25bc low' : datum.value > {{high}} ? '\u25b2 high' : '\u25cf in range'"
+      "x-eas:transform": "health-status",
+      "value": "value",
+      "low": {
+        "x-eas:slot": "low"
       },
-      "as": "status"
-    },
-    {
-      "calculate": {
-        "x-eas:expr": "datum.value < {{low}} ? 'L' : datum.value > {{high}} ? 'H' : ''"
+      "high": {
+        "x-eas:slot": "high"
       },
-      "as": "flag"
+      "warn_low": {
+        "x-eas:slot": "warn_low"
+      },
+      "warn_high": {
+        "x-eas:slot": "warn_high"
+      },
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      }
     }
   ],
   "layer": [
@@ -196,42 +242,202 @@
         {
           "aggregate": [
             {
-              "op": "count",
-              "as": "n"
+              "op": "max",
+              "field": "band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "zone_high",
+              "as": "zh"
             }
           ]
         },
         {
-          "calculate": {
-            "x-eas:expr": "{{low}}"
-          },
-          "as": "lo"
+          "filter": "isValid(datum.lo)"
         },
         {
-          "calculate": {
-            "x-eas:expr": "{{high}}"
-          },
-          "as": "hi"
+          "calculate": "isValid(datum.zl) ? datum.zl : datum.lo",
+          "as": "y0"
+        },
+        {
+          "calculate": "isValid(datum.zh) ? datum.zh : datum.hi",
+          "as": "y1"
+        },
+        {
+          "filter": "true"
         }
       ],
       "mark": {
         "type": "rect",
-        "opacity": 0.2,
+        "opacity": 0.22,
         "color": {
-          "x-eas:slot": "band_color"
+          "x-eas:slot": "ok_color"
         }
       },
       "encoding": {
         "y": {
-          "field": "lo",
           "type": "quantitative",
           "scale": {
             "zero": false,
             "nice": true
-          }
+          },
+          "field": "y0"
         },
         "y2": {
-          "field": "hi"
+          "field": "y1"
+        },
+        "tooltip": [
+          {
+            "value": {
+              "x-eas:text": "{{band_label}}"
+            },
+            "title": "range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "warn-low",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "max",
+              "field": "band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "zone_high",
+              "as": "zh"
+            }
+          ]
+        },
+        {
+          "filter": "isValid(datum.lo)"
+        },
+        {
+          "calculate": "datum.lo",
+          "as": "y0"
+        },
+        {
+          "calculate": "datum.zl",
+          "as": "y1"
+        },
+        {
+          "filter": "isValid(datum.zl)"
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.35,
+        "color": {
+          "x-eas:slot": "warn_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          },
+          "field": "y0"
+        },
+        "y2": {
+          "field": "y1"
+        },
+        "tooltip": [
+          {
+            "value": {
+              "x-eas:text": "{{band_label}}"
+            },
+            "title": "range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "warn-high",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "max",
+              "field": "band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "zone_high",
+              "as": "zh"
+            }
+          ]
+        },
+        {
+          "filter": "isValid(datum.lo)"
+        },
+        {
+          "calculate": "datum.zh",
+          "as": "y0"
+        },
+        {
+          "calculate": "datum.hi",
+          "as": "y1"
+        },
+        {
+          "filter": "isValid(datum.zh)"
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.35,
+        "color": {
+          "x-eas:slot": "warn_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          },
+          "field": "y0"
+        },
+        "y2": {
+          "field": "y1"
         },
         "tooltip": [
           {
@@ -259,9 +465,9 @@
         ],
         "mark": {
           "type": "rect",
-          "opacity": 0.25,
+          "opacity": 0.2,
           "color": {
-            "x-eas:slot": "opt_color"
+            "x-eas:slot": "line_color"
           }
         },
         "encoding": {
@@ -367,23 +573,31 @@
           }
         },
         "color": {
-          "field": "status",
+          "field": "status_label",
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25bc low",
-              "\u25cf in range",
-              "\u25b2 high"
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
             ],
             "range": [
               {
-                "x-eas:slot": "flag_color"
+                "x-eas:slot": "bad_color"
               },
               {
-                "x-eas:slot": "line_color"
+                "x-eas:slot": "warn_color"
               },
               {
-                "x-eas:slot": "flag_color"
+                "x-eas:slot": "ok_color"
+              },
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "unknown_color"
               }
             ]
           },
@@ -392,18 +606,22 @@
           }
         },
         "shape": {
-          "field": "status",
+          "field": "status_label",
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25bc low",
-              "\u25cf in range",
-              "\u25b2 high"
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
             ],
             "range": [
               "triangle-down",
+              "diamond",
               "circle",
-              "triangle-up"
+              "triangle-up",
+              "square"
             ]
           },
           "legend": null
@@ -419,8 +637,12 @@
             "title": "value"
           },
           {
-            "field": "status",
+            "field": "status_label",
             "title": "status"
+          },
+          {
+            "field": "range_text",
+            "title": "range"
           }
         ]
       }
@@ -429,7 +651,7 @@
       "name": "flags",
       "transform": [
         {
-          "filter": "datum.flag != ''"
+          "filter": "datum.status_flag != ''"
         }
       ],
       "mark": {
@@ -439,7 +661,7 @@
         "fontSize": 12,
         "fontWeight": "bold",
         "color": {
-          "x-eas:slot": "flag_color"
+          "x-eas:slot": "bad_color"
         }
       },
       "encoding": {
@@ -469,7 +691,7 @@
           }
         },
         "text": {
-          "field": "flag"
+          "field": "status_flag"
         }
       }
     },

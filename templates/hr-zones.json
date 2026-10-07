@@ -29,29 +29,23 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
-      "bar_color": {
+      "line_color": {
         "type": "string",
-        "default": "#d03b3b",
-        "doc": "bar color"
+        "doc": "the theme's neutral line color"
       }
     },
     "example": "examples/hr-zones.data.json",
@@ -139,7 +133,7 @@
           "band": 0.7
         },
         "color": {
-          "x-eas:slot": "bar_color"
+          "x-eas:slot": "line_color"
         }
       },
       "encoding": {

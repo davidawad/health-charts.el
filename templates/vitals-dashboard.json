@@ -3,12 +3,12 @@
   "x-eas": {
     "template": "vitals-dashboard",
     "version": "1.0.0",
-    "doc": "Five vitals on one time axis, each against its normal range: heart rate, blood pressure (systolic and diastolic), temperature, SpO2 and respiratory rate. Readings outside a range are flagged by color and shape.",
+    "doc": "Five vitals on one time axis, each against its own range: heart rate, blood pressure (systolic and diastolic), temperature, SpO2 and respiratory rate. Each range is a band (green, yellow near each limit); readings are red out of range (triangle-down low, triangle-up high), yellow near a limit, green in range, grey when that metric has no range. The ranges come from the data source via the hr_/sbp_/dbp_/temp_/spo2_/rr_ low and high slots; a missing pair is grey no range.",
     "slots": {
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {time, metric, value}: metric is one of hr, sbp, dbp, temp, spo2, rr; oldest first"
+        "doc": "rows {time, metric, value, warn_low?, warn_high?, warn_margin?}: metric is one of hr, sbp, dbp, temp, spo2, rr; oldest first; the warn fields override that reading's warning zone"
       },
       "title": {
         "type": "string",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "Five vitals on one time axis, each against its normal range: heart rate, blood pressure (systolic and diastolic), temperature, SpO2 and respiratory rate. Readings outside a range are flagged by color and shape.",
+        "default": "Five vitals on one time axis, each against its own range: heart rate, blood pressure (systolic and diastolic), temperature, SpO2 and respiratory rate. Each range is a band (green, yellow near each limit); readings are red out of range (triangle-down low, triangle-up high), yellow near a limit, green in range, grey when that metric has no range. The ranges come from the data source via the hr_/sbp_/dbp_/temp_/spo2_/rr_ low and high slots; a missing pair is grey no range.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,24 +29,19 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "hr_title": {
         "type": "string",
@@ -75,75 +70,87 @@
       },
       "hr_low": {
         "type": "number",
-        "doc": "lower limit of the normal range of hr",
-        "required": true
+        "default": null,
+        "doc": "lower limit of the range of hr, from the data source; null leaves that side open (both null: grey, no range)"
       },
       "hr_high": {
         "type": "number",
-        "doc": "upper limit of the normal range of hr",
-        "required": true
+        "default": null,
+        "doc": "upper limit of the range of hr, from the data source; null leaves that side open"
       },
       "sbp_low": {
         "type": "number",
-        "doc": "lower limit of the normal range of sbp",
-        "required": true
+        "default": null,
+        "doc": "lower limit of the range of sbp, from the data source; null leaves that side open (both null: grey, no range)"
       },
       "sbp_high": {
         "type": "number",
-        "doc": "upper limit of the normal range of sbp",
-        "required": true
+        "default": null,
+        "doc": "upper limit of the range of sbp, from the data source; null leaves that side open"
       },
       "dbp_low": {
         "type": "number",
-        "doc": "lower limit of the normal range of dbp",
-        "required": true
+        "default": null,
+        "doc": "lower limit of the range of dbp, from the data source; null leaves that side open (both null: grey, no range)"
       },
       "dbp_high": {
         "type": "number",
-        "doc": "upper limit of the normal range of dbp",
-        "required": true
+        "default": null,
+        "doc": "upper limit of the range of dbp, from the data source; null leaves that side open"
       },
       "temp_low": {
         "type": "number",
-        "doc": "lower limit of the normal range of temp",
-        "required": true
+        "default": null,
+        "doc": "lower limit of the range of temp, from the data source; null leaves that side open (both null: grey, no range)"
       },
       "temp_high": {
         "type": "number",
-        "doc": "upper limit of the normal range of temp",
-        "required": true
+        "default": null,
+        "doc": "upper limit of the range of temp, from the data source; null leaves that side open"
       },
       "spo2_low": {
         "type": "number",
-        "doc": "lower limit of the normal range of spo2",
-        "required": true
+        "default": null,
+        "doc": "lower limit of the range of spo2, from the data source; null leaves that side open (both null: grey, no range)"
       },
       "spo2_high": {
         "type": "number",
-        "doc": "upper limit of the normal range of spo2",
-        "required": true
+        "default": null,
+        "doc": "upper limit of the range of spo2, from the data source; null leaves that side open"
       },
       "rr_low": {
         "type": "number",
-        "doc": "lower limit of the normal range of rr",
-        "required": true
+        "default": null,
+        "doc": "lower limit of the range of rr, from the data source; null leaves that side open (both null: grey, no range)"
       },
       "rr_high": {
         "type": "number",
-        "doc": "upper limit of the normal range of rr",
-        "required": true
+        "default": null,
+        "doc": "upper limit of the range of rr, from the data source; null leaves that side open"
       },
       "line_color": {
         "type": "string",
-        "default": "#2a78d6"
+        "doc": "neutral line color (the theme's)"
       },
-      "flag_color": {
+      "bad_color": {
         "type": "string",
-        "default": "#d03b3b"
+        "doc": "out of range (the theme's red)"
       },
-      "band_color": {
+      "warn_color": {
         "type": "string",
-        "default": "#2a9d8f"
+        "doc": "near a limit (the theme's yellow)"
+      },
+      "ok_color": {
+        "type": "string",
+        "doc": "in range (the theme's green)"
+      },
+      "unknown_color": {
+        "type": "string",
+        "doc": "no range to judge by (the theme's grey)"
+      },
+      "warn_margin": {
+        "type": "number",
+        "doc": "width of the yellow zone inside each limit, as a fraction of the range width (of the one bound for a one-sided range)"
       },
       "x_format": {
         "type": "string",
@@ -172,9 +179,21 @@
           "fields": {
             "time": "time",
             "metric": "enum:hr|sbp|dbp|temp|spo2|rr",
-            "value": "number"
+            "value": "number",
+            "warn_low": "?number",
+            "warn_high": "?number",
+            "warn_margin": "?range:0:1"
           },
-          "order": "time"
+          "order": "time",
+          "rows": [
+            {
+              "le": [
+                "warn_low",
+                "warn_high"
+              ],
+              "code": "range_inverted"
+            }
+          ]
         }
       },
       "rules": [
@@ -220,7 +239,10 @@
           ],
           "code": "range_inverted"
         }
-      ]
+      ],
+      "slots": {
+        "warn_margin": "range:0:1"
+      }
     }
   },
   "title": {
@@ -257,34 +279,69 @@
             {
               "aggregate": [
                 {
-                  "op": "count",
-                  "as": "n"
+                  "op": "max",
+                  "field": "hr_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "hr_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "hr_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "hr_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "hr_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "hr_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
                 }
               ]
             },
             {
-              "calculate": {
-                "x-eas:expr": "{{hr_low}}"
-              },
-              "as": "lo"
+              "calculate": "datum.nzl > 0 ? datum.zl : datum.vmin",
+              "as": "y0"
             },
             {
-              "calculate": {
-                "x-eas:expr": "{{hr_high}}"
-              },
-              "as": "hi"
+              "calculate": "datum.nzh > 0 ? datum.zh : datum.vmax",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzl > 0 || datum.nzh > 0"
             }
           ],
           "mark": {
             "type": "rect",
             "opacity": 0.18,
             "color": {
-              "x-eas:slot": "band_color"
+              "x-eas:slot": "ok_color"
             }
           },
           "encoding": {
             "y": {
-              "field": "lo",
+              "field": "y0",
               "type": "quantitative",
               "scale": {
                 "zero": false,
@@ -292,7 +349,179 @@
               }
             },
             "y2": {
-              "field": "hi"
+              "field": "y1"
+            }
+          }
+        },
+        {
+          "name": "hr-warn-low",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "hr"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "max",
+                  "field": "hr_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "hr_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "hr_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "hr_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "hr_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "hr_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
+                }
+              ]
+            },
+            {
+              "calculate": "datum.lo",
+              "as": "y0"
+            },
+            {
+              "calculate": "datum.zl",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzl > 0"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.35,
+            "color": {
+              "x-eas:slot": "warn_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "y0",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "y1"
+            }
+          }
+        },
+        {
+          "name": "hr-warn-high",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "hr"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "max",
+                  "field": "hr_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "hr_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "hr_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "hr_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "hr_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "hr_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
+                }
+              ]
+            },
+            {
+              "calculate": "datum.zh",
+              "as": "y0"
+            },
+            {
+              "calculate": "datum.hi",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzh > 0"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.35,
+            "color": {
+              "x-eas:slot": "warn_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "y0",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "y1"
             }
           }
         },
@@ -304,12 +533,6 @@
                 "field": "metric",
                 "equal": "hr"
               }
-            },
-            {
-              "calculate": {
-                "x-eas:expr": "datum.value < {{hr_low}} ? '\u25bc low' : datum.value > {{hr_high}} ? '\u25b2 high' : '\u25cf in range'"
-              },
-              "as": "status"
             }
           ],
           "mark": {
@@ -332,6 +555,7 @@
               }
             },
             "y": {
+              "field": "value",
               "type": "quantitative",
               "scale": {
                 "zero": false,
@@ -339,8 +563,7 @@
               },
               "title": {
                 "x-eas:slot": "hr_title"
-              },
-              "field": "value"
+              }
             }
           }
         },
@@ -352,12 +575,6 @@
                 "field": "metric",
                 "equal": "hr"
               }
-            },
-            {
-              "calculate": {
-                "x-eas:expr": "datum.value < {{hr_low}} ? '\u25bc low' : datum.value > {{hr_high}} ? '\u25b2 high' : '\u25cf in range'"
-              },
-              "as": "status"
             }
           ],
           "mark": {
@@ -382,32 +599,40 @@
               }
             },
             "y": {
+              "field": "value",
               "type": "quantitative",
               "scale": {
                 "zero": false,
                 "nice": true
               },
-              "title": null,
-              "field": "value"
+              "title": null
             },
             "color": {
-              "field": "status",
+              "field": "status_label",
               "type": "nominal",
               "scale": {
                 "domain": [
-                  "\u25bc low",
-                  "\u25cf in range",
-                  "\u25b2 high"
+                  "low",
+                  "near limit",
+                  "in range",
+                  "high",
+                  "no range"
                 ],
                 "range": [
                   {
-                    "x-eas:slot": "flag_color"
+                    "x-eas:slot": "bad_color"
                   },
                   {
-                    "x-eas:slot": "line_color"
+                    "x-eas:slot": "warn_color"
                   },
                   {
-                    "x-eas:slot": "flag_color"
+                    "x-eas:slot": "ok_color"
+                  },
+                  {
+                    "x-eas:slot": "bad_color"
+                  },
+                  {
+                    "x-eas:slot": "unknown_color"
                   }
                 ]
               },
@@ -416,18 +641,22 @@
               }
             },
             "shape": {
-              "field": "status",
+              "field": "status_label",
               "type": "nominal",
               "scale": {
                 "domain": [
-                  "\u25bc low",
-                  "\u25cf in range",
-                  "\u25b2 high"
+                  "low",
+                  "near limit",
+                  "in range",
+                  "high",
+                  "no range"
                 ],
                 "range": [
                   "triangle-down",
+                  "diamond",
                   "circle",
-                  "triangle-up"
+                  "triangle-up",
+                  "square"
                 ]
               },
               "legend": null
@@ -443,7 +672,12 @@
                 "title": "hr"
               },
               {
-                "field": "status"
+                "field": "status_label",
+                "title": "status"
+              },
+              {
+                "field": "range_text",
+                "title": "range"
               }
             ]
           }
@@ -466,34 +700,69 @@
             {
               "aggregate": [
                 {
-                  "op": "count",
-                  "as": "n"
+                  "op": "max",
+                  "field": "sbp_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "sbp_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "sbp_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "sbp_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "sbp_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "sbp_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
                 }
               ]
             },
             {
-              "calculate": {
-                "x-eas:expr": "{{sbp_low}}"
-              },
-              "as": "lo"
+              "calculate": "datum.nzl > 0 ? datum.zl : datum.vmin",
+              "as": "y0"
             },
             {
-              "calculate": {
-                "x-eas:expr": "{{sbp_high}}"
-              },
-              "as": "hi"
+              "calculate": "datum.nzh > 0 ? datum.zh : datum.vmax",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzl > 0 || datum.nzh > 0"
             }
           ],
           "mark": {
             "type": "rect",
             "opacity": 0.18,
             "color": {
-              "x-eas:slot": "band_color"
+              "x-eas:slot": "ok_color"
             }
           },
           "encoding": {
             "y": {
-              "field": "lo",
+              "field": "y0",
               "type": "quantitative",
               "scale": {
                 "zero": false,
@@ -501,7 +770,437 @@
               }
             },
             "y2": {
-              "field": "hi"
+              "field": "y1"
+            }
+          }
+        },
+        {
+          "name": "sbp-warn-low",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "sbp"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "max",
+                  "field": "sbp_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "sbp_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "sbp_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "sbp_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "sbp_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "sbp_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
+                }
+              ]
+            },
+            {
+              "calculate": "datum.lo",
+              "as": "y0"
+            },
+            {
+              "calculate": "datum.zl",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzl > 0"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.35,
+            "color": {
+              "x-eas:slot": "warn_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "y0",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "y1"
+            }
+          }
+        },
+        {
+          "name": "sbp-warn-high",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "sbp"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "max",
+                  "field": "sbp_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "sbp_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "sbp_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "sbp_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "sbp_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "sbp_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
+                }
+              ]
+            },
+            {
+              "calculate": "datum.zh",
+              "as": "y0"
+            },
+            {
+              "calculate": "datum.hi",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzh > 0"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.35,
+            "color": {
+              "x-eas:slot": "warn_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "y0",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "y1"
+            }
+          }
+        },
+        {
+          "name": "dbp-range",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "dbp"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "max",
+                  "field": "dbp_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "dbp_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "dbp_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "dbp_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "dbp_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "dbp_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
+                }
+              ]
+            },
+            {
+              "calculate": "datum.nzl > 0 ? datum.zl : datum.vmin",
+              "as": "y0"
+            },
+            {
+              "calculate": "datum.nzh > 0 ? datum.zh : datum.vmax",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzl > 0 || datum.nzh > 0"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.18,
+            "color": {
+              "x-eas:slot": "ok_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "y0",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "y1"
+            }
+          }
+        },
+        {
+          "name": "dbp-warn-low",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "dbp"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "max",
+                  "field": "dbp_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "dbp_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "dbp_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "dbp_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "dbp_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "dbp_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
+                }
+              ]
+            },
+            {
+              "calculate": "datum.lo",
+              "as": "y0"
+            },
+            {
+              "calculate": "datum.zl",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzl > 0"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.35,
+            "color": {
+              "x-eas:slot": "warn_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "y0",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "y1"
+            }
+          }
+        },
+        {
+          "name": "dbp-warn-high",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "dbp"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "max",
+                  "field": "dbp_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "dbp_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "dbp_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "dbp_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "dbp_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "dbp_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
+                }
+              ]
+            },
+            {
+              "calculate": "datum.zh",
+              "as": "y0"
+            },
+            {
+              "calculate": "datum.hi",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzh > 0"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.35,
+            "color": {
+              "x-eas:slot": "warn_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "y0",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "y1"
             }
           }
         },
@@ -513,12 +1212,6 @@
                 "field": "metric",
                 "equal": "sbp"
               }
-            },
-            {
-              "calculate": {
-                "x-eas:expr": "datum.value < {{sbp_low}} ? '\u25bc low' : datum.value > {{sbp_high}} ? '\u25b2 high' : '\u25cf in range'"
-              },
-              "as": "status"
             }
           ],
           "mark": {
@@ -541,6 +1234,7 @@
               }
             },
             "y": {
+              "field": "value",
               "type": "quantitative",
               "scale": {
                 "zero": false,
@@ -548,8 +1242,49 @@
               },
               "title": {
                 "x-eas:slot": "bp_title"
+              }
+            }
+          }
+        },
+        {
+          "name": "dbp-line",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "dbp"
+              }
+            }
+          ],
+          "mark": {
+            "type": "line",
+            "strokeWidth": 2,
+            "color": {
+              "x-eas:slot": "muted"
+            },
+            "strokeDash": []
+          },
+          "encoding": {
+            "x": {
+              "field": "time",
+              "type": "temporal",
+              "title": null,
+              "axis": {
+                "labels": false,
+                "ticks": false,
+                "grid": false
+              }
+            },
+            "y": {
+              "field": "value",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
               },
-              "field": "value"
+              "title": {
+                "x-eas:slot": "bp_title"
+              }
             }
           }
         },
@@ -561,12 +1296,6 @@
                 "field": "metric",
                 "equal": "sbp"
               }
-            },
-            {
-              "calculate": {
-                "x-eas:expr": "datum.value < {{sbp_low}} ? '\u25bc low' : datum.value > {{sbp_high}} ? '\u25b2 high' : '\u25cf in range'"
-              },
-              "as": "status"
             }
           ],
           "mark": {
@@ -591,50 +1320,64 @@
               }
             },
             "y": {
+              "field": "value",
               "type": "quantitative",
               "scale": {
                 "zero": false,
                 "nice": true
               },
-              "title": null,
-              "field": "value"
+              "title": null
             },
             "color": {
-              "field": "status",
+              "field": "status_label",
               "type": "nominal",
               "scale": {
                 "domain": [
-                  "\u25bc low",
-                  "\u25cf in range",
-                  "\u25b2 high"
+                  "low",
+                  "near limit",
+                  "in range",
+                  "high",
+                  "no range"
                 ],
                 "range": [
                   {
-                    "x-eas:slot": "flag_color"
+                    "x-eas:slot": "bad_color"
                   },
                   {
-                    "x-eas:slot": "line_color"
+                    "x-eas:slot": "warn_color"
                   },
                   {
-                    "x-eas:slot": "flag_color"
+                    "x-eas:slot": "ok_color"
+                  },
+                  {
+                    "x-eas:slot": "bad_color"
+                  },
+                  {
+                    "x-eas:slot": "unknown_color"
                   }
                 ]
               },
-              "legend": null
+              "legend": {
+                "title": null
+              }
             },
             "shape": {
-              "field": "status",
+              "field": "status_label",
               "type": "nominal",
               "scale": {
                 "domain": [
-                  "\u25bc low",
-                  "\u25cf in range",
-                  "\u25b2 high"
+                  "low",
+                  "near limit",
+                  "in range",
+                  "high",
+                  "no range"
                 ],
                 "range": [
                   "triangle-down",
+                  "diamond",
                   "circle",
-                  "triangle-up"
+                  "triangle-up",
+                  "square"
                 ]
               },
               "legend": null
@@ -650,109 +1393,14 @@
                 "title": "sbp"
               },
               {
-                "field": "status"
+                "field": "status_label",
+                "title": "status"
+              },
+              {
+                "field": "range_text",
+                "title": "range"
               }
             ]
-          }
-        },
-        {
-          "name": "dbp-range",
-          "transform": [
-            {
-              "filter": {
-                "field": "metric",
-                "equal": "dbp"
-              }
-            },
-            {
-              "aggregate": [
-                {
-                  "op": "count",
-                  "as": "n"
-                }
-              ]
-            },
-            {
-              "calculate": {
-                "x-eas:expr": "{{dbp_low}}"
-              },
-              "as": "lo"
-            },
-            {
-              "calculate": {
-                "x-eas:expr": "{{dbp_high}}"
-              },
-              "as": "hi"
-            }
-          ],
-          "mark": {
-            "type": "rect",
-            "opacity": 0.18,
-            "color": {
-              "x-eas:slot": "band_color"
-            }
-          },
-          "encoding": {
-            "y": {
-              "field": "lo",
-              "type": "quantitative",
-              "scale": {
-                "zero": false,
-                "nice": true
-              }
-            },
-            "y2": {
-              "field": "hi"
-            }
-          }
-        },
-        {
-          "name": "dbp-line",
-          "transform": [
-            {
-              "filter": {
-                "field": "metric",
-                "equal": "dbp"
-              }
-            },
-            {
-              "calculate": {
-                "x-eas:expr": "datum.value < {{dbp_low}} ? '\u25bc low' : datum.value > {{dbp_high}} ? '\u25b2 high' : '\u25cf in range'"
-              },
-              "as": "status"
-            }
-          ],
-          "mark": {
-            "type": "line",
-            "strokeWidth": 2,
-            "color": {
-              "x-eas:slot": "muted"
-            },
-            "strokeDash": [
-              4,
-              3
-            ]
-          },
-          "encoding": {
-            "x": {
-              "field": "time",
-              "type": "temporal",
-              "title": null,
-              "axis": {
-                "labels": false,
-                "ticks": false,
-                "grid": false
-              }
-            },
-            "y": {
-              "type": "quantitative",
-              "scale": {
-                "zero": false,
-                "nice": true
-              },
-              "title": null,
-              "field": "value"
-            }
           }
         },
         {
@@ -763,12 +1411,6 @@
                 "field": "metric",
                 "equal": "dbp"
               }
-            },
-            {
-              "calculate": {
-                "x-eas:expr": "datum.value < {{dbp_low}} ? '\u25bc low' : datum.value > {{dbp_high}} ? '\u25b2 high' : '\u25cf in range'"
-              },
-              "as": "status"
             }
           ],
           "mark": {
@@ -793,50 +1435,64 @@
               }
             },
             "y": {
+              "field": "value",
               "type": "quantitative",
               "scale": {
                 "zero": false,
                 "nice": true
               },
-              "title": null,
-              "field": "value"
+              "title": null
             },
             "color": {
-              "field": "status",
+              "field": "status_label",
               "type": "nominal",
               "scale": {
                 "domain": [
-                  "\u25bc low",
-                  "\u25cf in range",
-                  "\u25b2 high"
+                  "low",
+                  "near limit",
+                  "in range",
+                  "high",
+                  "no range"
                 ],
                 "range": [
                   {
-                    "x-eas:slot": "flag_color"
+                    "x-eas:slot": "bad_color"
                   },
                   {
-                    "x-eas:slot": "line_color"
+                    "x-eas:slot": "warn_color"
                   },
                   {
-                    "x-eas:slot": "flag_color"
+                    "x-eas:slot": "ok_color"
+                  },
+                  {
+                    "x-eas:slot": "bad_color"
+                  },
+                  {
+                    "x-eas:slot": "unknown_color"
                   }
                 ]
               },
-              "legend": null
+              "legend": {
+                "title": null
+              }
             },
             "shape": {
-              "field": "status",
+              "field": "status_label",
               "type": "nominal",
               "scale": {
                 "domain": [
-                  "\u25bc low",
-                  "\u25cf in range",
-                  "\u25b2 high"
+                  "low",
+                  "near limit",
+                  "in range",
+                  "high",
+                  "no range"
                 ],
                 "range": [
                   "triangle-down",
+                  "diamond",
                   "circle",
-                  "triangle-up"
+                  "triangle-up",
+                  "square"
                 ]
               },
               "legend": null
@@ -852,7 +1508,12 @@
                 "title": "dbp"
               },
               {
-                "field": "status"
+                "field": "status_label",
+                "title": "status"
+              },
+              {
+                "field": "range_text",
+                "title": "range"
               }
             ]
           }
@@ -875,34 +1536,69 @@
             {
               "aggregate": [
                 {
-                  "op": "count",
-                  "as": "n"
+                  "op": "max",
+                  "field": "temp_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "temp_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "temp_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "temp_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "temp_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "temp_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
                 }
               ]
             },
             {
-              "calculate": {
-                "x-eas:expr": "{{temp_low}}"
-              },
-              "as": "lo"
+              "calculate": "datum.nzl > 0 ? datum.zl : datum.vmin",
+              "as": "y0"
             },
             {
-              "calculate": {
-                "x-eas:expr": "{{temp_high}}"
-              },
-              "as": "hi"
+              "calculate": "datum.nzh > 0 ? datum.zh : datum.vmax",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzl > 0 || datum.nzh > 0"
             }
           ],
           "mark": {
             "type": "rect",
             "opacity": 0.18,
             "color": {
-              "x-eas:slot": "band_color"
+              "x-eas:slot": "ok_color"
             }
           },
           "encoding": {
             "y": {
-              "field": "lo",
+              "field": "y0",
               "type": "quantitative",
               "scale": {
                 "zero": false,
@@ -910,7 +1606,179 @@
               }
             },
             "y2": {
-              "field": "hi"
+              "field": "y1"
+            }
+          }
+        },
+        {
+          "name": "temp-warn-low",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "temp"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "max",
+                  "field": "temp_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "temp_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "temp_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "temp_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "temp_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "temp_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
+                }
+              ]
+            },
+            {
+              "calculate": "datum.lo",
+              "as": "y0"
+            },
+            {
+              "calculate": "datum.zl",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzl > 0"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.35,
+            "color": {
+              "x-eas:slot": "warn_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "y0",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "y1"
+            }
+          }
+        },
+        {
+          "name": "temp-warn-high",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "temp"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "max",
+                  "field": "temp_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "temp_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "temp_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "temp_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "temp_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "temp_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
+                }
+              ]
+            },
+            {
+              "calculate": "datum.zh",
+              "as": "y0"
+            },
+            {
+              "calculate": "datum.hi",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzh > 0"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.35,
+            "color": {
+              "x-eas:slot": "warn_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "y0",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "y1"
             }
           }
         },
@@ -922,12 +1790,6 @@
                 "field": "metric",
                 "equal": "temp"
               }
-            },
-            {
-              "calculate": {
-                "x-eas:expr": "datum.value < {{temp_low}} ? '\u25bc low' : datum.value > {{temp_high}} ? '\u25b2 high' : '\u25cf in range'"
-              },
-              "as": "status"
             }
           ],
           "mark": {
@@ -950,6 +1812,7 @@
               }
             },
             "y": {
+              "field": "value",
               "type": "quantitative",
               "scale": {
                 "zero": false,
@@ -957,8 +1820,7 @@
               },
               "title": {
                 "x-eas:slot": "temp_title"
-              },
-              "field": "value"
+              }
             }
           }
         },
@@ -970,12 +1832,6 @@
                 "field": "metric",
                 "equal": "temp"
               }
-            },
-            {
-              "calculate": {
-                "x-eas:expr": "datum.value < {{temp_low}} ? '\u25bc low' : datum.value > {{temp_high}} ? '\u25b2 high' : '\u25cf in range'"
-              },
-              "as": "status"
             }
           ],
           "mark": {
@@ -1000,50 +1856,64 @@
               }
             },
             "y": {
+              "field": "value",
               "type": "quantitative",
               "scale": {
                 "zero": false,
                 "nice": true
               },
-              "title": null,
-              "field": "value"
+              "title": null
             },
             "color": {
-              "field": "status",
+              "field": "status_label",
               "type": "nominal",
               "scale": {
                 "domain": [
-                  "\u25bc low",
-                  "\u25cf in range",
-                  "\u25b2 high"
+                  "low",
+                  "near limit",
+                  "in range",
+                  "high",
+                  "no range"
                 ],
                 "range": [
                   {
-                    "x-eas:slot": "flag_color"
+                    "x-eas:slot": "bad_color"
                   },
                   {
-                    "x-eas:slot": "line_color"
+                    "x-eas:slot": "warn_color"
                   },
                   {
-                    "x-eas:slot": "flag_color"
+                    "x-eas:slot": "ok_color"
+                  },
+                  {
+                    "x-eas:slot": "bad_color"
+                  },
+                  {
+                    "x-eas:slot": "unknown_color"
                   }
                 ]
               },
-              "legend": null
+              "legend": {
+                "title": null
+              }
             },
             "shape": {
-              "field": "status",
+              "field": "status_label",
               "type": "nominal",
               "scale": {
                 "domain": [
-                  "\u25bc low",
-                  "\u25cf in range",
-                  "\u25b2 high"
+                  "low",
+                  "near limit",
+                  "in range",
+                  "high",
+                  "no range"
                 ],
                 "range": [
                   "triangle-down",
+                  "diamond",
                   "circle",
-                  "triangle-up"
+                  "triangle-up",
+                  "square"
                 ]
               },
               "legend": null
@@ -1059,7 +1929,12 @@
                 "title": "temp"
               },
               {
-                "field": "status"
+                "field": "status_label",
+                "title": "status"
+              },
+              {
+                "field": "range_text",
+                "title": "range"
               }
             ]
           }
@@ -1082,34 +1957,69 @@
             {
               "aggregate": [
                 {
-                  "op": "count",
-                  "as": "n"
+                  "op": "max",
+                  "field": "spo2_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "spo2_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "spo2_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "spo2_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "spo2_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "spo2_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
                 }
               ]
             },
             {
-              "calculate": {
-                "x-eas:expr": "{{spo2_low}}"
-              },
-              "as": "lo"
+              "calculate": "datum.nzl > 0 ? datum.zl : datum.vmin",
+              "as": "y0"
             },
             {
-              "calculate": {
-                "x-eas:expr": "{{spo2_high}}"
-              },
-              "as": "hi"
+              "calculate": "datum.nzh > 0 ? datum.zh : datum.vmax",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzl > 0 || datum.nzh > 0"
             }
           ],
           "mark": {
             "type": "rect",
             "opacity": 0.18,
             "color": {
-              "x-eas:slot": "band_color"
+              "x-eas:slot": "ok_color"
             }
           },
           "encoding": {
             "y": {
-              "field": "lo",
+              "field": "y0",
               "type": "quantitative",
               "scale": {
                 "zero": false,
@@ -1117,7 +2027,179 @@
               }
             },
             "y2": {
-              "field": "hi"
+              "field": "y1"
+            }
+          }
+        },
+        {
+          "name": "spo2-warn-low",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "spo2"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "max",
+                  "field": "spo2_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "spo2_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "spo2_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "spo2_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "spo2_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "spo2_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
+                }
+              ]
+            },
+            {
+              "calculate": "datum.lo",
+              "as": "y0"
+            },
+            {
+              "calculate": "datum.zl",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzl > 0"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.35,
+            "color": {
+              "x-eas:slot": "warn_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "y0",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "y1"
+            }
+          }
+        },
+        {
+          "name": "spo2-warn-high",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "spo2"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "max",
+                  "field": "spo2_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "spo2_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "spo2_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "spo2_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "spo2_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "spo2_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
+                }
+              ]
+            },
+            {
+              "calculate": "datum.zh",
+              "as": "y0"
+            },
+            {
+              "calculate": "datum.hi",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzh > 0"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.35,
+            "color": {
+              "x-eas:slot": "warn_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "y0",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "y1"
             }
           }
         },
@@ -1129,12 +2211,6 @@
                 "field": "metric",
                 "equal": "spo2"
               }
-            },
-            {
-              "calculate": {
-                "x-eas:expr": "datum.value < {{spo2_low}} ? '\u25bc low' : datum.value > {{spo2_high}} ? '\u25b2 high' : '\u25cf in range'"
-              },
-              "as": "status"
             }
           ],
           "mark": {
@@ -1157,6 +2233,7 @@
               }
             },
             "y": {
+              "field": "value",
               "type": "quantitative",
               "scale": {
                 "zero": false,
@@ -1164,8 +2241,7 @@
               },
               "title": {
                 "x-eas:slot": "spo2_title"
-              },
-              "field": "value"
+              }
             }
           }
         },
@@ -1177,12 +2253,6 @@
                 "field": "metric",
                 "equal": "spo2"
               }
-            },
-            {
-              "calculate": {
-                "x-eas:expr": "datum.value < {{spo2_low}} ? '\u25bc low' : datum.value > {{spo2_high}} ? '\u25b2 high' : '\u25cf in range'"
-              },
-              "as": "status"
             }
           ],
           "mark": {
@@ -1207,50 +2277,64 @@
               }
             },
             "y": {
+              "field": "value",
               "type": "quantitative",
               "scale": {
                 "zero": false,
                 "nice": true
               },
-              "title": null,
-              "field": "value"
+              "title": null
             },
             "color": {
-              "field": "status",
+              "field": "status_label",
               "type": "nominal",
               "scale": {
                 "domain": [
-                  "\u25bc low",
-                  "\u25cf in range",
-                  "\u25b2 high"
+                  "low",
+                  "near limit",
+                  "in range",
+                  "high",
+                  "no range"
                 ],
                 "range": [
                   {
-                    "x-eas:slot": "flag_color"
+                    "x-eas:slot": "bad_color"
                   },
                   {
-                    "x-eas:slot": "line_color"
+                    "x-eas:slot": "warn_color"
                   },
                   {
-                    "x-eas:slot": "flag_color"
+                    "x-eas:slot": "ok_color"
+                  },
+                  {
+                    "x-eas:slot": "bad_color"
+                  },
+                  {
+                    "x-eas:slot": "unknown_color"
                   }
                 ]
               },
-              "legend": null
+              "legend": {
+                "title": null
+              }
             },
             "shape": {
-              "field": "status",
+              "field": "status_label",
               "type": "nominal",
               "scale": {
                 "domain": [
-                  "\u25bc low",
-                  "\u25cf in range",
-                  "\u25b2 high"
+                  "low",
+                  "near limit",
+                  "in range",
+                  "high",
+                  "no range"
                 ],
                 "range": [
                   "triangle-down",
+                  "diamond",
                   "circle",
-                  "triangle-up"
+                  "triangle-up",
+                  "square"
                 ]
               },
               "legend": null
@@ -1266,7 +2350,12 @@
                 "title": "spo2"
               },
               {
-                "field": "status"
+                "field": "status_label",
+                "title": "status"
+              },
+              {
+                "field": "range_text",
+                "title": "range"
               }
             ]
           }
@@ -1289,34 +2378,69 @@
             {
               "aggregate": [
                 {
-                  "op": "count",
-                  "as": "n"
+                  "op": "max",
+                  "field": "rr_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "rr_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "rr_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "rr_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "rr_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "rr_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
                 }
               ]
             },
             {
-              "calculate": {
-                "x-eas:expr": "{{rr_low}}"
-              },
-              "as": "lo"
+              "calculate": "datum.nzl > 0 ? datum.zl : datum.vmin",
+              "as": "y0"
             },
             {
-              "calculate": {
-                "x-eas:expr": "{{rr_high}}"
-              },
-              "as": "hi"
+              "calculate": "datum.nzh > 0 ? datum.zh : datum.vmax",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzl > 0 || datum.nzh > 0"
             }
           ],
           "mark": {
             "type": "rect",
             "opacity": 0.18,
             "color": {
-              "x-eas:slot": "band_color"
+              "x-eas:slot": "ok_color"
             }
           },
           "encoding": {
             "y": {
-              "field": "lo",
+              "field": "y0",
               "type": "quantitative",
               "scale": {
                 "zero": false,
@@ -1324,7 +2448,179 @@
               }
             },
             "y2": {
-              "field": "hi"
+              "field": "y1"
+            }
+          }
+        },
+        {
+          "name": "rr-warn-low",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "rr"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "max",
+                  "field": "rr_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "rr_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "rr_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "rr_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "rr_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "rr_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
+                }
+              ]
+            },
+            {
+              "calculate": "datum.lo",
+              "as": "y0"
+            },
+            {
+              "calculate": "datum.zl",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzl > 0"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.35,
+            "color": {
+              "x-eas:slot": "warn_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "y0",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "y1"
+            }
+          }
+        },
+        {
+          "name": "rr-warn-high",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "rr"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "max",
+                  "field": "rr_band_lo",
+                  "as": "lo"
+                },
+                {
+                  "op": "max",
+                  "field": "rr_band_hi",
+                  "as": "hi"
+                },
+                {
+                  "op": "max",
+                  "field": "rr_zone_low",
+                  "as": "zl"
+                },
+                {
+                  "op": "max",
+                  "field": "rr_zone_high",
+                  "as": "zh"
+                },
+                {
+                  "op": "valid",
+                  "field": "rr_zone_low",
+                  "as": "nzl"
+                },
+                {
+                  "op": "valid",
+                  "field": "rr_zone_high",
+                  "as": "nzh"
+                },
+                {
+                  "op": "min",
+                  "field": "value",
+                  "as": "vmin"
+                },
+                {
+                  "op": "max",
+                  "field": "value",
+                  "as": "vmax"
+                }
+              ]
+            },
+            {
+              "calculate": "datum.zh",
+              "as": "y0"
+            },
+            {
+              "calculate": "datum.hi",
+              "as": "y1"
+            },
+            {
+              "filter": "datum.nzh > 0"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.35,
+            "color": {
+              "x-eas:slot": "warn_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "y0",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "y1"
             }
           }
         },
@@ -1336,12 +2632,6 @@
                 "field": "metric",
                 "equal": "rr"
               }
-            },
-            {
-              "calculate": {
-                "x-eas:expr": "datum.value < {{rr_low}} ? '\u25bc low' : datum.value > {{rr_high}} ? '\u25b2 high' : '\u25cf in range'"
-              },
-              "as": "status"
             }
           ],
           "mark": {
@@ -1368,6 +2658,7 @@
               }
             },
             "y": {
+              "field": "value",
               "type": "quantitative",
               "scale": {
                 "zero": false,
@@ -1375,8 +2666,7 @@
               },
               "title": {
                 "x-eas:slot": "rr_title"
-              },
-              "field": "value"
+              }
             }
           }
         },
@@ -1388,12 +2678,6 @@
                 "field": "metric",
                 "equal": "rr"
               }
-            },
-            {
-              "calculate": {
-                "x-eas:expr": "datum.value < {{rr_low}} ? '\u25bc low' : datum.value > {{rr_high}} ? '\u25b2 high' : '\u25cf in range'"
-              },
-              "as": "status"
             }
           ],
           "mark": {
@@ -1422,50 +2706,64 @@
               }
             },
             "y": {
+              "field": "value",
               "type": "quantitative",
               "scale": {
                 "zero": false,
                 "nice": true
               },
-              "title": null,
-              "field": "value"
+              "title": null
             },
             "color": {
-              "field": "status",
+              "field": "status_label",
               "type": "nominal",
               "scale": {
                 "domain": [
-                  "\u25bc low",
-                  "\u25cf in range",
-                  "\u25b2 high"
+                  "low",
+                  "near limit",
+                  "in range",
+                  "high",
+                  "no range"
                 ],
                 "range": [
                   {
-                    "x-eas:slot": "flag_color"
+                    "x-eas:slot": "bad_color"
                   },
                   {
-                    "x-eas:slot": "line_color"
+                    "x-eas:slot": "warn_color"
                   },
                   {
-                    "x-eas:slot": "flag_color"
+                    "x-eas:slot": "ok_color"
+                  },
+                  {
+                    "x-eas:slot": "bad_color"
+                  },
+                  {
+                    "x-eas:slot": "unknown_color"
                   }
                 ]
               },
-              "legend": null
+              "legend": {
+                "title": null
+              }
             },
             "shape": {
-              "field": "status",
+              "field": "status_label",
               "type": "nominal",
               "scale": {
                 "domain": [
-                  "\u25bc low",
-                  "\u25cf in range",
-                  "\u25b2 high"
+                  "low",
+                  "near limit",
+                  "in range",
+                  "high",
+                  "no range"
                 ],
                 "range": [
                   "triangle-down",
+                  "diamond",
                   "circle",
-                  "triangle-up"
+                  "triangle-up",
+                  "square"
                 ]
               },
               "legend": null
@@ -1481,12 +2779,111 @@
                 "title": "rr"
               },
               {
-                "field": "status"
+                "field": "status_label",
+                "title": "status"
+              },
+              {
+                "field": "range_text",
+                "title": "range"
               }
             ]
           }
         }
       ]
+    }
+  ],
+  "transform": [
+    {
+      "x-eas:transform": "health-status",
+      "value": "value",
+      "prefix": "hr",
+      "low": {
+        "x-eas:slot": "hr_low"
+      },
+      "high": {
+        "x-eas:slot": "hr_high"
+      },
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      }
+    },
+    {
+      "x-eas:transform": "health-status",
+      "value": "value",
+      "prefix": "sbp",
+      "low": {
+        "x-eas:slot": "sbp_low"
+      },
+      "high": {
+        "x-eas:slot": "sbp_high"
+      },
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      }
+    },
+    {
+      "x-eas:transform": "health-status",
+      "value": "value",
+      "prefix": "dbp",
+      "low": {
+        "x-eas:slot": "dbp_low"
+      },
+      "high": {
+        "x-eas:slot": "dbp_high"
+      },
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      }
+    },
+    {
+      "x-eas:transform": "health-status",
+      "value": "value",
+      "prefix": "temp",
+      "low": {
+        "x-eas:slot": "temp_low"
+      },
+      "high": {
+        "x-eas:slot": "temp_high"
+      },
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      }
+    },
+    {
+      "x-eas:transform": "health-status",
+      "value": "value",
+      "prefix": "spo2",
+      "low": {
+        "x-eas:slot": "spo2_low"
+      },
+      "high": {
+        "x-eas:slot": "spo2_high"
+      },
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      }
+    },
+    {
+      "x-eas:transform": "health-status",
+      "value": "value",
+      "prefix": "rr",
+      "low": {
+        "x-eas:slot": "rr_low"
+      },
+      "high": {
+        "x-eas:slot": "rr_high"
+      },
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      }
+    },
+    {
+      "calculate": "datum.metric == 'hr' ? datum.hr_label : datum.metric == 'sbp' ? datum.sbp_label : datum.metric == 'dbp' ? datum.dbp_label : datum.metric == 'temp' ? datum.temp_label : datum.metric == 'spo2' ? datum.spo2_label : datum.metric == 'rr' ? datum.rr_label : 'no range'",
+      "as": "status_label"
+    },
+    {
+      "calculate": "datum.metric == 'hr' ? datum.hr_range_text : datum.metric == 'sbp' ? datum.sbp_range_text : datum.metric == 'dbp' ? datum.dbp_range_text : datum.metric == 'temp' ? datum.temp_range_text : datum.metric == 'spo2' ? datum.spo2_range_text : datum.metric == 'rr' ? datum.rr_range_text : 'no range'",
+      "as": "range_text"
     }
   ]
 }

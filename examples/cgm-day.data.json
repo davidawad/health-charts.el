@@ -1,5 +1,6 @@
 {
  "title": "CGM day (synthetic)",
+ "subtitle": "synthetic data; the limits are illustrative (a care team or the data source supplies the real ones)",
  "very_low": 54,
  "low": 70,
  "high": 180,

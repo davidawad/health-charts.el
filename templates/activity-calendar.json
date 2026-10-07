@@ -29,29 +29,24 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "goal": {
         "type": "number",
-        "default": 8000,
-        "doc": "daily goal; days at or above it get a check mark"
+        "default": null,
+        "doc": "daily goal, from the data or the user; days at or above it get a check mark, none when absent"
       },
       "unit": {
         "type": "string",
@@ -93,7 +88,10 @@
       "svg_size": [
         1000,
         420
-      ]
+      ],
+      "slots": {
+        "goal": "nonneg"
+      }
     }
   },
   "title": {
@@ -148,10 +146,17 @@
       "as": "week_label"
     },
     {
-      "calculate": {
-        "x-eas:expr": "datum.steps >= {{goal}} ? 1 : 0"
-      },
+      "calculate": "0",
       "as": "met"
+    },
+    {
+      "x-eas:when": "goal",
+      "spec": {
+        "calculate": {
+          "x-eas:expr": "datum.steps >= {{goal}} ? 1 : 0"
+        },
+        "as": "met"
+      }
     },
     {
       "calculate": "format(datum.steps / 1000, '.1f') + 'k' + (datum.met == 1 ? ' \u2713' : '')",
@@ -171,8 +176,15 @@
       "as": "dark"
     },
     {
-      "calculate": "datum.met == 1 ? 'goal met' : 'below goal'",
+      "calculate": "'no goal'",
       "as": "goal_state"
+    },
+    {
+      "x-eas:when": "goal",
+      "spec": {
+        "calculate": "datum.met == 1 ? 'goal met' : 'below goal'",
+        "as": "goal_state"
+      }
     }
   ],
   "layer": [

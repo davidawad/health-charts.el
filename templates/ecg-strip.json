@@ -29,24 +29,19 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "duration": {
         "type": "number",
@@ -389,11 +384,11 @@
       },
       "grid_minor": {
         "type": "string",
-        "default": "#f3d3d3"
+        "default": "#e6e5df"
       },
       "grid_major": {
         "type": "string",
-        "default": "#e3a0a0"
+        "default": "#c9c7bf"
       },
       "trace_color": {
         "type": "string",

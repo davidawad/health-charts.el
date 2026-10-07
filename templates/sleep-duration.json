@@ -3,7 +3,7 @@
   "x-eas": {
     "template": "sleep-duration",
     "version": "1.0.0",
-    "doc": "Nightly sleep as stacked bars by stage, the time in bed in hours above each night and the sleep goal as a dashed line.",
+    "doc": "Nightly sleep as stacked bars by stage, the time in bed in hours above each night and, when a goal is supplied, the sleep goal as a dashed line.",
     "slots": {
       "data": {
         "shape": "plist",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "Nightly sleep as stacked bars by stage, the time in bed in hours above each night and the sleep goal as a dashed line.",
+        "default": "Nightly sleep as stacked bars by stage, the time in bed in hours above each night and, when a goal is supplied, the sleep goal as a dashed line.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,39 +29,34 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "target_hours": {
         "type": "number",
-        "default": 8,
-        "doc": "sleep goal in hours (dashed line)"
+        "default": null,
+        "doc": "sleep goal in hours, from the data or the user; the dashed line is drawn only when supplied"
       },
       "stage_colors": {
         "type": "array",
         "default": [
-          "#d03b3b",
+          "#898781",
           "#8e5bd0",
           "#5aa0e6",
           "#1f4e99"
         ],
-        "doc": "colors for awake, rem, light, deep",
+        "doc": "colors for awake (grey), rem (violet), light (blue), deep (navy)",
         "items": "string"
       }
     },
@@ -85,7 +80,10 @@
       "svg_size": [
         900,
         400
-      ]
+      ],
+      "slots": {
+        "target_hours": "nonneg"
+      }
     }
   },
   "title": {
@@ -241,34 +239,37 @@
       }
     },
     {
-      "name": "target",
-      "transform": [
-        {
-          "aggregate": [
-            {
-              "op": "count",
-              "as": "n"
-            }
-          ]
-        }
-      ],
-      "mark": {
-        "type": "rule",
-        "strokeDash": [
-          6,
-          4
+      "x-eas:when": "target_hours",
+      "spec": {
+        "name": "target",
+        "transform": [
+          {
+            "aggregate": [
+              {
+                "op": "count",
+                "as": "n"
+              }
+            ]
+          }
         ],
-        "strokeWidth": 1.5,
-        "color": {
-          "x-eas:slot": "ink"
-        }
-      },
-      "encoding": {
-        "y": {
-          "datum": {
-            "x-eas:slot": "target_hours"
-          },
-          "type": "quantitative"
+        "mark": {
+          "type": "rule",
+          "strokeDash": [
+            6,
+            4
+          ],
+          "strokeWidth": 1.5,
+          "color": {
+            "x-eas:slot": "ink"
+          }
+        },
+        "encoding": {
+          "y": {
+            "datum": {
+              "x-eas:slot": "target_hours"
+            },
+            "type": "quantitative"
+          }
         }
       }
     }

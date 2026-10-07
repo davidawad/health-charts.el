@@ -1,8 +1,9 @@
 {
  "title": "Heart-rate variability (synthetic)",
- "subtitle": "blue: 7-day mean; shaded: personal baseline",
- "baseline_low": 52,
- "baseline_high": 72,
+ "subtitle": "synthetic; grey: daily, blue: 7-day mean, band: illustrative personal baseline (from the data)",
+ "low": 52,
+ "high": 72,
+ "band_label": "illustrative personal baseline 52-72 ms",
  "x_format": "%b %d",
  "data": [
   {

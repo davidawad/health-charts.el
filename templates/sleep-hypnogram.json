@@ -29,34 +29,29 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "stage_colors": {
         "type": "array",
         "default": [
-          "#d03b3b",
+          "#898781",
           "#8e5bd0",
           "#5aa0e6",
           "#1f4e99"
         ],
-        "doc": "colors for awake, rem, light, deep",
+        "doc": "colors for awake (grey), rem (violet), light (blue), deep (navy)",
         "items": "string"
       },
       "x_format": {

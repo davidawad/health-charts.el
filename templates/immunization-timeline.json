@@ -3,7 +3,7 @@
   "x-eas": {
     "template": "immunization-timeline",
     "version": "1.0.0",
-    "doc": "Immunization history: one row per vaccine, doses given as filled points, doses still due as grey diamonds and doses due before the as_of date as red triangles.",
+    "doc": "Immunization history: one row per vaccine, doses given as blue circles, doses still due as grey diamonds and doses due before the as_of date as dark triangles labelled overdue (overdue is a scheduling state, not a health judgment).",
     "slots": {
       "data": {
         "shape": "plist",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "Immunization history: one row per vaccine, doses given as filled points, doses still due as grey diamonds and doses due before the as_of date as red triangles.",
+        "default": "Immunization history: one row per vaccine, doses given as blue circles, doses still due as grey diamonds and doses due before the as_of date as dark triangles labelled overdue (overdue is a scheduling state, not a health judgment).",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,41 +29,38 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
+        "type": "string"
+      },
+      "line_color": {
         "type": "string",
-        "default": "#e1e0d9"
+        "doc": "the theme's neutral line color"
       },
       "as_of": {
         "type": "string",
         "doc": "ISO date (YYYY-MM-DD) that decides what is overdue; never the current date implicitly",
         "required": true
       },
-      "given_color": {
-        "type": "string",
-        "default": "#2a78d6"
-      },
       "due_color": {
         "type": "string",
-        "default": "#52514e"
+        "default": "#898781",
+        "doc": "doses still due (grey diamond)"
       },
       "overdue_color": {
         "type": "string",
-        "default": "#d03b3b"
+        "default": "#1f2a3a",
+        "doc": "doses due before as_of (dark neutral triangle, labelled overdue)"
       },
       "x_format": {
         "type": "string",
@@ -227,7 +224,7 @@
             ],
             "range": [
               {
-                "x-eas:slot": "given_color"
+                "x-eas:slot": "line_color"
               },
               {
                 "x-eas:slot": "due_color"

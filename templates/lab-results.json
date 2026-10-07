@@ -3,12 +3,12 @@
   "x-eas": {
     "template": "lab-results",
     "version": "1.0.0",
-    "doc": "Latest result of many analytes, each placed within its own reference range: the range is the bar, the result a marker, and results outside the range are flagged by color, shape and the legend.",
+    "doc": "Latest result of many analytes, each placed within its own reference range: the range is the bar (green, yellow near each limit), the result a marker colored red out of range, yellow near a limit, green in range and grey when there is no range.",
     "slots": {
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {analyte, value, unit?, ref_low, ref_high}: one latest result per analyte"
+        "doc": "rows {analyte, value, unit?, ref_low?, ref_high?, warn_low?, warn_high?, warn_margin?}: one latest result per analyte; ref_low and ref_high come from the data source (either may be missing, both missing draws no bar and is grey)"
       },
       "title": {
         "type": "string",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "Latest result of many analytes, each placed within its own reference range: the range is the bar, the result a marker, and results outside the range are flagged by color, shape and the legend.",
+        "default": "Latest result of many analytes, each placed within its own reference range: the range is the bar (green, yellow near each limit), the result a marker colored red out of range, yellow near a limit, green in range and grey when there is no range.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,39 +29,39 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
-      "band_color": {
+      "bad_color": {
         "type": "string",
-        "default": "#2a9d8f",
-        "doc": "reference range bar"
+        "doc": "out of range (the theme's red)"
       },
-      "line_color": {
+      "warn_color": {
         "type": "string",
-        "default": "#2a78d6",
-        "doc": "in-range results"
+        "doc": "near a limit (the theme's yellow)"
       },
-      "flag_color": {
+      "ok_color": {
         "type": "string",
-        "default": "#d03b3b",
-        "doc": "out-of-range results"
+        "doc": "in range (the theme's green)"
+      },
+      "unknown_color": {
+        "type": "string",
+        "doc": "no range to judge by (the theme's grey)"
+      },
+      "warn_margin": {
+        "type": "number",
+        "doc": "width of the yellow zone inside each limit, as a fraction of the range width (one bound for a one-sided range)"
       }
     },
     "example": "examples/lab-results.data.json",
@@ -73,8 +73,11 @@
             "analyte": "string",
             "value": "number",
             "unit": "?string",
-            "ref_low": "number",
-            "ref_high": "number"
+            "ref_low": "?number",
+            "ref_high": "?number",
+            "warn_low": "?number",
+            "warn_high": "?number",
+            "warn_margin": "?range:0:1"
           },
           "rows": [
             {
@@ -83,6 +86,20 @@
                 "ref_high"
               ],
               "code": "range_inverted"
+            },
+            {
+              "le": [
+                "ref_low",
+                "warn_low"
+              ],
+              "code": "warn_outside_range"
+            },
+            {
+              "le": [
+                "warn_high",
+                "ref_high"
+              ],
+              "code": "warn_outside_range"
             }
           ]
         }
@@ -94,7 +111,10 @@
       "svg_size": [
         1000,
         440
-      ]
+      ],
+      "slots": {
+        "warn_margin": "range:0:1"
+      }
     }
   },
   "title": {
@@ -120,24 +140,22 @@
   },
   "transform": [
     {
-      "calculate": "datum.value < datum.ref_low ? '\u25bc low' : datum.value > datum.ref_high ? '\u25b2 high' : '\u25cf in range'",
-      "as": "status"
-    },
-    {
-      "calculate": "(datum.value - datum.ref_low) / (datum.ref_high - datum.ref_low)",
-      "as": "pos_raw"
-    },
-    {
-      "calculate": "max(-0.5, min(1.5, datum.pos_raw))",
-      "as": "pos"
+      "x-eas:transform": "health-status",
+      "value": "value",
+      "low_field": "ref_low",
+      "high_field": "ref_high",
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      },
+      "normalize": true
     },
     {
       "calculate": "datum.analyte + '  ' + datum.value + (isValid(datum.unit) ? ' ' + datum.unit : '')",
       "as": "row_label"
     },
     {
-      "calculate": "datum.ref_low + ' to ' + datum.ref_high + (isValid(datum.unit) ? ' ' + datum.unit : '')",
-      "as": "range_text"
+      "calculate": "datum.range_text + (isValid(datum.unit) ? ' ' + datum.unit : '')",
+      "as": "range_text_unit"
     }
   ],
   "encoding": {
@@ -156,6 +174,11 @@
   "layer": [
     {
       "name": "range",
+      "transform": [
+        {
+          "filter": "isValid(datum.pos)"
+        }
+      ],
       "mark": {
         "type": "rect",
         "height": {
@@ -163,7 +186,7 @@
         },
         "opacity": 0.35,
         "color": {
-          "x-eas:slot": "band_color"
+          "x-eas:slot": "ok_color"
         }
       },
       "encoding": {
@@ -177,13 +200,101 @@
             "nice": false,
             "zero": false
           },
-          "datum": 0,
-          "title": "within the reference range (left edge = low limit, right edge = high limit)",
+          "title": "range bar: green in range, yellow near a limit",
           "axis": {
             "labels": false,
             "ticks": false,
             "grid": false
+          },
+          "field": "ok_from"
+        },
+        "x2": {
+          "field": "ok_to"
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "range_text_unit",
+            "title": "reference range"
           }
+        ]
+      }
+    },
+    {
+      "name": "warn-low",
+      "transform": [
+        {
+          "filter": "isValid(datum.warn_lo_pos)"
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "height": {
+          "band": 0.5
+        },
+        "opacity": 0.6,
+        "color": {
+          "x-eas:slot": "warn_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              1.6
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "datum": 0
+        },
+        "x2": {
+          "field": "warn_lo_pos"
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "range_text_unit",
+            "title": "reference range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "warn-high",
+      "transform": [
+        {
+          "filter": "isValid(datum.warn_hi_pos)"
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "height": {
+          "band": 0.5
+        },
+        "opacity": 0.6,
+        "color": {
+          "x-eas:slot": "warn_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              1.6
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "field": "warn_hi_pos"
         },
         "x2": {
           "datum": 1
@@ -193,7 +304,7 @@
             "field": "analyte"
           },
           {
-            "field": "range_text",
+            "field": "range_text_unit",
             "title": "reference range"
           }
         ]
@@ -201,6 +312,11 @@
     },
     {
       "name": "result",
+      "transform": [
+        {
+          "filter": "isValid(datum.pos)"
+        }
+      ],
       "mark": {
         "type": "point",
         "filled": true,
@@ -225,23 +341,31 @@
           "field": "pos"
         },
         "color": {
-          "field": "status",
+          "field": "status_label",
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25bc low",
-              "\u25cf in range",
-              "\u25b2 high"
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
             ],
             "range": [
               {
-                "x-eas:slot": "flag_color"
+                "x-eas:slot": "bad_color"
               },
               {
-                "x-eas:slot": "line_color"
+                "x-eas:slot": "warn_color"
               },
               {
-                "x-eas:slot": "flag_color"
+                "x-eas:slot": "ok_color"
+              },
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "unknown_color"
               }
             ]
           },
@@ -250,18 +374,22 @@
           }
         },
         "shape": {
-          "field": "status",
+          "field": "status_label",
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25bc low",
-              "\u25cf in range",
-              "\u25b2 high"
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
             ],
             "range": [
               "triangle-down",
+              "diamond",
               "circle",
-              "triangle-up"
+              "triangle-up",
+              "square"
             ]
           },
           "legend": null
@@ -274,11 +402,57 @@
             "field": "value"
           },
           {
-            "field": "status"
+            "field": "status_label",
+            "title": "status"
           },
           {
-            "field": "range_text",
+            "field": "range_text_unit",
             "title": "reference range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "no-range",
+      "transform": [
+        {
+          "filter": "datum.status == 'unknown'"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "align": "center",
+        "fontSize": 11,
+        "color": {
+          "x-eas:slot": "unknown_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              1.6
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "datum": 0.5
+        },
+        "text": {
+          "value": "no range"
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "value"
+          },
+          {
+            "field": "status_label",
+            "title": "status"
           }
         ]
       }

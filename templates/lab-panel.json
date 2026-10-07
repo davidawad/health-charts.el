@@ -3,12 +3,12 @@
   "x-eas": {
     "template": "lab-panel",
     "version": "1.0.0",
-    "doc": "Small multiples: one compact trend per analyte, each on its own scale with its reference range as a band and out-of-range results flagged by color and shape.",
+    "doc": "Small multiples: one compact trend per analyte, each on its own scale with its own reference range (from the panels table) as a band, green with yellow zones near each limit; every result is colored red out of range, yellow near a limit, green in range or grey with no range, and shaped by direction. The range is data, never a template default.",
     "slots": {
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {time, analyte, value}: every result of every analyte, oldest first; panels names the analytes to draw"
+        "doc": "rows {time, analyte, value, warn_low?, warn_high?, warn_margin?}: every result of every analyte, oldest first; panels names the analytes to draw and carries each analyte's range; the warn fields override the yellow zone of that one result"
       },
       "title": {
         "type": "string",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "Small multiples: one compact trend per analyte, each on its own scale with its reference range as a band and out-of-range results flagged by color and shape.",
+        "default": "Small multiples: one compact trend per analyte, each on its own scale with its own reference range (from the panels table) as a band, green with yellow zones near each limit; every result is colored red out of range, yellow near a limit, green in range or grey with no range, and shaped by direction. The range is data, never a template default.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,29 +29,24 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "panels": {
         "type": "array",
         "required": true,
-        "doc": "one object per analyte: {analyte, label, unit?, low, high}; analyte matches data rows"
+        "doc": "one object per analyte: {analyte, label, unit?, low?, high?, warn_low?, warn_high?, warn_margin?}; analyte matches data rows; low and high are that analyte's reference range from the data source (either may be missing: one-sided; both missing: grey, no range); warn_low and warn_high are the inner edges of the yellow zones, warn_margin a fraction, each overriding the slot warn_margin for that analyte"
       },
       "columns": {
         "type": "integer",
@@ -60,17 +55,27 @@
       },
       "line_color": {
         "type": "string",
-        "default": "#2a78d6"
+        "doc": "the series line (the theme's neutral line color)"
       },
-      "flag_color": {
+      "bad_color": {
         "type": "string",
-        "default": "#d03b3b",
-        "doc": "out-of-range results"
+        "doc": "out of range (the theme's red)"
       },
-      "band_color": {
+      "warn_color": {
         "type": "string",
-        "default": "#2a9d8f",
-        "doc": "reference range band"
+        "doc": "near a limit (the theme's yellow)"
+      },
+      "ok_color": {
+        "type": "string",
+        "doc": "in range (the theme's green)"
+      },
+      "unknown_color": {
+        "type": "string",
+        "doc": "no range to judge by (the theme's grey)"
+      },
+      "warn_margin": {
+        "type": "number",
+        "doc": "width of the yellow zone inside each limit, as a fraction of the range width (of the one bound for a one-sided range); a row's warn_margin overrides it"
       },
       "x_format": {
         "type": "string",
@@ -91,7 +96,10 @@
           "fields": {
             "time": "time",
             "analyte": "string",
-            "value": "number"
+            "value": "number",
+            "warn_low": "?number",
+            "warn_high": "?number",
+            "warn_margin": "?range:0:1"
           },
           "order": "time"
         },
@@ -100,8 +108,11 @@
             "analyte": "string",
             "label": "string",
             "unit": "?string",
-            "low": "number",
-            "high": "number"
+            "low": "?number",
+            "high": "?number",
+            "warn_low": "?number",
+            "warn_high": "?number",
+            "warn_margin": "?range:0:1"
           },
           "rows": [
             {
@@ -110,6 +121,20 @@
                 "high"
               ],
               "code": "range_inverted"
+            },
+            {
+              "le": [
+                "low",
+                "warn_low"
+              ],
+              "code": "warn_outside_range"
+            },
+            {
+              "le": [
+                "warn_high",
+                "high"
+              ],
+              "code": "warn_outside_range"
             }
           ]
         }
@@ -121,7 +146,10 @@
       "svg_size": [
         900,
         560
-      ]
+      ],
+      "slots": {
+        "warn_margin": "range:0:1"
+      }
     }
   },
   "title": {
@@ -167,10 +195,86 @@
             }
           },
           {
+            "joinaggregate": [
+              {
+                "op": "min",
+                "field": "value",
+                "as": "vmin"
+              },
+              {
+                "op": "max",
+                "field": "value",
+                "as": "vmax"
+              }
+            ]
+          },
+          {
             "calculate": {
-              "x-eas:expr": "datum.value < {{@low}} ? '\u25bc low' : datum.value > {{@high}} ? '\u25b2 high' : '\u25cf in range'"
+              "x-eas:expr": "({{@}}).low"
             },
-            "as": "status"
+            "as": "lo"
+          },
+          {
+            "calculate": {
+              "x-eas:expr": "({{@}}).high"
+            },
+            "as": "hi"
+          },
+          {
+            "calculate": {
+              "x-eas:expr": "({{@}}).warn_margin"
+            },
+            "as": "pm"
+          },
+          {
+            "calculate": {
+              "x-eas:expr": "({{@}}).warn_low"
+            },
+            "as": "pwl"
+          },
+          {
+            "calculate": {
+              "x-eas:expr": "({{@}}).warn_high"
+            },
+            "as": "pwh"
+          },
+          {
+            "calculate": {
+              "x-eas:expr": "isValid(datum.warn_margin) ? datum.warn_margin : isValid(datum.pm) ? datum.pm : {{warn_margin}}"
+            },
+            "as": "m"
+          },
+          {
+            "calculate": "!isValid(datum.lo) ? null : isValid(datum.warn_low) ? datum.warn_low : isValid(datum.pwl) ? datum.pwl : datum.lo + datum.m * (isValid(datum.hi) ? datum.hi - datum.lo : abs(datum.lo))",
+            "as": "zone_low"
+          },
+          {
+            "calculate": "!isValid(datum.hi) ? null : isValid(datum.warn_high) ? datum.warn_high : isValid(datum.pwh) ? datum.pwh : datum.hi - datum.m * (isValid(datum.lo) ? datum.hi - datum.lo : abs(datum.hi))",
+            "as": "zone_high"
+          },
+          {
+            "calculate": "!isValid(datum.value) || (!isValid(datum.lo) && !isValid(datum.hi)) ? 'no range' : isValid(datum.lo) && datum.value < datum.lo ? 'low' : isValid(datum.hi) && datum.value > datum.hi ? 'high' : (isValid(datum.zone_low) && datum.value < datum.zone_low) || (isValid(datum.zone_high) && datum.value > datum.zone_high) ? 'near limit' : 'in range'",
+            "as": "status_label"
+          },
+          {
+            "calculate": "datum.status_label == 'low' ? 'L' : datum.status_label == 'high' ? 'H' : ''",
+            "as": "status_flag"
+          },
+          {
+            "calculate": "0.1 * max(datum.vmax - datum.vmin, 1e-9)",
+            "as": "pad"
+          },
+          {
+            "calculate": "!isValid(datum.lo) && !isValid(datum.hi) ? null : isValid(datum.lo) ? datum.lo : min(datum.vmin, datum.hi, datum.zone_high) - datum.pad",
+            "as": "band_lo"
+          },
+          {
+            "calculate": "!isValid(datum.lo) && !isValid(datum.hi) ? null : isValid(datum.hi) ? datum.hi : max(datum.vmax, datum.lo, datum.zone_low) + datum.pad",
+            "as": "band_hi"
+          },
+          {
+            "calculate": "isValid(datum.lo) && isValid(datum.hi) ? datum.lo + ' to ' + datum.hi : isValid(datum.lo) ? '\u2265 ' + datum.lo : isValid(datum.hi) ? '\u2264 ' + datum.hi : 'no range'",
+            "as": "range_text"
           }
         ],
         "layer": [
@@ -180,34 +284,52 @@
               {
                 "aggregate": [
                   {
-                    "op": "count",
-                    "as": "n"
+                    "op": "max",
+                    "field": "band_lo",
+                    "as": "lo"
+                  },
+                  {
+                    "op": "max",
+                    "field": "band_hi",
+                    "as": "hi"
+                  },
+                  {
+                    "op": "max",
+                    "field": "zone_low",
+                    "as": "zl"
+                  },
+                  {
+                    "op": "max",
+                    "field": "zone_high",
+                    "as": "zh"
                   }
                 ]
               },
               {
-                "calculate": {
-                  "x-eas:expr": "{{@low}}"
-                },
-                "as": "lo"
+                "filter": "isValid(datum.lo)"
               },
               {
-                "calculate": {
-                  "x-eas:expr": "{{@high}}"
-                },
-                "as": "hi"
+                "calculate": "isValid(datum.zl) ? datum.zl : datum.lo",
+                "as": "y0"
+              },
+              {
+                "calculate": "isValid(datum.zh) ? datum.zh : datum.hi",
+                "as": "y1"
+              },
+              {
+                "filter": "true"
               }
             ],
             "mark": {
               "type": "rect",
-              "opacity": 0.2,
+              "opacity": 0.22,
               "color": {
-                "x-eas:slot": "band_color"
+                "x-eas:slot": "ok_color"
               }
             },
             "encoding": {
               "y": {
-                "field": "lo",
+                "field": "y0",
                 "type": "quantitative",
                 "scale": {
                   "zero": false,
@@ -215,7 +337,133 @@
                 }
               },
               "y2": {
-                "field": "hi"
+                "field": "y1"
+              }
+            }
+          },
+          {
+            "name": "warn-low",
+            "transform": [
+              {
+                "aggregate": [
+                  {
+                    "op": "max",
+                    "field": "band_lo",
+                    "as": "lo"
+                  },
+                  {
+                    "op": "max",
+                    "field": "band_hi",
+                    "as": "hi"
+                  },
+                  {
+                    "op": "max",
+                    "field": "zone_low",
+                    "as": "zl"
+                  },
+                  {
+                    "op": "max",
+                    "field": "zone_high",
+                    "as": "zh"
+                  }
+                ]
+              },
+              {
+                "filter": "isValid(datum.lo)"
+              },
+              {
+                "calculate": "datum.lo",
+                "as": "y0"
+              },
+              {
+                "calculate": "datum.zl",
+                "as": "y1"
+              },
+              {
+                "filter": "isValid(datum.zl)"
+              }
+            ],
+            "mark": {
+              "type": "rect",
+              "opacity": 0.35,
+              "color": {
+                "x-eas:slot": "warn_color"
+              }
+            },
+            "encoding": {
+              "y": {
+                "field": "y0",
+                "type": "quantitative",
+                "scale": {
+                  "zero": false,
+                  "nice": true
+                }
+              },
+              "y2": {
+                "field": "y1"
+              }
+            }
+          },
+          {
+            "name": "warn-high",
+            "transform": [
+              {
+                "aggregate": [
+                  {
+                    "op": "max",
+                    "field": "band_lo",
+                    "as": "lo"
+                  },
+                  {
+                    "op": "max",
+                    "field": "band_hi",
+                    "as": "hi"
+                  },
+                  {
+                    "op": "max",
+                    "field": "zone_low",
+                    "as": "zl"
+                  },
+                  {
+                    "op": "max",
+                    "field": "zone_high",
+                    "as": "zh"
+                  }
+                ]
+              },
+              {
+                "filter": "isValid(datum.lo)"
+              },
+              {
+                "calculate": "datum.zh",
+                "as": "y0"
+              },
+              {
+                "calculate": "datum.hi",
+                "as": "y1"
+              },
+              {
+                "filter": "isValid(datum.zh)"
+              }
+            ],
+            "mark": {
+              "type": "rect",
+              "opacity": 0.35,
+              "color": {
+                "x-eas:slot": "warn_color"
+              }
+            },
+            "encoding": {
+              "y": {
+                "field": "y0",
+                "type": "quantitative",
+                "scale": {
+                  "zero": false,
+                  "nice": true
+                }
+              },
+              "y2": {
+                "field": "y1"
               }
             }
           },
@@ -301,23 +549,31 @@
                 }
               },
               "color": {
-                "field": "status",
+                "field": "status_label",
                 "type": "nominal",
                 "scale": {
                   "domain": [
-                    "\u25bc low",
-                    "\u25cf in range",
-                    "\u25b2 high"
+                    "low",
+                    "near limit",
+                    "in range",
+                    "high",
+                    "no range"
                   ],
                   "range": [
                     {
-                      "x-eas:slot": "flag_color"
+                      "x-eas:slot": "bad_color"
                     },
                     {
-                      "x-eas:slot": "line_color"
+                      "x-eas:slot": "warn_color"
                     },
                     {
-                      "x-eas:slot": "flag_color"
+                      "x-eas:slot": "ok_color"
+                    },
+                    {
+                      "x-eas:slot": "bad_color"
+                    },
+                    {
+                      "x-eas:slot": "unknown_color"
                     }
                   ]
                 },
@@ -326,18 +582,22 @@
                 }
               },
               "shape": {
-                "field": "status",
+                "field": "status_label",
                 "type": "nominal",
                 "scale": {
                   "domain": [
-                    "\u25bc low",
-                    "\u25cf in range",
-                    "\u25b2 high"
+                    "low",
+                    "near limit",
+                    "in range",
+                    "high",
+                    "no range"
                   ],
                   "range": [
                     "triangle-down",
+                    "diamond",
                     "circle",
-                    "triangle-up"
+                    "triangle-up",
+                    "square"
                   ]
                 },
                 "legend": null
@@ -352,9 +612,65 @@
                   "field": "value"
                 },
                 {
-                  "field": "status"
+                  "field": "status_label",
+                  "title": "status"
+                },
+                {
+                  "field": "range_text",
+                  "title": "range"
                 }
               ]
+            }
+          },
+          {
+            "name": "flags",
+            "transform": [
+              {
+                "filter": "datum.status_flag != ''"
+              }
+            ],
+            "mark": {
+              "type": "text",
+              "baseline": "bottom",
+              "dy": -7,
+              "fontSize": 10,
+              "fontWeight": "bold",
+              "color": {
+                "x-eas:slot": "bad_color"
+              }
+            },
+            "encoding": {
+              "x": {
+                "field": "time",
+                "type": "temporal",
+                "title": null,
+                "axis": {
+                  "grid": false,
+                  "format": {
+                    "x-eas:slot": "x_format"
+                  },
+                  "tickCount": {
+                    "x-eas:slot": "x_ticks"
+                  },
+                  "labelFontSize": 10
+                }
+              },
+              "y": {
+                "field": "value",
+                "type": "quantitative",
+                "title": null,
+                "scale": {
+                  "zero": false,
+                  "nice": true
+                },
+                "axis": {
+                  "labelFontSize": 10,
+                  "tickCount": 4
+                }
+              },
+              "text": {
+                "field": "status_flag"
+              }
             }
           }
         ]

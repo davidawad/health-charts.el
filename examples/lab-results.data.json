@@ -1,6 +1,6 @@
 {
  "title": "Latest results (synthetic)",
- "subtitle": "illustrative reference ranges",
+ "subtitle": "illustrative reference ranges; the data source owns the real ones",
  "data": [
   {
    "analyte": "Glucose, fasting",
@@ -70,7 +70,19 @@
    "value": 61,
    "unit": "nmol/L",
    "ref_low": 50,
-   "ref_high": 125
+   "ref_high": 125,
+   "warn_margin": 0.1
+  },
+  {
+   "analyte": "ApoB (upper limit only)",
+   "value": 86,
+   "unit": "mg/dL",
+   "ref_high": 90
+  },
+  {
+   "analyte": "Lp(a) (no range supplied)",
+   "value": 40,
+   "unit": "nmol/L"
   }
  ]
 }

@@ -3,7 +3,7 @@
   "x-eas": {
     "template": "agp",
     "version": "1.0.0",
-    "doc": "Ambulatory glucose profile: many days of readings folded onto one 24 hour day as the median line with the 25-75th and 5-95th percentile bands and the target range limits.",
+    "doc": "Ambulatory glucose profile: many days of readings folded onto one 24 hour day as the median line with the 25-75th and 5-95th percentile bands (neutral blues) and, when the data source supplies it, the target range as a green band. The profile itself is not judged, so it uses no red or yellow.",
     "slots": {
       "data": {
         "shape": "plist",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "Ambulatory glucose profile: many days of readings folded onto one 24 hour day as the median line with the 25-75th and 5-95th percentile bands and the target range limits.",
+        "default": "Ambulatory glucose profile: many days of readings folded onto one 24 hour day as the median line with the 25-75th and 5-95th percentile bands (neutral blues) and, when the data source supplies it, the target range as a green band. The profile itself is not judged, so it uses no red or yellow.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,39 +29,34 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "low": {
         "type": "number",
-        "default": 70,
-        "doc": "below this: low; the bottom of the target range (mg/dL)"
+        "default": null,
+        "doc": "lower limit of the target range, from the data source or care team; the target band is drawn only when low or high is given (the open side runs to the data)"
       },
       "high": {
         "type": "number",
-        "default": 180,
-        "doc": "above this: high; the top of the target range (mg/dL)"
+        "default": null,
+        "doc": "upper limit of the target range, from the data source or care team"
       },
       "unit": {
         "type": "string",
         "default": "mg/dL",
-        "doc": "glucose unit, shown in titles"
+        "doc": "glucose unit label, shown in titles (a label, not a threshold)"
       },
       "bucket_minutes": {
         "type": "integer",
@@ -70,11 +65,11 @@
       },
       "line_color": {
         "type": "string",
-        "default": "#2a78d6"
+        "doc": "the median and the percentile bands (the theme's neutral line color, bands at lower opacity)"
       },
-      "band_color": {
+      "ok_color": {
         "type": "string",
-        "default": "#2a9d8f"
+        "doc": "the target range band (the theme's green)"
       }
     },
     "example": "examples/agp.data.json",
@@ -135,6 +130,16 @@
       "bucket_minutes": {
         "x-eas:slot": "bucket_minutes"
       }
+    },
+    {
+      "x-eas:transform": "health-status",
+      "value": "p50",
+      "low": {
+        "x-eas:slot": "low"
+      },
+      "high": {
+        "x-eas:slot": "high"
+      }
     }
   ],
   "layer": [
@@ -144,24 +149,31 @@
         {
           "aggregate": [
             {
-              "op": "count",
-              "as": "n"
+              "op": "max",
+              "field": "band_lo",
+              "as": "y0"
+            },
+            {
+              "op": "max",
+              "field": "band_hi",
+              "as": "y1"
             }
           ]
+        },
+        {
+          "filter": "isValid(datum.y0)"
         }
       ],
       "mark": {
         "type": "rect",
-        "opacity": 0.14,
+        "opacity": 0.22,
         "color": {
-          "x-eas:slot": "band_color"
+          "x-eas:slot": "ok_color"
         }
       },
       "encoding": {
         "y": {
-          "datum": {
-            "x-eas:slot": "low"
-          },
+          "field": "y0",
           "type": "quantitative",
           "scale": {
             "zero": false,
@@ -169,17 +181,21 @@
           }
         },
         "y2": {
-          "datum": {
-            "x-eas:slot": "high"
+          "field": "y1"
+        },
+        "tooltip": [
+          {
+            "value": "target range",
+            "title": "range"
           }
-        }
+        ]
       }
     },
     {
       "name": "p5-p95",
       "mark": {
         "type": "area",
-        "opacity": 0.22,
+        "opacity": 0.16,
         "color": {
           "x-eas:slot": "line_color"
         }
@@ -307,78 +323,12 @@
       }
     },
     {
-      "name": "low-line",
-      "transform": [
-        {
-          "aggregate": [
-            {
-              "op": "count",
-              "as": "n"
-            }
-          ]
-        }
-      ],
-      "mark": {
-        "type": "rule",
-        "strokeDash": [
-          4,
-          3
-        ],
-        "color": "#d03b3b"
-      },
-      "encoding": {
-        "y": {
-          "datum": {
-            "x-eas:slot": "low"
-          },
-          "type": "quantitative",
-          "scale": {
-            "zero": false,
-            "nice": true
-          }
-        }
-      }
-    },
-    {
-      "name": "high-line",
-      "transform": [
-        {
-          "aggregate": [
-            {
-              "op": "count",
-              "as": "n"
-            }
-          ]
-        }
-      ],
-      "mark": {
-        "type": "rule",
-        "strokeDash": [
-          4,
-          3
-        ],
-        "color": "#e09a00"
-      },
-      "encoding": {
-        "y": {
-          "datum": {
-            "x-eas:slot": "high"
-          },
-          "type": "quantitative",
-          "scale": {
-            "zero": false,
-            "nice": true
-          }
-        }
-      }
-    },
-    {
       "name": "median",
       "mark": {
         "type": "line",
         "strokeWidth": 2.5,
         "color": {
-          "x-eas:slot": "ink"
+          "x-eas:slot": "line_color"
         }
       },
       "encoding": {

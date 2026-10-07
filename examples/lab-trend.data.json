@@ -1,6 +1,6 @@
 {
  "title": "LDL cholesterol (synthetic)",
- "subtitle": "illustrative adult reference range 2.0-4.9 mmol/L",
+ "subtitle": "illustrative adult reference range 2.0-4.9 mmol/L; the data source owns the real range",
  "y_title": "LDL cholesterol (mmol/L)",
  "low": 2.0,
  "high": 4.9,

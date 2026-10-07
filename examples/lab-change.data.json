@@ -1,6 +1,6 @@
 {
  "title": "Change between two draws (synthetic)",
- "subtitle": "hollow = earlier, filled = later; illustrative ranges",
+ "subtitle": "synthetic, illustrative ranges; hollow earlier, filled later; blue line improved, black worsened",
  "data": [
   {
    "analyte": "LDL cholesterol",
@@ -37,7 +37,7 @@
   {
    "analyte": "ALT",
    "unit": "U/L",
-   "before": 31,
+   "before": 36,
    "after": 29,
    "ref_low": 7,
    "ref_high": 40
@@ -46,16 +46,13 @@
    "analyte": "Vitamin D",
    "unit": "nmol/L",
    "before": 38,
-   "after": 74,
-   "ref_low": 50,
-   "ref_high": 125
+   "after": 74
   },
   {
    "analyte": "TSH",
    "unit": "mIU/L",
    "before": 2.4,
    "after": 4.6,
-   "ref_low": 0.4,
    "ref_high": 4.0
   }
  ]

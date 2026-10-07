@@ -1,12 +1,11 @@
 {
  "title": "Lab panel (synthetic)",
- "subtitle": "illustrative reference ranges",
+ "subtitle": "synthetic data; illustrative reference ranges (the data source owns the real ones)",
  "panels": [
   {
    "analyte": "hba1c",
    "label": "HbA1c",
    "unit": " (%)",
-   "low": 4.0,
    "high": 5.6
   },
   {
@@ -20,15 +19,15 @@
    "analyte": "ldl",
    "label": "LDL cholesterol",
    "unit": " (mmol/L)",
-   "low": 2.0,
-   "high": 4.9
+   "low": null
   },
   {
    "analyte": "tsh",
    "label": "TSH",
    "unit": " (mIU/L)",
    "low": 0.4,
-   "high": 4.0
+   "high": 4.0,
+   "warn_low": 0.6
   }
  ],
  "data": [

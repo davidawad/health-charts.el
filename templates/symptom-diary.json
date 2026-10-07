@@ -29,34 +29,29 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "low_color": {
         "type": "string",
-        "default": "#f4f1ea",
+        "default": "#eef3fb",
         "doc": "colour of severity 0"
       },
       "high_color": {
         "type": "string",
-        "default": "#b3261e",
-        "doc": "colour of severity 10"
+        "default": "#2a3f8f",
+        "doc": "colour of severity 10 (deep blue-violet, an intensity ramp, not a health status)"
       },
       "row_step": {
         "type": "integer",

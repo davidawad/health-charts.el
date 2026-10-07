@@ -3,7 +3,7 @@
   "x-eas": {
     "template": "egfr-trend",
     "version": "1.0.0",
-    "doc": "Estimated GFR (mL/min/1.73 m2) over time against the KDIGO CKD stage bands G1 to G5.",
+    "doc": "Estimated GFR (mL/min/1.73 m2) over time against category bands bound from the data source (each band carries its own status: low, near, ok or high); bands are filled and readings colored and shaped by that status, with an optional personal target line.",
     "slots": {
       "data": {
         "shape": "plist",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "Estimated GFR (mL/min/1.73 m2) over time against the KDIGO CKD stage bands G1 to G5.",
+        "default": "Estimated GFR (mL/min/1.73 m2) over time against category bands bound from the data source (each band carries its own status: low, near, ok or high); bands are filled and readings colored and shaped by that status, with an optional personal target line.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,80 +29,34 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "bands": {
         "type": "array",
-        "default": [
-          {
-            "label": "G5",
-            "low": 0,
-            "high": 15,
-            "color": "#8b1e1e"
-          },
-          {
-            "label": "G4",
-            "low": 15,
-            "high": 30,
-            "color": "#d03b3b"
-          },
-          {
-            "label": "G3b",
-            "low": 30,
-            "high": 45,
-            "color": "#e07a00"
-          },
-          {
-            "label": "G3a",
-            "low": 45,
-            "high": 60,
-            "color": "#e09a00"
-          },
-          {
-            "label": "G2",
-            "low": 60,
-            "high": 90,
-            "color": "#8ab04a"
-          },
-          {
-            "label": "G1",
-            "low": 90,
-            "high": 120,
-            "color": "#2a9d8f"
-          }
-        ],
-        "doc": "category bands [{label, low, high, color}], drawn bottom to top"
+        "required": true,
+        "doc": "required, from the data source: category bands [{label, low, high, status, color?}], drawn bottom to top; status is low, near, ok or high and decides the band's color and each reading's status; color optionally overrides the band's fill"
       },
       "target": {
         "type": "number",
         "default": null,
-        "doc": "optional personal target: a dashed line"
+        "doc": "optional personal target: a dashed line in the ink color"
       },
       "y_title": {
         "type": "string",
-        "default": "eGFR (mL/min/1.73 m\u00b2)",
+        "default": "eGFR (mL/min/1.73 m²)",
         "doc": "y-axis title"
-      },
-      "line_color": {
-        "type": "string",
-        "default": "#2a78d6"
       },
       "x_format": {
         "type": "string",
@@ -113,6 +67,22 @@
         "type": "integer",
         "default": 5,
         "doc": "about this many time axis ticks"
+      },
+      "bad_color": {
+        "type": "string",
+        "doc": "out of range (the theme's red)"
+      },
+      "warn_color": {
+        "type": "string",
+        "doc": "near limit (the theme's yellow)"
+      },
+      "ok_color": {
+        "type": "string",
+        "doc": "in range (the theme's green)"
+      },
+      "unknown_color": {
+        "type": "string",
+        "doc": "no band holds the value (the theme's grey)"
       }
     },
     "example": "examples/egfr-trend.data.json",
@@ -127,11 +97,11 @@
           "order": "time"
         },
         "bands": {
-          "optional": true,
           "fields": {
             "label": "string",
             "low": "number",
             "high": "number",
+            "status": "enum:low|near|ok|high",
             "color": "?string"
           },
           "rows": [
@@ -142,7 +112,8 @@
               ],
               "code": "range_inverted"
             }
-          ]
+          ],
+          "min_rows": 1
         }
       },
       "text_size": [
@@ -178,7 +149,7 @@
     {
       "x-eas:each": "bands",
       "spec": {
-        "name": "band",
+        "name": "band-bad",
         "transform": [
           {
             "aggregate": [
@@ -187,13 +158,136 @@
                 "as": "n"
               }
             ]
+          },
+          {
+            "filter": {
+              "x-eas:expr": "{{@status}} == 'low' || {{@status}} == 'high'"
+            }
           }
         ],
         "mark": {
           "type": "rect",
+          "clip": true,
           "opacity": 0.22,
           "color": {
-            "x-eas:item": "color"
+            "x-eas:item": "color",
+            "default": {
+              "x-eas:slot": "bad_color"
+            }
+          }
+        },
+        "encoding": {
+          "y": {
+            "datum": {
+              "x-eas:item": "low"
+            },
+            "type": "quantitative",
+            "scale": {
+              "zero": false,
+              "nice": true
+            }
+          },
+          "y2": {
+            "datum": {
+              "x-eas:item": "high"
+            }
+          },
+          "tooltip": [
+            {
+              "value": {
+                "x-eas:text": "{{@label}}"
+              },
+              "title": "band"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "x-eas:each": "bands",
+      "spec": {
+        "name": "band-near",
+        "transform": [
+          {
+            "aggregate": [
+              {
+                "op": "count",
+                "as": "n"
+              }
+            ]
+          },
+          {
+            "filter": {
+              "x-eas:expr": "{{@status}} == 'near'"
+            }
+          }
+        ],
+        "mark": {
+          "type": "rect",
+          "clip": true,
+          "opacity": 0.22,
+          "color": {
+            "x-eas:item": "color",
+            "default": {
+              "x-eas:slot": "warn_color"
+            }
+          }
+        },
+        "encoding": {
+          "y": {
+            "datum": {
+              "x-eas:item": "low"
+            },
+            "type": "quantitative",
+            "scale": {
+              "zero": false,
+              "nice": true
+            }
+          },
+          "y2": {
+            "datum": {
+              "x-eas:item": "high"
+            }
+          },
+          "tooltip": [
+            {
+              "value": {
+                "x-eas:text": "{{@label}}"
+              },
+              "title": "band"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "x-eas:each": "bands",
+      "spec": {
+        "name": "band-ok",
+        "transform": [
+          {
+            "aggregate": [
+              {
+                "op": "count",
+                "as": "n"
+              }
+            ]
+          },
+          {
+            "filter": {
+              "x-eas:expr": "{{@status}} == 'ok'"
+            }
+          }
+        ],
+        "mark": {
+          "type": "rect",
+          "clip": true,
+          "opacity": 0.22,
+          "color": {
+            "x-eas:item": "color",
+            "default": {
+              "x-eas:slot": "ok_color"
+            }
           }
         },
         "encoding": {
@@ -241,7 +335,10 @@
           "type": "rule",
           "strokeWidth": 1,
           "color": {
-            "x-eas:item": "color"
+            "x-eas:item": "color",
+            "default": {
+              "x-eas:slot": "muted"
+            }
           }
         },
         "encoding": {
@@ -399,10 +496,7 @@
         "stroke": {
           "x-eas:slot": "surface"
         },
-        "strokeWidth": 1.5,
-        "color": {
-          "x-eas:slot": "line_color"
-        }
+        "strokeWidth": 1.5
       },
       "encoding": {
         "x": {
@@ -439,8 +533,118 @@
           {
             "field": "value",
             "title": "value"
+          },
+          {
+            "field": "status_label",
+            "title": "status"
+          },
+          {
+            "field": "band_label",
+            "title": "band"
           }
-        ]
+        ],
+        "color": {
+          "field": "status_label",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "warn_color"
+              },
+              {
+                "x-eas:slot": "ok_color"
+              },
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "unknown_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "shape": {
+          "field": "status_label",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
+            ],
+            "range": [
+              "triangle-down",
+              "diamond",
+              "circle",
+              "triangle-up",
+              "square"
+            ]
+          },
+          "legend": null
+        }
+      }
+    },
+    {
+      "name": "flags",
+      "transform": [
+        {
+          "filter": "datum.status_flag != ''"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "baseline": "bottom",
+        "dy": -9,
+        "fontSize": 12,
+        "fontWeight": "bold",
+        "color": {
+          "x-eas:slot": "bad_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "time",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "grid": false,
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            }
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "y_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "text": {
+          "field": "status_flag"
+        }
       }
     },
     {
@@ -509,6 +713,15 @@
         "text": {
           "field": "latest_text"
         }
+      }
+    }
+  ],
+  "transform": [
+    {
+      "x-eas:transform": "health-band-status",
+      "value": "value",
+      "bands": {
+        "x-eas:slot": "bands"
       }
     }
   ]

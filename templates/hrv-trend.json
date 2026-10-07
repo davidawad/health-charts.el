@@ -3,12 +3,12 @@
   "x-eas": {
     "template": "hrv-trend",
     "version": "1.0.0",
-    "doc": "Daily heart-rate variability (RMSSD) with a 7-day rolling mean and a personal baseline band; days below the baseline are flagged.",
+    "doc": "Daily heart-rate variability (RMSSD) with a 7-day rolling mean and a personal baseline band (green, yellow near each edge); days below the baseline are red and flagged L, days above it red and flagged H. The baseline comes from the data via the low/high slots. Legend words: below baseline / near edge / within baseline / above baseline / no baseline.",
     "slots": {
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {date, hrv}: an ISO date and RMSSD in ms, oldest first"
+        "doc": "rows {date, hrv, warn_low?, warn_high?, warn_margin?}: an ISO date and RMSSD in ms, oldest first; the warn fields override the warning zone for that day"
       },
       "title": {
         "type": "string",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "Daily heart-rate variability (RMSSD) with a 7-day rolling mean and a personal baseline band; days below the baseline are flagged.",
+        "default": "Daily heart-rate variability (RMSSD) with a 7-day rolling mean and a personal baseline band (green, yellow near each edge); days below the baseline are red and flagged L, days above it red and flagged H. The baseline comes from the data via the low/high slots. Legend words: below baseline / near edge / within baseline / above baseline / no baseline.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,54 +29,24 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
-      },
-      "baseline_low": {
-        "type": "number",
-        "doc": "lower limit of the personal baseline",
-        "required": true
-      },
-      "baseline_high": {
-        "type": "number",
-        "doc": "upper limit of the personal baseline",
-        "required": true
+        "type": "string"
       },
       "unit": {
         "type": "string",
         "default": "ms",
         "doc": "unit"
-      },
-      "line_color": {
-        "type": "string",
-        "default": "#2a78d6",
-        "doc": "rolling mean"
-      },
-      "flag_color": {
-        "type": "string",
-        "default": "#d03b3b",
-        "doc": "days below baseline"
-      },
-      "band_color": {
-        "type": "string",
-        "default": "#2a9d8f",
-        "doc": "baseline band"
       },
       "x_format": {
         "type": "string",
@@ -87,6 +57,55 @@
         "type": "integer",
         "default": 5,
         "doc": "about this many time axis ticks"
+      },
+      "low": {
+        "type": "number",
+        "default": null,
+        "doc": "lower limit of the personal baseline, from the data; null for a baseline with only an upper limit"
+      },
+      "high": {
+        "type": "number",
+        "default": null,
+        "doc": "upper limit of the personal baseline, from the data; null for a baseline with only a lower limit (both null: days are grey, no baseline)"
+      },
+      "line_color": {
+        "type": "string",
+        "doc": "the 7-day rolling mean (the theme's neutral line color)"
+      },
+      "bad_color": {
+        "type": "string",
+        "doc": "outside the baseline (the theme's red)"
+      },
+      "warn_color": {
+        "type": "string",
+        "doc": "near a baseline edge (the theme's yellow)"
+      },
+      "ok_color": {
+        "type": "string",
+        "doc": "within the baseline (the theme's green)"
+      },
+      "unknown_color": {
+        "type": "string",
+        "doc": "no baseline to judge by (the theme's grey)"
+      },
+      "warn_margin": {
+        "type": "number",
+        "doc": "width of the yellow zone inside each baseline edge, as a fraction of the baseline width"
+      },
+      "warn_low": {
+        "type": "number",
+        "default": null,
+        "doc": "optional: the value below which a day is yellow, replacing low + margin"
+      },
+      "warn_high": {
+        "type": "number",
+        "default": null,
+        "doc": "optional: the value above which a day is yellow, replacing high - margin"
+      },
+      "band_label": {
+        "type": "string",
+        "default": "personal baseline",
+        "doc": "tooltip name of the baseline band"
       }
     },
     "example": "examples/hrv-trend.data.json",
@@ -96,18 +115,44 @@
         "data": {
           "fields": {
             "date": "time",
-            "hrv": "nonneg"
+            "hrv": "nonneg",
+            "warn_low": "?number",
+            "warn_high": "?number",
+            "warn_margin": "?range:0:1"
           },
-          "order": "date"
+          "order": "date",
+          "rows": [
+            {
+              "le": [
+                "warn_low",
+                "warn_high"
+              ],
+              "code": "range_inverted"
+            }
+          ]
         }
       },
       "rules": [
         {
           "le": [
-            "baseline_low",
-            "baseline_high"
+            "low",
+            "high"
           ],
           "code": "range_inverted"
+        },
+        {
+          "le": [
+            "low",
+            "warn_low"
+          ],
+          "code": "warn_outside_range"
+        },
+        {
+          "le": [
+            "warn_high",
+            "high"
+          ],
+          "code": "warn_outside_range"
         }
       ],
       "text_size": [
@@ -117,7 +162,10 @@
       "svg_size": [
         1000,
         400
-      ]
+      ],
+      "slots": {
+        "warn_margin": "range:0:1"
+      }
     }
   },
   "title": {
@@ -141,10 +189,30 @@
   },
   "transform": [
     {
-      "calculate": {
-        "x-eas:expr": "datum.hrv < {{baseline_low}} ? '\u25bc below baseline' : datum.hrv > {{baseline_high}} ? '\u25b2 above baseline' : '\u25cf within baseline'"
+      "x-eas:transform": "health-status",
+      "value": "hrv",
+      "low": {
+        "x-eas:slot": "low"
       },
-      "as": "status"
+      "high": {
+        "x-eas:slot": "high"
+      },
+      "warn_low": {
+        "x-eas:slot": "warn_low"
+      },
+      "warn_high": {
+        "x-eas:slot": "warn_high"
+      },
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      },
+      "labels": {
+        "low": "below baseline",
+        "near": "near edge",
+        "ok": "within baseline",
+        "high": "above baseline",
+        "unknown": "no baseline"
+      }
     },
     {
       "window": [
@@ -168,40 +236,216 @@
   ],
   "layer": [
     {
-      "name": "baseline",
+      "name": "baseline-band",
       "transform": [
         {
           "aggregate": [
             {
-              "op": "count",
-              "as": "n"
+              "op": "max",
+              "field": "band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "zone_high",
+              "as": "zh"
             }
           ]
+        },
+        {
+          "filter": "isValid(datum.lo)"
+        },
+        {
+          "calculate": "isValid(datum.zl) ? datum.zl : datum.lo",
+          "as": "y0"
+        },
+        {
+          "calculate": "isValid(datum.zh) ? datum.zh : datum.hi",
+          "as": "y1"
+        },
+        {
+          "filter": "true"
         }
       ],
       "mark": {
         "type": "rect",
-        "opacity": 0.2,
+        "opacity": 0.22,
         "color": {
-          "x-eas:slot": "band_color"
+          "x-eas:slot": "ok_color"
         }
       },
       "encoding": {
         "y": {
-          "datum": {
-            "x-eas:slot": "baseline_low"
-          },
           "type": "quantitative",
           "scale": {
             "zero": false,
             "nice": true
-          }
+          },
+          "field": "y0"
         },
         "y2": {
-          "datum": {
-            "x-eas:slot": "baseline_high"
+          "field": "y1"
+        },
+        "tooltip": [
+          {
+            "value": {
+              "x-eas:text": "{{band_label}}"
+            },
+            "title": "baseline"
           }
+        ]
+      }
+    },
+    {
+      "name": "warn-low",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "max",
+              "field": "band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "zone_high",
+              "as": "zh"
+            }
+          ]
+        },
+        {
+          "filter": "isValid(datum.lo)"
+        },
+        {
+          "calculate": "datum.lo",
+          "as": "y0"
+        },
+        {
+          "calculate": "datum.zl",
+          "as": "y1"
+        },
+        {
+          "filter": "isValid(datum.zl)"
         }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.35,
+        "color": {
+          "x-eas:slot": "warn_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          },
+          "field": "y0"
+        },
+        "y2": {
+          "field": "y1"
+        },
+        "tooltip": [
+          {
+            "value": {
+              "x-eas:text": "{{band_label}}"
+            },
+            "title": "baseline"
+          }
+        ]
+      }
+    },
+    {
+      "name": "warn-high",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "max",
+              "field": "band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "zone_high",
+              "as": "zh"
+            }
+          ]
+        },
+        {
+          "filter": "isValid(datum.lo)"
+        },
+        {
+          "calculate": "datum.zh",
+          "as": "y0"
+        },
+        {
+          "calculate": "datum.hi",
+          "as": "y1"
+        },
+        {
+          "filter": "isValid(datum.zh)"
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.35,
+        "color": {
+          "x-eas:slot": "warn_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          },
+          "field": "y0"
+        },
+        "y2": {
+          "field": "y1"
+        },
+        "tooltip": [
+          {
+            "value": {
+              "x-eas:text": "{{band_label}}"
+            },
+            "title": "baseline"
+          }
+        ]
       }
     },
     {
@@ -278,7 +522,7 @@
       "mark": {
         "type": "point",
         "filled": true,
-        "size": 60,
+        "size": 70,
         "opacity": 1,
         "stroke": {
           "x-eas:slot": "surface"
@@ -310,23 +554,31 @@
           }
         },
         "color": {
-          "field": "status",
+          "field": "status_label",
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25bc below baseline",
-              "\u25cf within baseline",
-              "\u25b2 above baseline"
+              "below baseline",
+              "near edge",
+              "within baseline",
+              "above baseline",
+              "no baseline"
             ],
             "range": [
               {
-                "x-eas:slot": "flag_color"
+                "x-eas:slot": "bad_color"
               },
               {
-                "x-eas:slot": "muted"
+                "x-eas:slot": "warn_color"
               },
               {
-                "x-eas:slot": "line_color"
+                "x-eas:slot": "ok_color"
+              },
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "unknown_color"
               }
             ]
           },
@@ -335,18 +587,22 @@
           }
         },
         "shape": {
-          "field": "status",
+          "field": "status_label",
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25bc below baseline",
-              "\u25cf within baseline",
-              "\u25b2 above baseline"
+              "below baseline",
+              "near edge",
+              "within baseline",
+              "above baseline",
+              "no baseline"
             ],
             "range": [
               "triangle-down",
+              "diamond",
               "circle",
-              "triangle-up"
+              "triangle-up",
+              "square"
             ]
           },
           "legend": null
@@ -367,9 +623,56 @@
             "format": ".1f"
           },
           {
-            "field": "status"
+            "field": "status_label",
+            "title": "status"
           }
         ]
+      }
+    },
+    {
+      "name": "flags",
+      "transform": [
+        {
+          "filter": "datum.status_flag != ''"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "baseline": "bottom",
+        "dy": -9,
+        "fontSize": 12,
+        "fontWeight": "bold",
+        "color": {
+          "x-eas:slot": "bad_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "grid": false,
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            }
+          }
+        },
+        "y": {
+          "field": "hrv",
+          "type": "quantitative",
+          "title": "HRV RMSSD (ms)",
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "text": {
+          "field": "status_flag"
+        }
       }
     }
   ]

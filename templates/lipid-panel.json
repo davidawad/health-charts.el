@@ -3,12 +3,12 @@
   "x-eas": {
     "template": "lipid-panel",
     "version": "1.0.0",
-    "doc": "A lipid panel against goal lines: one bar per measure (total cholesterol, LDL, HDL, triglycerides, non-HDL), a tick at its goal, an optional hollow marker for the prior draw. Goal met or missed is shown by color, glyph and label, with direction (below or above) per measure.",
+    "doc": "A lipid panel against goal lines: one bar per measure, a tick at its goal, an optional hollow marker for the prior draw. Each measure is judged against its own goal, a one-sided range: a 'below' goal has only an upper limit, an 'above' goal only a lower one. The bar is red when the goal is missed (low means below an 'above' goal, high above a 'below' goal), yellow when met but within the margin of the goal, green when met clear of it; the status is also written at the bar end. Goals are data.",
     "slots": {
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {analyte, value, unit?, goal, direction: below|above, prior?}: one row per lipid measure"
+        "doc": "rows {analyte, value, unit?, goal, direction: below|above, prior?, warn_low?, warn_high?, warn_margin?}: one row per lipid measure; goal and direction come from the data source (below: value should stay at or under the goal; above: at or over it); warn_high (below goals) or warn_low (above goals) sets the inner edge of the yellow zone and warn_margin its width as a fraction of |goal|, each overriding the slot warn_margin for that row"
       },
       "title": {
         "type": "string",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "A lipid panel against goal lines: one bar per measure (total cholesterol, LDL, HDL, triglycerides, non-HDL), a tick at its goal, an optional hollow marker for the prior draw. Goal met or missed is shown by color, glyph and label, with direction (below or above) per measure.",
+        "default": "A lipid panel against goal lines: one bar per measure, a tick at its goal, an optional hollow marker for the prior draw. Each measure is judged against its own goal, a one-sided range: a 'below' goal has only an upper limit, an 'above' goal only a lower one. The bar is red when the goal is missed (low means below an 'above' goal, high above a 'below' goal), yellow when met but within the margin of the goal, green when met clear of it; the status is also written at the bar end. Goals are data.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,34 +29,39 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
-      "met_color": {
+      "bad_color": {
         "type": "string",
-        "default": "#2a78d6",
-        "doc": "goal met"
+        "doc": "out of range (the theme's red)"
       },
-      "missed_color": {
+      "warn_color": {
         "type": "string",
-        "default": "#d03b3b",
-        "doc": "goal missed"
+        "doc": "near a limit (the theme's yellow)"
+      },
+      "ok_color": {
+        "type": "string",
+        "doc": "in range (the theme's green)"
+      },
+      "unknown_color": {
+        "type": "string",
+        "doc": "no range to judge by (the theme's grey)"
+      },
+      "warn_margin": {
+        "type": "number",
+        "doc": "width of the yellow zone inside the goal, as a fraction of |goal| (a goal is a one-sided limit); a row's warn_margin overrides it"
       },
       "x_title": {
         "type": "string",
@@ -75,8 +80,27 @@
             "unit": "?string",
             "goal": "nonneg",
             "direction": "enum:below|above",
-            "prior": "?nonneg"
-          }
+            "prior": "?nonneg",
+            "warn_low": "?number",
+            "warn_high": "?number",
+            "warn_margin": "?range:0:1"
+          },
+          "rows": [
+            {
+              "le": [
+                "goal",
+                "warn_low"
+              ],
+              "code": "warn_outside_range"
+            },
+            {
+              "le": [
+                "warn_high",
+                "goal"
+              ],
+              "code": "warn_outside_range"
+            }
+          ]
         }
       },
       "text_size": [
@@ -86,7 +110,10 @@
       "svg_size": [
         1000,
         360
-      ]
+      ],
+      "slots": {
+        "warn_margin": "range:0:1"
+      }
     }
   },
   "title": {
@@ -112,11 +139,37 @@
   },
   "transform": [
     {
-      "calculate": "(datum.direction == 'below' ? datum.value <= datum.goal : datum.value >= datum.goal) ? '\u2714 goal met' : '\u2716 goal missed'",
-      "as": "outcome"
+      "x-eas:transform": "health-status",
+      "value": "value",
+      "low_field": "goal",
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      },
+      "prefix": "abv"
     },
     {
-      "calculate": "datum.analyte + '  ' + datum.value + (isValid(datum.unit) ? ' ' + datum.unit : '') + '  (goal ' + (datum.direction == 'below' ? '<' : '>') + datum.goal + ')'",
+      "x-eas:transform": "health-status",
+      "value": "value",
+      "high_field": "goal",
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      },
+      "prefix": "bel"
+    },
+    {
+      "calculate": "datum.direction == 'above' ? datum.abv_label : datum.bel_label",
+      "as": "status_label"
+    },
+    {
+      "calculate": "datum.direction == 'above' ? datum.abv_flag : datum.bel_flag",
+      "as": "status_flag"
+    },
+    {
+      "calculate": "datum.direction == 'above' ? datum.abv_glyph : datum.bel_glyph",
+      "as": "status_glyph"
+    },
+    {
+      "calculate": "datum.analyte + '  ' + datum.value + (isValid(datum.unit) ? ' ' + datum.unit : '') + '  (goal ' + (datum.direction == 'below' ? '<' : '>') + datum.goal + ')  ' + datum.status_glyph + ' ' + datum.status_label",
       "as": "row_label"
     },
     {
@@ -137,7 +190,7 @@
       "axis": {
         "domain": false,
         "ticks": false,
-        "labelLimit": 360
+        "labelLimit": 460
       }
     }
   },
@@ -166,19 +219,31 @@
           }
         },
         "color": {
-          "field": "outcome",
+          "field": "status_label",
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u2714 goal met",
-              "\u2716 goal missed"
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
             ],
             "range": [
               {
-                "x-eas:slot": "met_color"
+                "x-eas:slot": "bad_color"
               },
               {
-                "x-eas:slot": "missed_color"
+                "x-eas:slot": "warn_color"
+              },
+              {
+                "x-eas:slot": "ok_color"
+              },
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "unknown_color"
               }
             ]
           },
@@ -200,8 +265,8 @@
             "field": "direction"
           },
           {
-            "field": "outcome",
-            "title": "goal"
+            "field": "status_label",
+            "title": "status"
           }
         ]
       }

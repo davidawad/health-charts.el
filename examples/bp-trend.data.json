@@ -4,7 +4,7 @@
  "sys_high": 120,
  "dia_low": 60,
  "dia_high": 80,
- "band_label": "normal 90-120 / 60-80 mmHg (illustrative)",
+ "band_label": "illustrative ranges 90-120 / 60-80 mmHg",
  "data": [
   {
    "time": "2026-03-01T07:00:00",
@@ -126,5 +126,6 @@
    "systolic": 104,
    "diastolic": 70
   }
- ]
+ ],
+ "subtitle": "synthetic data; the ranges are illustrative, the data source owns the real ones"
 }

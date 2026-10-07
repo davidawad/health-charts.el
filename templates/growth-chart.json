@@ -29,29 +29,24 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "curves": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {age, percentile, value}: one curve per percentile label such as P3, P50, P97"
+        "doc": "required, from the data source: rows {age, percentile, value}, one curve per percentile label such as P3, P50, P97; drawn in neutral greys, never red, yellow or green"
       },
       "x_title": {
         "type": "string",
@@ -64,7 +59,7 @@
       "patient_color": {
         "type": "string",
         "default": "#2a78d6",
-        "doc": "the patient's line and points"
+        "doc": "the patient's line and points (neutral blue)"
       }
     },
     "example": "examples/growth-chart.data.json",

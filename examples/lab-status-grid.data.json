@@ -1,6 +1,6 @@
 {
  "title": "Results by draw (synthetic)",
- "subtitle": "illustrative reference ranges",
+ "subtitle": "synthetic data; illustrative reference ranges (the data source owns the real ones)",
  "data": [
   {
    "time": "2025-01-15",
@@ -27,15 +27,12 @@
    "time": "2025-01-15",
    "analyte": "TSH (mIU/L)",
    "value": 0.59,
-   "ref_low": 0.4,
    "ref_high": 4.0
   },
   {
    "time": "2025-01-15",
    "analyte": "Ferritin (ug/L)",
-   "value": 54.1,
-   "ref_low": 30,
-   "ref_high": 300
+   "value": 54.1
   },
   {
    "time": "2025-01-15",
@@ -69,15 +66,12 @@
    "time": "2025-04-15",
    "analyte": "TSH (mIU/L)",
    "value": 1.52,
-   "ref_low": 0.4,
    "ref_high": 4.0
   },
   {
    "time": "2025-04-15",
    "analyte": "Ferritin (ug/L)",
-   "value": 22.3,
-   "ref_low": 30,
-   "ref_high": 300
+   "value": 22.3
   },
   {
    "time": "2025-04-15",
@@ -111,7 +105,6 @@
    "time": "2025-07-14",
    "analyte": "TSH (mIU/L)",
    "value": 3.09,
-   "ref_low": 0.4,
    "ref_high": 4.0
   },
   {
@@ -153,7 +146,6 @@
    "time": "2025-10-12",
    "analyte": "TSH (mIU/L)",
    "value": 3.06,
-   "ref_low": 0.4,
    "ref_high": 4.0
   },
   {
@@ -195,7 +187,6 @@
    "time": "2026-01-10",
    "analyte": "TSH (mIU/L)",
    "value": 1.28,
-   "ref_low": 0.4,
    "ref_high": 4.0
   },
   {

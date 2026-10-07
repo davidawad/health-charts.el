@@ -3,12 +3,12 @@
   "x-eas": {
     "template": "cgm-day",
     "version": "1.0.0",
-    "doc": "A continuous glucose monitor day: the glucose line over 24 hours, the target range as a band, very low and very high limits as dashed rules, readings outside the range flagged by colour and shape.",
+    "doc": "A continuous glucose monitor day: the glucose line over 24 hours against the target range from the data source (band: green, yellow near each limit); readings are red out of range (triangle-down low, triangle-up high, letter L or H), yellow near a limit, green in range, grey with no range. Optional very low / very high limits are drawn as labelled dashed rules; a reading beyond one is red like any out-of-range reading but larger and flagged with its letter and !! (dense days are not lettered otherwise).",
     "slots": {
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {time, glucose}: an ISO date-time and the glucose in the slot unit, oldest first"
+        "doc": "rows {time, glucose, warn_low?, warn_high?, warn_margin?}: an ISO date-time and the glucose in the slot unit, oldest first; the warn fields override the warning zone for that reading"
       },
       "title": {
         "type": "string",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "A continuous glucose monitor day: the glucose line over 24 hours, the target range as a band, very low and very high limits as dashed rules, readings outside the range flagged by colour and shape.",
+        "default": "A continuous glucose monitor day: the glucose line over 24 hours against the target range from the data source (band: green, yellow near each limit); readings are red out of range (triangle-down low, triangle-up high, letter L or H), yellow near a limit, green in range, grey with no range. Optional very low / very high limits are drawn as labelled dashed rules; a reading beyond one is red like any out-of-range reading but larger and flagged with its letter and !! (dense days are not lettered otherwise).",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -29,49 +29,49 @@
         "doc": "Vega-Lite config: background and axis colors from the theme"
       },
       "ink": {
-        "type": "string",
-        "default": "#0b0b0b"
+        "type": "string"
       },
       "secondary": {
-        "type": "string",
-        "default": "#52514e"
+        "type": "string"
       },
       "muted": {
-        "type": "string",
-        "default": "#898781"
+        "type": "string"
       },
       "surface": {
-        "type": "string",
-        "default": "#fcfcfb"
+        "type": "string"
       },
       "grid": {
-        "type": "string",
-        "default": "#e1e0d9"
+        "type": "string"
       },
       "very_low": {
         "type": "number",
-        "default": 54,
-        "doc": "below this: very low (consensus level 2 hypoglycemia, mg/dL)"
+        "default": null,
+        "doc": "optional, from the data source or care team: drawn as a dashed rule labelled very low; a reading below it is flagged !! (still red)"
       },
       "low": {
         "type": "number",
-        "default": 70,
-        "doc": "below this: low; the bottom of the target range (mg/dL)"
+        "default": null,
+        "doc": "lower limit of the target range, from the data source or care team; required for coloring (null: no lower limit)"
       },
       "high": {
         "type": "number",
-        "default": 180,
-        "doc": "above this: high; the top of the target range (mg/dL)"
+        "default": null,
+        "doc": "upper limit of the target range, from the data source or care team; required for coloring (null: no upper limit; both null: readings are grey, no range)"
       },
       "very_high": {
         "type": "number",
-        "default": 250,
-        "doc": "above this: very high (mg/dL)"
+        "default": null,
+        "doc": "optional, from the data source or care team: drawn as a dashed rule labelled very high; a reading above it is flagged !! (still red)"
       },
       "unit": {
         "type": "string",
         "default": "mg/dL",
-        "doc": "glucose unit, shown in titles"
+        "doc": "glucose unit label, shown in titles (a label, not a threshold)"
+      },
+      "band_label": {
+        "type": "string",
+        "default": "target range",
+        "doc": "tooltip name of the target band"
       },
       "x_format": {
         "type": "string",
@@ -81,10 +81,39 @@
         "type": "integer",
         "default": 8
       },
-      "band_color": {
+      "line_color": {
         "type": "string",
-        "default": "#2a9d8f",
-        "doc": "target range band"
+        "doc": "neutral line color (the theme's)"
+      },
+      "bad_color": {
+        "type": "string",
+        "doc": "out of range (the theme's red)"
+      },
+      "warn_color": {
+        "type": "string",
+        "doc": "near a limit (the theme's yellow)"
+      },
+      "ok_color": {
+        "type": "string",
+        "doc": "in range (the theme's green)"
+      },
+      "unknown_color": {
+        "type": "string",
+        "doc": "no range to judge by (the theme's grey)"
+      },
+      "warn_margin": {
+        "type": "number",
+        "doc": "width of the yellow zone inside each limit, as a fraction of the target range width (of the one bound for a one-sided range)"
+      },
+      "warn_low": {
+        "type": "number",
+        "default": null,
+        "doc": "optional: the value below which a reading is yellow, replacing low + margin"
+      },
+      "warn_high": {
+        "type": "number",
+        "default": null,
+        "doc": "optional: the value above which a reading is yellow, replacing high - margin"
       }
     },
     "example": "examples/cgm-day.data.json",
@@ -102,9 +131,21 @@
         "data": {
           "fields": {
             "time": "time",
-            "glucose": "range:10:800"
+            "glucose": "range:10:800",
+            "warn_low": "?number",
+            "warn_high": "?number",
+            "warn_margin": "?range:0:1"
           },
-          "order": "time"
+          "order": "time",
+          "rows": [
+            {
+              "le": [
+                "warn_low",
+                "warn_high"
+              ],
+              "code": "range_inverted"
+            }
+          ]
         }
       },
       "rules": [
@@ -128,8 +169,25 @@
             "very_high"
           ],
           "code": "range_inverted"
+        },
+        {
+          "le": [
+            "low",
+            "warn_low"
+          ],
+          "code": "warn_outside_range"
+        },
+        {
+          "le": [
+            "warn_high",
+            "high"
+          ],
+          "code": "warn_outside_range"
         }
-      ]
+      ],
+      "slots": {
+        "warn_margin": "range:0:1"
+      }
     }
   },
   "title": {
@@ -153,10 +211,53 @@
   },
   "transform": [
     {
-      "calculate": {
-        "x-eas:expr": "datum.glucose < {{very_low}} ? '\u25c6 very low' : datum.glucose < {{low}} ? '\u25bc low' : datum.glucose > {{very_high}} ? '\u25a0 very high' : datum.glucose > {{high}} ? '\u25b2 high' : '\u25cf in range'"
+      "x-eas:transform": "health-status",
+      "value": "glucose",
+      "low": {
+        "x-eas:slot": "low"
       },
-      "as": "zone"
+      "high": {
+        "x-eas:slot": "high"
+      },
+      "warn_low": {
+        "x-eas:slot": "warn_low"
+      },
+      "warn_high": {
+        "x-eas:slot": "warn_high"
+      },
+      "margin": {
+        "x-eas:slot": "warn_margin"
+      }
+    },
+    {
+      "calculate": "0",
+      "as": "extreme"
+    },
+    {
+      "x-eas:when": "very_low",
+      "spec": {
+        "calculate": {
+          "x-eas:expr": "datum.glucose < {{very_low}} ? 1 : datum.extreme"
+        },
+        "as": "extreme"
+      }
+    },
+    {
+      "x-eas:when": "very_high",
+      "spec": {
+        "calculate": {
+          "x-eas:expr": "datum.glucose > {{very_high}} ? 1 : datum.extreme"
+        },
+        "as": "extreme"
+      }
+    },
+    {
+      "calculate": "datum.extreme == 1 ? 150 : datum.status_label == 'low' || datum.status_label == 'high' ? 70 : 30",
+      "as": "pt_size"
+    },
+    {
+      "calculate": "datum.extreme == 1 ? datum.status_flag + '!!' : datum.status_flag",
+      "as": "flag_text"
     }
   ],
   "layer": [
@@ -166,39 +267,65 @@
         {
           "aggregate": [
             {
-              "op": "count",
-              "as": "n"
+              "op": "max",
+              "field": "band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "zone_high",
+              "as": "zh"
             }
           ]
+        },
+        {
+          "filter": "isValid(datum.lo)"
+        },
+        {
+          "calculate": "isValid(datum.zl) ? datum.zl : datum.lo",
+          "as": "y0"
+        },
+        {
+          "calculate": "isValid(datum.zh) ? datum.zh : datum.hi",
+          "as": "y1"
+        },
+        {
+          "filter": "true"
         }
       ],
       "mark": {
         "type": "rect",
-        "opacity": 0.2,
+        "opacity": 0.22,
         "color": {
-          "x-eas:slot": "band_color"
+          "x-eas:slot": "ok_color"
         }
       },
       "encoding": {
         "y": {
-          "datum": {
-            "x-eas:slot": "low"
-          },
           "type": "quantitative",
           "scale": {
             "zero": false,
             "nice": true
-          }
+          },
+          "field": "y0"
         },
         "y2": {
-          "datum": {
-            "x-eas:slot": "high"
-          }
+          "field": "y1"
         },
         "tooltip": [
           {
             "value": {
-              "x-eas:text": "target range {{low}}-{{high}} {{unit}}"
+              "x-eas:text": "{{band_label}}"
             },
             "title": "range"
           }
@@ -206,67 +333,325 @@
       }
     },
     {
-      "name": "very-low-line",
+      "name": "target-warn-low",
       "transform": [
         {
           "aggregate": [
             {
-              "op": "count",
-              "as": "n"
+              "op": "max",
+              "field": "band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "zone_high",
+              "as": "zh"
             }
           ]
+        },
+        {
+          "filter": "isValid(datum.lo)"
+        },
+        {
+          "calculate": "datum.lo",
+          "as": "y0"
+        },
+        {
+          "calculate": "datum.zl",
+          "as": "y1"
+        },
+        {
+          "filter": "isValid(datum.zl)"
         }
       ],
       "mark": {
-        "type": "rule",
-        "strokeDash": [
-          4,
-          3
-        ],
-        "color": "#8b1e1e"
+        "type": "rect",
+        "opacity": 0.35,
+        "color": {
+          "x-eas:slot": "warn_color"
+        }
       },
       "encoding": {
         "y": {
-          "datum": {
-            "x-eas:slot": "very_low"
-          },
           "type": "quantitative",
           "scale": {
             "zero": false,
             "nice": true
+          },
+          "field": "y0"
+        },
+        "y2": {
+          "field": "y1"
+        },
+        "tooltip": [
+          {
+            "value": {
+              "x-eas:text": "{{band_label}}"
+            },
+            "title": "range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "target-warn-high",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "max",
+              "field": "band_lo",
+              "as": "lo"
+            },
+            {
+              "op": "max",
+              "field": "band_hi",
+              "as": "hi"
+            },
+            {
+              "op": "max",
+              "field": "zone_low",
+              "as": "zl"
+            },
+            {
+              "op": "max",
+              "field": "zone_high",
+              "as": "zh"
+            }
+          ]
+        },
+        {
+          "filter": "isValid(datum.lo)"
+        },
+        {
+          "calculate": "datum.zh",
+          "as": "y0"
+        },
+        {
+          "calculate": "datum.hi",
+          "as": "y1"
+        },
+        {
+          "filter": "isValid(datum.zh)"
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.35,
+        "color": {
+          "x-eas:slot": "warn_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          },
+          "field": "y0"
+        },
+        "y2": {
+          "field": "y1"
+        },
+        "tooltip": [
+          {
+            "value": {
+              "x-eas:text": "{{band_label}}"
+            },
+            "title": "range"
+          }
+        ]
+      }
+    },
+    {
+      "x-eas:when": "very_low",
+      "spec": {
+        "name": "very-low-line",
+        "transform": [
+          {
+            "aggregate": [
+              {
+                "op": "count",
+                "as": "n"
+              }
+            ]
+          }
+        ],
+        "mark": {
+          "type": "rule",
+          "strokeDash": [
+            4,
+            3
+          ],
+          "color": {
+            "x-eas:slot": "secondary"
+          }
+        },
+        "encoding": {
+          "y": {
+            "datum": {
+              "x-eas:slot": "very_low"
+            },
+            "type": "quantitative",
+            "scale": {
+              "zero": false,
+              "nice": true
+            }
           }
         }
       }
     },
     {
-      "name": "very-high-line",
-      "transform": [
-        {
-          "aggregate": [
-            {
-              "op": "count",
-              "as": "n"
-            }
-          ]
-        }
-      ],
-      "mark": {
-        "type": "rule",
-        "strokeDash": [
-          4,
-          3
-        ],
-        "color": "#b35c00"
-      },
-      "encoding": {
-        "y": {
-          "datum": {
-            "x-eas:slot": "very_high"
+      "x-eas:when": "very_low",
+      "spec": {
+        "name": "very-low-label",
+        "transform": [
+          {
+            "aggregate": [
+              {
+                "op": "min",
+                "field": "time",
+                "as": "t0"
+              }
+            ]
           },
-          "type": "quantitative",
-          "scale": {
-            "zero": false,
-            "nice": true
+          {
+            "calculate": {
+              "x-eas:expr": "'very low ' + {{very_low}}"
+            },
+            "as": "txt"
+          }
+        ],
+        "mark": {
+          "type": "text",
+          "align": "left",
+          "baseline": "bottom",
+          "dx": 4,
+          "dy": -2,
+          "fontSize": 11,
+          "color": {
+            "x-eas:slot": "secondary"
+          }
+        },
+        "encoding": {
+          "x": {
+            "field": "t0",
+            "type": "temporal"
+          },
+          "y": {
+            "datum": {
+              "x-eas:slot": "very_low"
+            },
+            "type": "quantitative",
+            "scale": {
+              "zero": false,
+              "nice": true
+            }
+          },
+          "text": {
+            "field": "txt"
+          }
+        }
+      }
+    },
+    {
+      "x-eas:when": "very_high",
+      "spec": {
+        "name": "very-high-line",
+        "transform": [
+          {
+            "aggregate": [
+              {
+                "op": "count",
+                "as": "n"
+              }
+            ]
+          }
+        ],
+        "mark": {
+          "type": "rule",
+          "strokeDash": [
+            4,
+            3
+          ],
+          "color": {
+            "x-eas:slot": "secondary"
+          }
+        },
+        "encoding": {
+          "y": {
+            "datum": {
+              "x-eas:slot": "very_high"
+            },
+            "type": "quantitative",
+            "scale": {
+              "zero": false,
+              "nice": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "x-eas:when": "very_high",
+      "spec": {
+        "name": "very-high-label",
+        "transform": [
+          {
+            "aggregate": [
+              {
+                "op": "min",
+                "field": "time",
+                "as": "t0"
+              }
+            ]
+          },
+          {
+            "calculate": {
+              "x-eas:expr": "'very high ' + {{very_high}}"
+            },
+            "as": "txt"
+          }
+        ],
+        "mark": {
+          "type": "text",
+          "align": "left",
+          "baseline": "bottom",
+          "dx": 4,
+          "dy": -2,
+          "fontSize": 11,
+          "color": {
+            "x-eas:slot": "secondary"
+          }
+        },
+        "encoding": {
+          "x": {
+            "field": "t0",
+            "type": "temporal"
+          },
+          "y": {
+            "datum": {
+              "x-eas:slot": "very_high"
+            },
+            "type": "quantitative",
+            "scale": {
+              "zero": false,
+              "nice": true
+            }
+          },
+          "text": {
+            "field": "txt"
           }
         }
       }
@@ -309,16 +694,10 @@
       }
     },
     {
-      "name": "flagged",
-      "transform": [
-        {
-          "filter": "datum.zone != '\u25cf in range'"
-        }
-      ],
+      "name": "readings",
       "mark": {
         "type": "point",
         "filled": true,
-        "size": 60,
         "opacity": 1,
         "stroke": {
           "x-eas:slot": "surface"
@@ -352,22 +731,32 @@
           }
         },
         "color": {
-          "field": "zone",
+          "field": "status_label",
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25c6 very low",
-              "\u25bc low",
-              "\u25cf in range",
-              "\u25b2 high",
-              "\u25a0 very high"
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
             ],
             "range": [
-              "#8b1e1e",
-              "#d03b3b",
-              "#2a78d6",
-              "#e09a00",
-              "#b35c00"
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "warn_color"
+              },
+              {
+                "x-eas:slot": "ok_color"
+              },
+              {
+                "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "unknown_color"
+              }
             ]
           },
           "legend": {
@@ -375,24 +764,30 @@
           }
         },
         "shape": {
-          "field": "zone",
+          "field": "status_label",
           "type": "nominal",
           "scale": {
             "domain": [
-              "\u25c6 very low",
-              "\u25bc low",
-              "\u25cf in range",
-              "\u25b2 high",
-              "\u25a0 very high"
+              "low",
+              "near limit",
+              "in range",
+              "high",
+              "no range"
             ],
             "range": [
-              "diamond",
               "triangle-down",
+              "diamond",
               "circle",
               "triangle-up",
               "square"
             ]
           },
+          "legend": null
+        },
+        "size": {
+          "field": "pt_size",
+          "type": "quantitative",
+          "scale": null,
           "legend": null
         },
         "tooltip": [
@@ -406,10 +801,62 @@
             "title": "glucose"
           },
           {
-            "field": "zone",
-            "title": "zone"
+            "field": "status_label",
+            "title": "status"
+          },
+          {
+            "field": "range_text",
+            "title": "target"
           }
         ]
+      }
+    },
+    {
+      "name": "flags",
+      "transform": [
+        {
+          "filter": "datum.extreme == 1"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "baseline": "bottom",
+        "dy": -9,
+        "fontSize": 11,
+        "fontWeight": "bold",
+        "color": {
+          "x-eas:slot": "bad_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "time",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "grid": false,
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            }
+          }
+        },
+        "y": {
+          "field": "glucose",
+          "type": "quantitative",
+          "title": {
+            "x-eas:text": "Glucose ({{unit}})"
+          },
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "text": {
+          "field": "flag_text"
+        }
       }
     }
   ]
