@@ -1,8 +1,0 @@
-Indicators · cardio
-Indicator        Value  Unit      Status        Trend
-ApoB                84  mg/dL     ◐ suboptimal  █▆▃▂▄▁       ↘ improved
-Lp(a)              140  nmol/L    ▲ high        ▁█           ↗ worsened
-HbA1c              5.4  %         ○ normal      █▅▁          ↘ improved
-Vitamin D           26  ng/mL     ▼ low         █▄▁          ↘ worsened
-hs-CRP position    0.4  of range  ○ normal      ▅█▃▁         → on-target
-Ferritin           n/a  ng/mL     ? n/a

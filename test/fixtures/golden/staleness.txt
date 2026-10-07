@@ -1,8 +1,0 @@
-Days since draw · cardio · as of 2025-08-01
-Lp(a)            2024-02-12  ████████████████████  536 d  ▲ stale
-Vitamin D        2024-11-18  ██████████───│──────  256 d  ◐ due
-HbA1c            2025-03-03  ██████───────│──────  151 d  ◐ due
-ApoB             2025-06-02  ██──┆────────│──────   60 d  ● fresh
-hs-CRP position  2025-06-02  ██──┆────────│──────   60 d  ● fresh
-Ferritin         no draw     ────┆────────│──────      –  ? undated
-┆ due after 120 d   │ stale after 365 d   ● fresh  ◐ due  ▲ stale
