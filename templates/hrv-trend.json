@@ -1,0 +1,376 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "hrv-trend",
+    "version": "1.0.0",
+    "doc": "Daily heart-rate variability (RMSSD) with a 7-day rolling mean and a personal baseline band; days below the baseline are flagged.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {date, hrv}: an ISO date and RMSSD in ms, oldest first"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Daily heart-rate variability (RMSSD) with a 7-day rolling mean and a personal baseline band; days below the baseline are flagged.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "baseline_low": {
+        "type": "number",
+        "doc": "lower limit of the personal baseline",
+        "required": true
+      },
+      "baseline_high": {
+        "type": "number",
+        "doc": "upper limit of the personal baseline",
+        "required": true
+      },
+      "unit": {
+        "type": "string",
+        "default": "ms",
+        "doc": "unit"
+      },
+      "line_color": {
+        "type": "string",
+        "default": "#2a78d6",
+        "doc": "rolling mean"
+      },
+      "flag_color": {
+        "type": "string",
+        "default": "#d03b3b",
+        "doc": "days below baseline"
+      },
+      "band_color": {
+        "type": "string",
+        "default": "#2a9d8f",
+        "doc": "baseline band"
+      },
+      "x_format": {
+        "type": "string",
+        "default": "%b %d",
+        "doc": "time axis label format"
+      },
+      "x_ticks": {
+        "type": "integer",
+        "default": 5,
+        "doc": "about this many time axis ticks"
+      }
+    },
+    "example": "examples/hrv-trend.data.json",
+    "health": {
+      "group": "cardiology",
+      "tables": {
+        "data": {
+          "fields": {
+            "date": "time",
+            "hrv": "nonneg"
+          },
+          "order": "date"
+        }
+      },
+      "rules": [
+        {
+          "le": [
+            "baseline_low",
+            "baseline_high"
+          ],
+          "code": "range_inverted"
+        }
+      ],
+      "text_size": [
+        100,
+        24
+      ],
+      "svg_size": [
+        1000,
+        400
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": 260,
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": {
+        "x-eas:expr": "datum.hrv < {{baseline_low}} ? '\u25bc below baseline' : datum.hrv > {{baseline_high}} ? '\u25b2 above baseline' : '\u25cf within baseline'"
+      },
+      "as": "status"
+    },
+    {
+      "window": [
+        {
+          "op": "mean",
+          "field": "hrv",
+          "as": "roll"
+        }
+      ],
+      "frame": [
+        -6,
+        0
+      ],
+      "sort": [
+        {
+          "field": "date",
+          "order": "ascending"
+        }
+      ]
+    }
+  ],
+  "layer": [
+    {
+      "name": "baseline",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "count",
+              "as": "n"
+            }
+          ]
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.2,
+        "color": {
+          "x-eas:slot": "band_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "datum": {
+            "x-eas:slot": "baseline_low"
+          },
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "y2": {
+          "datum": {
+            "x-eas:slot": "baseline_high"
+          }
+        }
+      }
+    },
+    {
+      "name": "daily",
+      "mark": {
+        "type": "line",
+        "strokeWidth": 1,
+        "color": {
+          "x-eas:slot": "muted"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "grid": false,
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            }
+          }
+        },
+        "y": {
+          "field": "hrv",
+          "type": "quantitative",
+          "title": "HRV RMSSD (ms)",
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        }
+      }
+    },
+    {
+      "name": "rolling",
+      "mark": {
+        "type": "line",
+        "strokeWidth": 2.5,
+        "color": {
+          "x-eas:slot": "line_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "grid": false,
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            }
+          }
+        },
+        "y": {
+          "field": "roll",
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        }
+      }
+    },
+    {
+      "name": "days",
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 60,
+        "opacity": 1,
+        "stroke": {
+          "x-eas:slot": "surface"
+        },
+        "strokeWidth": 1
+      },
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "grid": false,
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            }
+          }
+        },
+        "y": {
+          "field": "hrv",
+          "type": "quantitative",
+          "title": "HRV RMSSD (ms)",
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "color": {
+          "field": "status",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25bc below baseline",
+              "\u25cf within baseline",
+              "\u25b2 above baseline"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "flag_color"
+              },
+              {
+                "x-eas:slot": "muted"
+              },
+              {
+                "x-eas:slot": "line_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "shape": {
+          "field": "status",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25bc below baseline",
+              "\u25cf within baseline",
+              "\u25b2 above baseline"
+            ],
+            "range": [
+              "triangle-down",
+              "circle",
+              "triangle-up"
+            ]
+          },
+          "legend": null
+        },
+        "tooltip": [
+          {
+            "field": "date",
+            "type": "temporal",
+            "format": "%Y-%m-%d"
+          },
+          {
+            "field": "hrv",
+            "title": "HRV"
+          },
+          {
+            "field": "roll",
+            "title": "7-day mean",
+            "format": ".1f"
+          },
+          {
+            "field": "status"
+          }
+        ]
+      }
+    }
+  ]
+}

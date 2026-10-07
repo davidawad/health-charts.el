@@ -1,0 +1,276 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "sleep-duration",
+    "version": "1.0.0",
+    "doc": "Nightly sleep as stacked bars by stage, the time in bed in hours above each night and the sleep goal as a dashed line.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {date, stage, minutes}: one row per night and stage, oldest first"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Nightly sleep as stacked bars by stage, the time in bed in hours above each night and the sleep goal as a dashed line.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "target_hours": {
+        "type": "number",
+        "default": 8,
+        "doc": "sleep goal in hours (dashed line)"
+      },
+      "stage_colors": {
+        "type": "array",
+        "default": [
+          "#d03b3b",
+          "#8e5bd0",
+          "#5aa0e6",
+          "#1f4e99"
+        ],
+        "doc": "colors for awake, rem, light, deep",
+        "items": "string"
+      }
+    },
+    "example": "examples/sleep-duration.data.json",
+    "health": {
+      "group": "sleep",
+      "tables": {
+        "data": {
+          "fields": {
+            "date": "date",
+            "stage": "enum:awake|rem|light|deep",
+            "minutes": "nonneg"
+          },
+          "order": "date"
+        }
+      },
+      "text_size": [
+        90,
+        22
+      ],
+      "svg_size": [
+        900,
+        400
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": 260,
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": "datum.stage == 'rem' ? 'REM' : datum.stage",
+      "as": "stage_label"
+    },
+    {
+      "calculate": "datum.minutes / 60",
+      "as": "hours"
+    },
+    {
+      "calculate": "datum.stage == 'awake' ? 0 : datum.stage == 'rem' ? 1 : datum.stage == 'light' ? 2 : 3",
+      "as": "ord"
+    },
+    {
+      "joinaggregate": [
+        {
+          "op": "sum",
+          "field": "hours",
+          "as": "total"
+        }
+      ],
+      "groupby": [
+        "date"
+      ]
+    },
+    {
+      "calculate": "substring(datum.date, 5)",
+      "as": "day"
+    }
+  ],
+  "layer": [
+    {
+      "name": "stages",
+      "mark": {
+        "type": "bar"
+      },
+      "encoding": {
+        "x": {
+          "field": "day",
+          "type": "ordinal",
+          "title": null,
+          "axis": {
+            "labelAngle": 0
+          }
+        },
+        "y": {
+          "field": "hours",
+          "type": "quantitative",
+          "aggregate": "sum",
+          "title": "hours"
+        },
+        "color": {
+          "field": "stage_label",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "awake",
+              "REM",
+              "light",
+              "deep"
+            ],
+            "range": {
+              "x-eas:slot": "stage_colors"
+            }
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "order": {
+          "field": "ord",
+          "type": "quantitative"
+        },
+        "tooltip": [
+          {
+            "field": "date"
+          },
+          {
+            "field": "stage_label",
+            "title": "stage"
+          },
+          {
+            "field": "minutes",
+            "title": "minutes"
+          }
+        ]
+      }
+    },
+    {
+      "name": "totals",
+      "transform": [
+        {
+          "window": [
+            {
+              "op": "row_number",
+              "as": "rn"
+            }
+          ],
+          "groupby": [
+            "date"
+          ]
+        },
+        {
+          "filter": "datum.rn == 1"
+        },
+        {
+          "calculate": "format(datum.total, '.1f') + ' h'",
+          "as": "total_text"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "baseline": "bottom",
+        "dy": -4,
+        "fontSize": 11,
+        "color": {
+          "x-eas:slot": "ink"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "day",
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "total",
+          "type": "quantitative"
+        },
+        "text": {
+          "field": "total_text"
+        }
+      }
+    },
+    {
+      "name": "target",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "count",
+              "as": "n"
+            }
+          ]
+        }
+      ],
+      "mark": {
+        "type": "rule",
+        "strokeDash": [
+          6,
+          4
+        ],
+        "strokeWidth": 1.5,
+        "color": {
+          "x-eas:slot": "ink"
+        }
+      },
+      "encoding": {
+        "y": {
+          "datum": {
+            "x-eas:slot": "target_hours"
+          },
+          "type": "quantitative"
+        }
+      }
+    }
+  ]
+}

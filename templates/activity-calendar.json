@@ -1,0 +1,311 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "activity-calendar",
+    "version": "1.0.0",
+    "doc": "A calendar heatmap of a daily count such as steps: weeks as columns, weekdays as rows, color by value, a check mark on days that met the goal.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {date, steps}: an ISO date and a non-negative count, oldest first"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "A calendar heatmap of a daily count such as steps: weeks as columns, weekdays as rows, color by value, a check mark on days that met the goal.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "goal": {
+        "type": "number",
+        "default": 8000,
+        "doc": "daily goal; days at or above it get a check mark"
+      },
+      "unit": {
+        "type": "string",
+        "default": "steps",
+        "doc": "what the value counts"
+      },
+      "low_color": {
+        "type": "string",
+        "default": "#e8f1fb",
+        "doc": "color of the fewest"
+      },
+      "high_color": {
+        "type": "string",
+        "default": "#0b4f9e",
+        "doc": "color of the most"
+      },
+      "value_title": {
+        "type": "string",
+        "default": "steps",
+        "doc": "legend title"
+      }
+    },
+    "example": "examples/activity-calendar.data.json",
+    "health": {
+      "group": "fitness",
+      "tables": {
+        "data": {
+          "fields": {
+            "date": "date",
+            "steps": "nonneg"
+          },
+          "order": "date"
+        }
+      },
+      "text_size": [
+        130,
+        22
+      ],
+      "svg_size": [
+        1000,
+        420
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": {
+    "step": 40
+  },
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": "toDate(datum.date)",
+      "as": "_t"
+    },
+    {
+      "calculate": "day(datum._t)",
+      "as": "weekday"
+    },
+    {
+      "calculate": "datum._t - datum.weekday * 864e5",
+      "as": "_sunday"
+    },
+    {
+      "joinaggregate": [
+        {
+          "op": "min",
+          "field": "_sunday",
+          "as": "_first"
+        }
+      ]
+    },
+    {
+      "calculate": "round((datum._sunday - datum._first) / 6048e5)",
+      "as": "week"
+    },
+    {
+      "calculate": "timeFormat(datum._sunday, '%b %d')",
+      "as": "week_label"
+    },
+    {
+      "calculate": {
+        "x-eas:expr": "datum.steps >= {{goal}} ? 1 : 0"
+      },
+      "as": "met"
+    },
+    {
+      "calculate": "format(datum.steps / 1000, '.1f') + 'k' + (datum.met == 1 ? ' \u2713' : '')",
+      "as": "cell_text"
+    },
+    {
+      "joinaggregate": [
+        {
+          "op": "max",
+          "field": "steps",
+          "as": "_max"
+        }
+      ]
+    },
+    {
+      "calculate": "datum.steps > 0.55 * datum._max ? 1 : 0",
+      "as": "dark"
+    },
+    {
+      "calculate": "datum.met == 1 ? 'goal met' : 'below goal'",
+      "as": "goal_state"
+    }
+  ],
+  "layer": [
+    {
+      "name": "days",
+      "mark": {
+        "type": "rect",
+        "stroke": {
+          "x-eas:slot": "surface"
+        },
+        "strokeWidth": 2
+      },
+      "encoding": {
+        "x": {
+          "field": "week_label",
+          "type": "ordinal",
+          "title": "week starting",
+          "sort": {
+            "field": "week",
+            "op": "min"
+          },
+          "axis": {
+            "labelAngle": 0,
+            "ticks": false,
+            "domain": false
+          }
+        },
+        "y": {
+          "field": "weekday",
+          "type": "ordinal",
+          "title": null,
+          "axis": {
+            "ticks": false,
+            "domain": false,
+            "labelExpr": "['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][datum.value]"
+          }
+        },
+        "color": {
+          "field": "steps",
+          "type": "quantitative",
+          "scale": {
+            "range": [
+              {
+                "x-eas:slot": "low_color"
+              },
+              {
+                "x-eas:slot": "high_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": {
+              "x-eas:slot": "value_title"
+            }
+          }
+        },
+        "tooltip": [
+          {
+            "field": "date",
+            "title": "date"
+          },
+          {
+            "field": "steps",
+            "title": "value"
+          },
+          {
+            "field": "goal_state",
+            "title": "goal"
+          }
+        ]
+      }
+    },
+    {
+      "name": "values-on-light",
+      "transform": [
+        {
+          "filter": "datum.dark == 0"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "fontSize": 10,
+        "color": {
+          "x-eas:slot": "ink"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "week_label",
+          "type": "ordinal",
+          "sort": {
+            "field": "week",
+            "op": "min"
+          }
+        },
+        "y": {
+          "field": "weekday",
+          "type": "ordinal"
+        },
+        "text": {
+          "field": "cell_text"
+        }
+      }
+    },
+    {
+      "name": "values-on-dark",
+      "transform": [
+        {
+          "filter": "datum.dark == 1"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "fontSize": 10,
+        "color": "#ffffff"
+      },
+      "encoding": {
+        "x": {
+          "field": "week_label",
+          "type": "ordinal",
+          "sort": {
+            "field": "week",
+            "op": "min"
+          }
+        },
+        "y": {
+          "field": "weekday",
+          "type": "ordinal"
+        },
+        "text": {
+          "field": "cell_text"
+        }
+      }
+    }
+  ]
+}

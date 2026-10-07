@@ -1,0 +1,35 @@
+{
+ "title": "Workout time in heart-rate zones (synthetic)",
+ "data": [
+  {
+   "zone": "Z1 Recovery",
+   "low": 50,
+   "high": 99,
+   "minutes": 44
+  },
+  {
+   "zone": "Z2 Easy",
+   "low": 100,
+   "high": 119,
+   "minutes": 78
+  },
+  {
+   "zone": "Z3 Aerobic",
+   "low": 120,
+   "high": 139,
+   "minutes": 52
+  },
+  {
+   "zone": "Z4 Threshold",
+   "low": 140,
+   "high": 159,
+   "minutes": 24
+  },
+  {
+   "zone": "Z5 Maximum",
+   "low": 160,
+   "high": 185,
+   "minutes": 6
+  }
+ ]
+}

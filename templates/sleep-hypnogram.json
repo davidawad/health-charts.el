@@ -1,0 +1,210 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "sleep-hypnogram",
+    "version": "1.0.0",
+    "doc": "One night of sleep as a hypnogram: the stage (awake, REM, light, deep) over time, one segment per stage change.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {start, end, stage}: ISO times and awake, rem, light or deep, oldest first"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "One night of sleep as a hypnogram: the stage (awake, REM, light, deep) over time, one segment per stage change.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "stage_colors": {
+        "type": "array",
+        "default": [
+          "#d03b3b",
+          "#8e5bd0",
+          "#5aa0e6",
+          "#1f4e99"
+        ],
+        "doc": "colors for awake, rem, light, deep",
+        "items": "string"
+      },
+      "x_format": {
+        "type": "string",
+        "default": "%H:%M",
+        "doc": "time axis label format"
+      },
+      "x_ticks": {
+        "type": "integer",
+        "default": 6
+      }
+    },
+    "example": "examples/sleep-hypnogram.data.json",
+    "health": {
+      "group": "sleep",
+      "tables": {
+        "data": {
+          "fields": {
+            "start": "time",
+            "end": "time",
+            "stage": "enum:awake|rem|light|deep"
+          },
+          "order": "start",
+          "rows": [
+            {
+              "le": [
+                "start",
+                "end"
+              ],
+              "code": "interval_inverted"
+            }
+          ]
+        }
+      },
+      "text_size": [
+        90,
+        16
+      ],
+      "svg_size": [
+        900,
+        340
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": {
+    "step": 44
+  },
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": "datum.stage == 'awake' ? 'awake' : datum.stage == 'rem' ? 'REM' : datum.stage == 'light' ? 'light' : 'deep'",
+      "as": "stage_label"
+    }
+  ],
+  "layer": [
+    {
+      "name": "stages",
+      "mark": {
+        "type": "bar",
+        "height": {
+          "band": 0.8
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "start",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            },
+            "grid": false
+          }
+        },
+        "x2": {
+          "field": "end"
+        },
+        "y": {
+          "field": "stage_label",
+          "type": "ordinal",
+          "title": null,
+          "sort": [
+            "awake",
+            "REM",
+            "light",
+            "deep"
+          ],
+          "axis": {
+            "domain": false,
+            "ticks": false
+          }
+        },
+        "color": {
+          "field": "stage_label",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "awake",
+              "REM",
+              "light",
+              "deep"
+            ],
+            "range": {
+              "x-eas:slot": "stage_colors"
+            }
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "tooltip": [
+          {
+            "field": "stage_label",
+            "title": "stage"
+          },
+          {
+            "field": "start",
+            "type": "temporal",
+            "format": "%H:%M"
+          },
+          {
+            "field": "end",
+            "type": "temporal",
+            "format": "%H:%M"
+          }
+        ]
+      }
+    }
+  ]
+}
