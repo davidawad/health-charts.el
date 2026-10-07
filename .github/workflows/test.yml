@@ -1,5 +1,3 @@
-# Fast default CI: latest Emacs on Linux only. The full OS x Emacs matrix
-# lives in test-full.yml (run by hand, on version tags, and weekly).
 name: test
 
 on:
@@ -14,92 +12,37 @@ concurrency:
 
 jobs:
   test:
-    name: ${{ matrix.os }} / Emacs ${{ matrix.emacs_version }}
-    runs-on: ${{ matrix.os }}
+    name: Emacs ${{ matrix.emacs_version }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
         emacs_version: ['30.1']
-    defaults:
-      run:
-        # Git Bash on Windows; make is not assumed there
-        shell: bash
     steps:
-      - name: Keep LF line ends on Windows
-        run: git config --global core.autocrlf false
-
       - uses: actions/checkout@v4
 
-      # purcell/setup-emacs on Linux and macOS, setup-emacs-windows on Windows
+      # eas.el, the chart engine, beside this repository
+      - uses: actions/checkout@v4
+        with:
+          repository: davidawad/eas.el
+          path: eas.el
+
       - uses: jcs090218/setup-emacs@master
         with:
           version: ${{ matrix.emacs_version }}
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      - name: Tests
+        run: make test EAS=eas.el
 
-      # Render tools.  The tests skip what is absent, so these steps only
-      # decide how much rendering each leg really exercises.
-      - name: Install gnuplot and rsvg-convert (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends gnuplot-nox librsvg2-bin fonts-dejavu-core
-
-      - name: Install gnuplot and rsvg-convert (macOS)
-        if: runner.os == 'macOS'
-        continue-on-error: true
-        run: brew install gnuplot librsvg
-
-      - name: Install gnuplot (Windows)
-        if: runner.os == 'Windows'
-        continue-on-error: true
-        # lands in "C:\Program Files\gnuplot\bin", which
-        # health-chart-tool-directories searches
-        run: choco install gnuplot --no-progress -y
-
-      - name: Install Vega-Lite (vl2svg, vl2png)
-        continue-on-error: ${{ runner.os != 'Linux' }}
-        run: npm install -g vega vega-lite vega-cli
-
-      - name: Show tools
-        run: |
-          emacs --version | head -n 1
-          emacs -Q --batch -L . -l health-chart-batch -f health-chart-batch-main backends
-
-      - name: Run tests (make)
-        if: runner.os != 'Windows'
-        run: make test
-
-      - name: Run tests (no make)
-        if: runner.os == 'Windows'
-        run: emacs -Q --batch -l test/run-tests.el
-
-      - name: Byte-compile
-        run: emacs -Q --batch -L . --eval '(setq byte-compile-error-on-warn t)' -f batch-byte-compile health-chart*.el
+      - name: Byte-compile (warnings are errors)
+        run: make compile EAS=eas.el
 
       - name: Checkdoc
-        if: runner.os == 'Linux'
         run: make checkdoc
 
-      - name: Package-lint
-        if: runner.os == 'Linux'
+      - name: Shell door
         run: |
-          emacs -Q --batch --eval "(progn (require 'package) (add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\") t) (package-initialize) (package-refresh-contents) (package-install 'package-lint))"
-          make lint PACKAGE_LINT="$(ls -d ~/.emacs.d/elpa/package-lint-*)"
-
-      - name: CLI smoke test
-        if: runner.os != 'Windows'
-        run: |
-          bin/health-chart example bullet | bin/health-chart render -
-          bin/health-chart pipe heatmap < test/fixtures/biomarker-query.json
-
-      - name: CLI smoke test (cmd.exe)
-        if: runner.os == 'Windows'
-        shell: cmd
-        run: |
-          call bin\health-chart.cmd example bullet > "%RUNNER_TEMP%\bullet.json" || exit /b 1
-          call bin\health-chart.cmd render "%RUNNER_TEMP%\bullet.json" || exit /b 1
-          call bin\health-chart.cmd pipe heatmap < test\fixtures\biomarker-query.json || exit /b 1
+          EAS=eas.el bin/health-chart templates > /dev/null
+          EAS=eas.el bin/health-chart example vitals-trend --raw > /tmp/vitals.json
+          EAS=eas.el bin/health-chart validate vitals-trend --data /tmp/vitals.json
+          EAS=eas.el bin/health-chart render vitals-trend --data /tmp/vitals.json --backend text --raw

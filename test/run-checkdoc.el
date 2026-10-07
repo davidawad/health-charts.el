@@ -1,24 +1,28 @@
-;;; run-checkdoc.el --- checkdoc every file named on the command line -*- lexical-binding: t; -*-
+;;; run-checkdoc.el --- Checkdoc every file named on the command line -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 
-;; Used by `make checkdoc'; exits 1 on any warning.
+;;   emacs -Q --batch -L src -l test/run-checkdoc.el src/*.el
+;;
+;; Exits 1 when checkdoc reports anything.
 
 ;;; Code:
 
-;; batch checkdoc over every health-chart file; exit 1 on any warning
 (require 'checkdoc)
-(require 'seq)
-(require 'subr-x)
-(setq checkdoc-arguments-in-order-flag nil)
-(dolist (f command-line-args-left)
-  (with-current-buffer (find-file-noselect f)
-    (let ((checkdoc-autofix-flag 'never)) (checkdoc-current-buffer t))))
-(setq command-line-args-left nil)
-(let ((problems (seq-filter (lambda (line) (string-match-p ":[0-9]+: " line))
-                           (split-string (with-current-buffer (get-buffer-create "*Style Warnings*")
-                                           (buffer-string))
-                                         "\n"))))
-  (when problems
-    (princ (string-join problems "\n")) (terpri) (kill-emacs 1)))
+
+(let ((failed nil)
+      (checkdoc-diagnostic-buffer "*checkdoc*"))
+  (dolist (file command-line-args-left)
+    (unless (string-match-p "-test\\.el\\'" file)
+      (with-current-buffer (find-file-noselect file)
+        (checkdoc-current-buffer t)
+        (when-let* ((buffer (get-buffer checkdoc-diagnostic-buffer)))
+          (with-current-buffer buffer
+            (when (> (buffer-size) 0)
+              (setq failed t)
+              (princ (buffer-string))
+              (let ((inhibit-read-only t)) (erase-buffer))))))))
+  (setq command-line-args-left nil)
+  (kill-emacs (if failed 1 0)))
+
 ;;; run-checkdoc.el ends here

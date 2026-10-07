@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
-# health-chart from the shell: chart specs as JSON in, charts or JSON out.
-#   health-chart render spec.json        (or: ... | health-chart render -)
-#   health-chart write spec.json chart.png   (.svg .png .pdf .txt .vl.json)
-#   health-chart spec|explain|validate spec.json
-#   biomarker trend --marker ldl_c --format json | health-chart pipe timeseries ['{"width":60}']
-#   health-chart example KIND | kinds | describe | doctor | backends | templates | cohorts
-#   health-chart cohort NAME ['{"kind":"staleness","person":"alex"}'] | cohort-explain NAME [PROPS]
-# Set EMACS to pick the binary. See health-chart-batch.el for the spec format.
+# health-chart from the shell: eas's verbs with the health templates loaded.
+#   health-chart templates                      the catalog
+#   health-chart validate vitals-trend --data b.json   error code and JSON path
+#   health-chart example vitals-trend --raw > b.json   bindings that render as-is
+#   health-chart render vitals-trend --data b.json --backend text --raw
+#   health-chart render vitals-trend --data b.json --backend svg --raw > chart.svg
+# check, export, explain, describe and doctor are eas's.  EAS points at an
+# eas.el checkout (default: eas.el beside this repository).  Set EMACS to
+# pick the binary.
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-exec "${EMACS:-emacs}" -Q --batch -L "$here" -l health-chart-batch \
-  -f health-chart-batch-main "$@"
+eas="${EAS:-$here/../eas.el}"
+exec "${EMACS:-emacs}" -Q --batch --eval '(setq load-prefer-newer t)' \
+  -L "$eas/src" -L "$here/src" -l health-chart-cli \
+  -f health-chart-cli-main -- "$@"
