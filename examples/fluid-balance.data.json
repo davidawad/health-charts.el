@@ -1,0 +1,443 @@
+{
+ "title": "Fluid balance (synthetic)",
+ "data": [
+  {
+   "time": "2026-03-09T06:30",
+   "kind": "output",
+   "ml": 80,
+   "source": "other"
+  },
+  {
+   "time": "2026-03-09T07:00",
+   "kind": "intake",
+   "ml": 320,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-09T08:30",
+   "kind": "output",
+   "ml": 310,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-09T10:00",
+   "kind": "intake",
+   "ml": 270,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-09T12:30",
+   "kind": "output",
+   "ml": 310,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-09T13:00",
+   "kind": "intake",
+   "ml": 390,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-09T16:00",
+   "kind": "intake",
+   "ml": 190,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-09T16:30",
+   "kind": "output",
+   "ml": 340,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-09T19:00",
+   "kind": "intake",
+   "ml": 370,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-09T20:30",
+   "kind": "output",
+   "ml": 280,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-09T21:00",
+   "kind": "intake",
+   "ml": 200,
+   "source": "IV"
+  },
+  {
+   "time": "2026-03-10T06:30",
+   "kind": "output",
+   "ml": 100,
+   "source": "other"
+  },
+  {
+   "time": "2026-03-10T07:00",
+   "kind": "intake",
+   "ml": 350,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-10T08:30",
+   "kind": "output",
+   "ml": 430,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-10T10:00",
+   "kind": "intake",
+   "ml": 230,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-10T12:30",
+   "kind": "output",
+   "ml": 360,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-10T13:00",
+   "kind": "intake",
+   "ml": 390,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-10T16:00",
+   "kind": "intake",
+   "ml": 160,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-10T16:30",
+   "kind": "output",
+   "ml": 320,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-10T19:00",
+   "kind": "intake",
+   "ml": 400,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-10T20:30",
+   "kind": "output",
+   "ml": 270,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-10T21:00",
+   "kind": "intake",
+   "ml": 140,
+   "source": "IV"
+  },
+  {
+   "time": "2026-03-11T06:30",
+   "kind": "output",
+   "ml": 70,
+   "source": "other"
+  },
+  {
+   "time": "2026-03-11T07:00",
+   "kind": "intake",
+   "ml": 350,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-11T08:30",
+   "kind": "output",
+   "ml": 340,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-11T10:00",
+   "kind": "intake",
+   "ml": 220,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-11T12:30",
+   "kind": "output",
+   "ml": 340,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-11T13:00",
+   "kind": "intake",
+   "ml": 400,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-11T16:30",
+   "kind": "output",
+   "ml": 330,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-11T20:30",
+   "kind": "output",
+   "ml": 270,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-11T21:00",
+   "kind": "intake",
+   "ml": 130,
+   "source": "IV"
+  },
+  {
+   "time": "2026-03-12T06:30",
+   "kind": "output",
+   "ml": 180,
+   "source": "other"
+  },
+  {
+   "time": "2026-03-12T07:00",
+   "kind": "intake",
+   "ml": 340,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-12T08:30",
+   "kind": "output",
+   "ml": 360,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-12T10:00",
+   "kind": "intake",
+   "ml": 220,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-12T12:30",
+   "kind": "output",
+   "ml": 350,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-12T13:00",
+   "kind": "intake",
+   "ml": 380,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-12T16:00",
+   "kind": "intake",
+   "ml": 240,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-12T16:30",
+   "kind": "output",
+   "ml": 280,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-12T19:00",
+   "kind": "intake",
+   "ml": 380,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-12T20:30",
+   "kind": "output",
+   "ml": 340,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-12T21:00",
+   "kind": "intake",
+   "ml": 160,
+   "source": "IV"
+  },
+  {
+   "time": "2026-03-13T06:30",
+   "kind": "output",
+   "ml": 320,
+   "source": "other"
+  },
+  {
+   "time": "2026-03-13T07:00",
+   "kind": "intake",
+   "ml": 280,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-13T08:30",
+   "kind": "output",
+   "ml": 510,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-13T10:00",
+   "kind": "intake",
+   "ml": 210,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-13T12:30",
+   "kind": "output",
+   "ml": 530,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-13T13:00",
+   "kind": "intake",
+   "ml": 350,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-13T16:00",
+   "kind": "intake",
+   "ml": 150,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-13T16:30",
+   "kind": "output",
+   "ml": 400,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-13T19:00",
+   "kind": "intake",
+   "ml": 350,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-13T20:30",
+   "kind": "output",
+   "ml": 430,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-13T21:00",
+   "kind": "intake",
+   "ml": 190,
+   "source": "IV"
+  },
+  {
+   "time": "2026-03-14T06:30",
+   "kind": "output",
+   "ml": 70,
+   "source": "other"
+  },
+  {
+   "time": "2026-03-14T07:00",
+   "kind": "intake",
+   "ml": 270,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-14T08:30",
+   "kind": "output",
+   "ml": 430,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-14T10:00",
+   "kind": "intake",
+   "ml": 290,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-14T12:30",
+   "kind": "output",
+   "ml": 320,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-14T13:00",
+   "kind": "intake",
+   "ml": 350,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-14T16:30",
+   "kind": "output",
+   "ml": 230,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-14T20:30",
+   "kind": "output",
+   "ml": 320,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-14T21:00",
+   "kind": "intake",
+   "ml": 160,
+   "source": "IV"
+  },
+  {
+   "time": "2026-03-15T06:30",
+   "kind": "output",
+   "ml": 80,
+   "source": "other"
+  },
+  {
+   "time": "2026-03-15T07:00",
+   "kind": "intake",
+   "ml": 300,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-15T08:30",
+   "kind": "output",
+   "ml": 410,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-15T10:00",
+   "kind": "intake",
+   "ml": 200,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-15T12:30",
+   "kind": "output",
+   "ml": 330,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-15T13:00",
+   "kind": "intake",
+   "ml": 400,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-15T16:00",
+   "kind": "intake",
+   "ml": 210,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-15T16:30",
+   "kind": "output",
+   "ml": 330,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-15T19:00",
+   "kind": "intake",
+   "ml": 310,
+   "source": "oral"
+  },
+  {
+   "time": "2026-03-15T20:30",
+   "kind": "output",
+   "ml": 350,
+   "source": "urine"
+  },
+  {
+   "time": "2026-03-15T21:00",
+   "kind": "intake",
+   "ml": 140,
+   "source": "IV"
+  }
+ ]
+}

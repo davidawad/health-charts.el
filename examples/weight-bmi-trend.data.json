@@ -1,0 +1,82 @@
+{
+ "title": "BMI (synthetic)",
+ "y_title": "BMI (kg/m\u00b2)",
+ "x_format": "%b %Y",
+ "height_m": 1.78,
+ "bands": [
+  {
+   "label": "underweight",
+   "low": 14,
+   "high": 18.5,
+   "color": "#2a78d6"
+  },
+  {
+   "label": "normal",
+   "low": 18.5,
+   "high": 25,
+   "color": "#2a9d8f"
+  },
+  {
+   "label": "overweight",
+   "low": 25,
+   "high": 30,
+   "color": "#e09a00"
+  },
+  {
+   "label": "obesity",
+   "low": 30,
+   "high": 36,
+   "color": "#d03b3b"
+  }
+ ],
+ "data": [
+  {
+   "time": "2025-01-05",
+   "weight_kg": 94.6
+  },
+  {
+   "time": "2025-02-04",
+   "weight_kg": 94.0
+  },
+  {
+   "time": "2025-03-06",
+   "weight_kg": 93.3
+  },
+  {
+   "time": "2025-04-05",
+   "weight_kg": 92.4
+  },
+  {
+   "time": "2025-05-05",
+   "weight_kg": 91.0
+  },
+  {
+   "time": "2025-06-04",
+   "weight_kg": 90.6
+  },
+  {
+   "time": "2025-07-04",
+   "weight_kg": 90.2
+  },
+  {
+   "time": "2025-08-03",
+   "weight_kg": 89.3
+  },
+  {
+   "time": "2025-09-02",
+   "weight_kg": 88.4
+  },
+  {
+   "time": "2025-10-02",
+   "weight_kg": 87.1
+  },
+  {
+   "time": "2025-11-01",
+   "weight_kg": 85.4
+  },
+  {
+   "time": "2025-12-01",
+   "weight_kg": 84.3
+  }
+ ]
+}

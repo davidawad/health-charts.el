@@ -1,0 +1,308 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "fluid-balance",
+    "version": "1.0.0",
+    "doc": "Fluid balance per day: intake bars up, output bars down, in millilitres, with the net balance marked and labelled; the totals are computed from the individual entries.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {time, kind, ml, source?}: one entry per intake or output, kind intake or output, oldest first"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Fluid balance per day: intake bars up, output bars down, in millilitres, with the net balance marked and labelled; the totals are computed from the individual entries.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "intake_color": {
+        "type": "string",
+        "default": "#2a78d6",
+        "doc": "intake bars"
+      },
+      "output_color": {
+        "type": "string",
+        "default": "#e09a00",
+        "doc": "output bars"
+      }
+    },
+    "example": "examples/fluid-balance.data.json",
+    "health": {
+      "group": "fluids",
+      "text_size": [
+        100,
+        26
+      ],
+      "svg_size": [
+        1000,
+        420
+      ],
+      "tables": {
+        "data": {
+          "fields": {
+            "time": "time",
+            "kind": "enum:intake|output",
+            "ml": "nonneg",
+            "source": "?string"
+          },
+          "order": "time"
+        }
+      }
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": 260,
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": "substring(datum.time, 0, 10)",
+      "as": "day"
+    },
+    {
+      "calculate": "datum.kind == 'output' ? -datum.ml : datum.ml",
+      "as": "signed"
+    },
+    {
+      "aggregate": [
+        {
+          "op": "sum",
+          "field": "signed",
+          "as": "total"
+        }
+      ],
+      "groupby": [
+        "day",
+        "kind"
+      ]
+    },
+    {
+      "joinaggregate": [
+        {
+          "op": "sum",
+          "field": "total",
+          "as": "net"
+        }
+      ],
+      "groupby": [
+        "day"
+      ]
+    },
+    {
+      "calculate": "datum.net >= 0 ? '+' + datum.net : '' + datum.net",
+      "as": "net_label"
+    },
+    {
+      "calculate": "datum.kind == 'intake' ? '\u25b2 intake' : '\u25bc output'",
+      "as": "flow"
+    }
+  ],
+  "layer": [
+    {
+      "name": "flows",
+      "mark": {
+        "type": "bar",
+        "width": {
+          "band": 0.7
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "day",
+          "type": "nominal",
+          "title": null,
+          "sort": null,
+          "axis": {
+            "labelAngle": 0
+          }
+        },
+        "y": {
+          "field": "total",
+          "type": "quantitative",
+          "title": "mL (intake up, output down)"
+        },
+        "color": {
+          "field": "flow",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25b2 intake",
+              "\u25bc output"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "intake_color"
+              },
+              {
+                "x-eas:slot": "output_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "tooltip": [
+          {
+            "field": "day"
+          },
+          {
+            "field": "flow",
+            "title": "flow"
+          },
+          {
+            "field": "total",
+            "title": "mL"
+          },
+          {
+            "field": "net_label",
+            "title": "net"
+          }
+        ]
+      }
+    },
+    {
+      "name": "net",
+      "transform": [
+        {
+          "filter": "datum.kind == 'intake'"
+        }
+      ],
+      "mark": {
+        "type": "point",
+        "shape": "diamond",
+        "filled": true,
+        "size": 110,
+        "color": {
+          "x-eas:slot": "ink"
+        },
+        "stroke": {
+          "x-eas:slot": "surface"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "day",
+          "type": "nominal",
+          "title": null,
+          "sort": null,
+          "axis": {
+            "labelAngle": 0
+          }
+        },
+        "y": {
+          "field": "net",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "name": "net-label",
+      "transform": [
+        {
+          "filter": "datum.kind == 'intake'"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "dy": -12,
+        "fontSize": 11,
+        "fontWeight": "bold",
+        "color": {
+          "x-eas:slot": "ink"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "day",
+          "type": "nominal",
+          "title": null,
+          "sort": null,
+          "axis": {
+            "labelAngle": 0
+          }
+        },
+        "y": {
+          "field": "net",
+          "type": "quantitative"
+        },
+        "text": {
+          "field": "net_label"
+        }
+      }
+    },
+    {
+      "name": "zero",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "count",
+              "as": "n"
+            }
+          ]
+        }
+      ],
+      "mark": {
+        "type": "rule",
+        "color": {
+          "x-eas:slot": "secondary"
+        }
+      },
+      "encoding": {
+        "y": {
+          "datum": 0,
+          "type": "quantitative"
+        }
+      }
+    }
+  ]
+}

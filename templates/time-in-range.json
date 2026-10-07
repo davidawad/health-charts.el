@@ -1,0 +1,323 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "time-in-range",
+    "version": "1.0.0",
+    "doc": "Time in range: the share of glucose readings very low, low, in range, high and very high per period (weeks, days, any label you give), computed from the raw readings; the consensus target is over 70 percent in range.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {time, glucose, period?}: readings with an optional period label; without one all readings count together"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Time in range: the share of glucose readings very low, low, in range, high and very high per period (weeks, days, any label you give), computed from the raw readings; the consensus target is over 70 percent in range.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "very_low": {
+        "type": "number",
+        "default": 54,
+        "doc": "below this: very low (consensus level 2 hypoglycemia, mg/dL)"
+      },
+      "low": {
+        "type": "number",
+        "default": 70,
+        "doc": "below this: low; the bottom of the target range (mg/dL)"
+      },
+      "high": {
+        "type": "number",
+        "default": 180,
+        "doc": "above this: high; the top of the target range (mg/dL)"
+      },
+      "very_high": {
+        "type": "number",
+        "default": 250,
+        "doc": "above this: very high (mg/dL)"
+      }
+    },
+    "example": "examples/time-in-range.data.json",
+    "health": {
+      "group": "glucose",
+      "text_size": [
+        100,
+        16
+      ],
+      "svg_size": [
+        1000,
+        300
+      ],
+      "tables": {
+        "data": {
+          "fields": {
+            "time": "time",
+            "glucose": "range:10:800",
+            "period": "?string"
+          },
+          "order": "time"
+        }
+      },
+      "rules": [
+        {
+          "le": [
+            "very_low",
+            "low"
+          ],
+          "code": "range_inverted"
+        },
+        {
+          "le": [
+            "low",
+            "high"
+          ],
+          "code": "range_inverted"
+        },
+        {
+          "le": [
+            "high",
+            "very_high"
+          ],
+          "code": "range_inverted"
+        }
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": {
+    "step": 44
+  },
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": {
+        "x-eas:expr": "datum.glucose < {{very_low}} ? 0 : datum.glucose < {{low}} ? 1 : datum.glucose > {{very_high}} ? 4 : datum.glucose > {{high}} ? 3 : 2"
+      },
+      "as": "ord"
+    },
+    {
+      "calculate": "isValid(datum.period) ? datum.period : 'All readings'",
+      "as": "per"
+    },
+    {
+      "calculate": "datum.ord == 0 ? '\u25c6 very low' : datum.ord == 1 ? '\u25bc low' : datum.ord == 2 ? '\u25cf in range' : datum.ord == 3 ? '\u25b2 high' : '\u25a0 very high'",
+      "as": "zone"
+    },
+    {
+      "aggregate": [
+        {
+          "op": "count",
+          "as": "count"
+        }
+      ],
+      "groupby": [
+        "per",
+        "zone",
+        "ord"
+      ]
+    },
+    {
+      "joinaggregate": [
+        {
+          "op": "sum",
+          "field": "count",
+          "as": "total"
+        }
+      ],
+      "groupby": [
+        "per"
+      ]
+    },
+    {
+      "stack": "count",
+      "groupby": [
+        "per"
+      ],
+      "as": [
+        "s0",
+        "s1"
+      ],
+      "offset": "normalize",
+      "sort": [
+        {
+          "field": "ord",
+          "order": "ascending"
+        }
+      ]
+    },
+    {
+      "calculate": "(datum.s0 + datum.s1) / 2",
+      "as": "mid"
+    },
+    {
+      "calculate": "format(100 * datum.count / datum.total, '.0f') + '%'",
+      "as": "pct"
+    },
+    {
+      "calculate": "datum.pct + ' ' + datum.zone + ' (' + datum.count + ' of ' + datum.total + ' readings)'",
+      "as": "detail"
+    }
+  ],
+  "encoding": {
+    "y": {
+      "field": "per",
+      "type": "nominal",
+      "title": null,
+      "sort": null,
+      "axis": {
+        "domain": false,
+        "ticks": false
+      }
+    }
+  },
+  "layer": [
+    {
+      "name": "shares",
+      "mark": {
+        "type": "bar",
+        "height": {
+          "band": 0.72
+        },
+        "stroke": {
+          "x-eas:slot": "surface"
+        },
+        "strokeWidth": 1.5
+      },
+      "encoding": {
+        "x": {
+          "field": "s0",
+          "type": "quantitative",
+          "title": "share of readings",
+          "scale": {
+            "domain": [
+              0,
+              1
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "axis": {
+            "values": [
+              0,
+              0.25,
+              0.5,
+              0.75,
+              1
+            ],
+            "format": ".0%"
+          }
+        },
+        "x2": {
+          "field": "s1"
+        },
+        "color": {
+          "field": "zone",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25c6 very low",
+              "\u25bc low",
+              "\u25cf in range",
+              "\u25b2 high",
+              "\u25a0 very high"
+            ],
+            "range": [
+              "#8b1e1e",
+              "#d03b3b",
+              "#2a78d6",
+              "#e09a00",
+              "#b35c00"
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "tooltip": [
+          {
+            "field": "per",
+            "title": "period"
+          },
+          {
+            "field": "detail",
+            "title": "readings"
+          }
+        ]
+      }
+    },
+    {
+      "name": "labels",
+      "transform": [
+        {
+          "filter": "datum.s1 - datum.s0 >= 0.06"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "baseline": "middle",
+        "fontSize": 12,
+        "fontWeight": "bold",
+        "color": {
+          "x-eas:slot": "surface"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "mid",
+          "type": "quantitative"
+        },
+        "text": {
+          "field": "pct"
+        }
+      }
+    }
+  ]
+}

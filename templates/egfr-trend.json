@@ -1,0 +1,515 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "egfr-trend",
+    "version": "1.0.0",
+    "doc": "Estimated GFR (mL/min/1.73 m2) over time against the KDIGO CKD stage bands G1 to G5.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {time, value}: an ISO date and the eGFR, oldest first"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Estimated GFR (mL/min/1.73 m2) over time against the KDIGO CKD stage bands G1 to G5.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "bands": {
+        "type": "array",
+        "default": [
+          {
+            "label": "G5",
+            "low": 0,
+            "high": 15,
+            "color": "#8b1e1e"
+          },
+          {
+            "label": "G4",
+            "low": 15,
+            "high": 30,
+            "color": "#d03b3b"
+          },
+          {
+            "label": "G3b",
+            "low": 30,
+            "high": 45,
+            "color": "#e07a00"
+          },
+          {
+            "label": "G3a",
+            "low": 45,
+            "high": 60,
+            "color": "#e09a00"
+          },
+          {
+            "label": "G2",
+            "low": 60,
+            "high": 90,
+            "color": "#8ab04a"
+          },
+          {
+            "label": "G1",
+            "low": 90,
+            "high": 120,
+            "color": "#2a9d8f"
+          }
+        ],
+        "doc": "category bands [{label, low, high, color}], drawn bottom to top"
+      },
+      "target": {
+        "type": "number",
+        "default": null,
+        "doc": "optional personal target: a dashed line"
+      },
+      "y_title": {
+        "type": "string",
+        "default": "eGFR (mL/min/1.73 m\u00b2)",
+        "doc": "y-axis title"
+      },
+      "line_color": {
+        "type": "string",
+        "default": "#2a78d6"
+      },
+      "x_format": {
+        "type": "string",
+        "default": "%b %d",
+        "doc": "time axis label format"
+      },
+      "x_ticks": {
+        "type": "integer",
+        "default": 5,
+        "doc": "about this many time axis ticks"
+      }
+    },
+    "example": "examples/egfr-trend.data.json",
+    "health": {
+      "group": "metabolic",
+      "tables": {
+        "data": {
+          "fields": {
+            "time": "time",
+            "value": "number"
+          },
+          "order": "time"
+        },
+        "bands": {
+          "optional": true,
+          "fields": {
+            "label": "string",
+            "low": "number",
+            "high": "number",
+            "color": "?string"
+          },
+          "rows": [
+            {
+              "le": [
+                "low",
+                "high"
+              ],
+              "code": "range_inverted"
+            }
+          ]
+        }
+      },
+      "text_size": [
+        100,
+        26
+      ],
+      "svg_size": [
+        1000,
+        420
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": 260,
+  "data": {
+    "name": "data"
+  },
+  "layer": [
+    {
+      "x-eas:each": "bands",
+      "spec": {
+        "name": "band",
+        "transform": [
+          {
+            "aggregate": [
+              {
+                "op": "count",
+                "as": "n"
+              }
+            ]
+          }
+        ],
+        "mark": {
+          "type": "rect",
+          "opacity": 0.22,
+          "color": {
+            "x-eas:item": "color"
+          }
+        },
+        "encoding": {
+          "y": {
+            "datum": {
+              "x-eas:item": "low"
+            },
+            "type": "quantitative",
+            "scale": {
+              "zero": false,
+              "nice": true
+            }
+          },
+          "y2": {
+            "datum": {
+              "x-eas:item": "high"
+            }
+          },
+          "tooltip": [
+            {
+              "value": {
+                "x-eas:text": "{{@label}}"
+              },
+              "title": "band"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "x-eas:each": "bands",
+      "spec": {
+        "name": "edge",
+        "transform": [
+          {
+            "aggregate": [
+              {
+                "op": "count",
+                "as": "n"
+              }
+            ]
+          }
+        ],
+        "mark": {
+          "type": "rule",
+          "strokeWidth": 1,
+          "color": {
+            "x-eas:item": "color"
+          }
+        },
+        "encoding": {
+          "y": {
+            "datum": {
+              "x-eas:item": "low"
+            },
+            "type": "quantitative",
+            "scale": {
+              "zero": false,
+              "nice": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "x-eas:each": "bands",
+      "spec": {
+        "name": "band-label",
+        "transform": [
+          {
+            "aggregate": [
+              {
+                "op": "max",
+                "field": "time",
+                "as": "t_end"
+              }
+            ]
+          }
+        ],
+        "mark": {
+          "type": "text",
+          "align": "right",
+          "baseline": "bottom",
+          "dx": -4,
+          "dy": -2,
+          "fontSize": 11,
+          "color": {
+            "x-eas:slot": "secondary"
+          }
+        },
+        "encoding": {
+          "x": {
+            "field": "t_end",
+            "type": "temporal"
+          },
+          "y": {
+            "datum": {
+              "x-eas:item": "low"
+            },
+            "type": "quantitative",
+            "scale": {
+              "zero": false,
+              "nice": true
+            }
+          },
+          "text": {
+            "value": {
+              "x-eas:item": "label"
+            }
+          }
+        }
+      }
+    },
+    {
+      "x-eas:when": "target",
+      "spec": {
+        "name": "target",
+        "transform": [
+          {
+            "aggregate": [
+              {
+                "op": "count",
+                "as": "n"
+              }
+            ]
+          }
+        ],
+        "mark": {
+          "type": "rule",
+          "strokeDash": [
+            6,
+            4
+          ],
+          "strokeWidth": 1.5,
+          "color": {
+            "x-eas:slot": "ink"
+          }
+        },
+        "encoding": {
+          "y": {
+            "datum": {
+              "x-eas:slot": "target"
+            },
+            "type": "quantitative",
+            "scale": {
+              "zero": false,
+              "nice": true
+            }
+          },
+          "tooltip": [
+            {
+              "value": "personal target",
+              "title": "line"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "series",
+      "mark": {
+        "type": "line",
+        "strokeWidth": 2,
+        "color": {
+          "x-eas:slot": "muted"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "time",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "grid": false,
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            }
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "y_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        }
+      }
+    },
+    {
+      "name": "readings",
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 90,
+        "opacity": 1,
+        "stroke": {
+          "x-eas:slot": "surface"
+        },
+        "strokeWidth": 1.5,
+        "color": {
+          "x-eas:slot": "line_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "time",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "grid": false,
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            }
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "y_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "tooltip": [
+          {
+            "field": "time",
+            "type": "temporal",
+            "format": "%Y-%m-%d"
+          },
+          {
+            "field": "value",
+            "title": "value"
+          }
+        ]
+      }
+    },
+    {
+      "name": "latest",
+      "transform": [
+        {
+          "window": [
+            {
+              "op": "row_number",
+              "as": "rn"
+            }
+          ],
+          "sort": [
+            {
+              "field": "time",
+              "order": "descending"
+            }
+          ]
+        },
+        {
+          "filter": "datum.rn == 1"
+        },
+        {
+          "calculate": "'latest ' + format(datum.value, '.1f')",
+          "as": "latest_text"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "align": "right",
+        "baseline": "bottom",
+        "dx": -4,
+        "dy": -12,
+        "fontSize": 12,
+        "fontWeight": "bold",
+        "color": {
+          "x-eas:slot": "ink"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "time",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "grid": false,
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            }
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "y_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "text": {
+          "field": "latest_text"
+        }
+      }
+    }
+  ]
+}

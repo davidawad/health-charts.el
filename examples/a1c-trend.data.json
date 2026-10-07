@@ -1,0 +1,68 @@
+{
+ "title": "HbA1c (synthetic)",
+ "y_title": "HbA1c (%)",
+ "x_format": "%b %Y",
+ "target": 7.0,
+ "bands": [
+  {
+   "label": "normal",
+   "low": 4.0,
+   "high": 5.7,
+   "color": "#2a9d8f"
+  },
+  {
+   "label": "prediabetes",
+   "low": 5.7,
+   "high": 6.5,
+   "color": "#e09a00"
+  },
+  {
+   "label": "diabetes",
+   "low": 6.5,
+   "high": 9.0,
+   "color": "#d03b3b"
+  }
+ ],
+ "data": [
+  {
+   "time": "2024-01-15",
+   "value": 7.0
+  },
+  {
+   "time": "2024-04-15",
+   "value": 6.8
+  },
+  {
+   "time": "2024-07-15",
+   "value": 6.8
+  },
+  {
+   "time": "2024-10-14",
+   "value": 6.7
+  },
+  {
+   "time": "2025-01-13",
+   "value": 6.6
+  },
+  {
+   "time": "2025-04-14",
+   "value": 6.5
+  },
+  {
+   "time": "2025-07-14",
+   "value": 6.2
+  },
+  {
+   "time": "2025-10-13",
+   "value": 6.0
+  },
+  {
+   "time": "2026-01-12",
+   "value": 6.0
+  },
+  {
+   "time": "2026-04-13",
+   "value": 5.9
+  }
+ ]
+}

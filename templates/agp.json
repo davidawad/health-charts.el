@@ -1,0 +1,437 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "agp",
+    "version": "1.0.0",
+    "doc": "Ambulatory glucose profile: many days of readings folded onto one 24 hour day as the median line with the 25-75th and 5-95th percentile bands and the target range limits.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {time, glucose}: ISO date-times with a clock time, from several days, oldest first"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Ambulatory glucose profile: many days of readings folded onto one 24 hour day as the median line with the 25-75th and 5-95th percentile bands and the target range limits.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "low": {
+        "type": "number",
+        "default": 70,
+        "doc": "below this: low; the bottom of the target range (mg/dL)"
+      },
+      "high": {
+        "type": "number",
+        "default": 180,
+        "doc": "above this: high; the top of the target range (mg/dL)"
+      },
+      "unit": {
+        "type": "string",
+        "default": "mg/dL",
+        "doc": "glucose unit, shown in titles"
+      },
+      "bucket_minutes": {
+        "type": "integer",
+        "default": 60,
+        "doc": "width of a time-of-day bucket in minutes; must divide 1440"
+      },
+      "line_color": {
+        "type": "string",
+        "default": "#2a78d6"
+      },
+      "band_color": {
+        "type": "string",
+        "default": "#2a9d8f"
+      }
+    },
+    "example": "examples/agp.data.json",
+    "health": {
+      "group": "glucose",
+      "text_size": [
+        100,
+        26
+      ],
+      "svg_size": [
+        1000,
+        420
+      ],
+      "tables": {
+        "data": {
+          "fields": {
+            "time": "time",
+            "glucose": "range:10:800"
+          },
+          "order": "time"
+        }
+      },
+      "rules": [
+        {
+          "le": [
+            "low",
+            "high"
+          ],
+          "code": "range_inverted"
+        }
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": 260,
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "x-eas:transform": "time-of-day-percentiles",
+      "field": "glucose",
+      "time": "time",
+      "bucket_minutes": {
+        "x-eas:slot": "bucket_minutes"
+      }
+    }
+  ],
+  "layer": [
+    {
+      "name": "target",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "count",
+              "as": "n"
+            }
+          ]
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.14,
+        "color": {
+          "x-eas:slot": "band_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "datum": {
+            "x-eas:slot": "low"
+          },
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "y2": {
+          "datum": {
+            "x-eas:slot": "high"
+          }
+        }
+      }
+    },
+    {
+      "name": "p5-p95",
+      "mark": {
+        "type": "area",
+        "opacity": 0.22,
+        "color": {
+          "x-eas:slot": "line_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "tod",
+          "type": "quantitative",
+          "title": "time of day (hours)",
+          "scale": {
+            "domain": [
+              0,
+              24
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "axis": {
+            "values": [
+              0,
+              3,
+              6,
+              9,
+              12,
+              15,
+              18,
+              21,
+              24
+            ],
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "p5",
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          },
+          "title": {
+            "x-eas:text": "Glucose ({{unit}})"
+          }
+        },
+        "y2": {
+          "field": "p95"
+        },
+        "tooltip": [
+          {
+            "field": "tod",
+            "title": "hour"
+          },
+          {
+            "field": "p5",
+            "title": "5th"
+          },
+          {
+            "field": "p95",
+            "title": "95th"
+          }
+        ]
+      }
+    },
+    {
+      "name": "p25-p75",
+      "mark": {
+        "type": "area",
+        "opacity": 0.4,
+        "color": {
+          "x-eas:slot": "line_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "tod",
+          "type": "quantitative",
+          "title": "time of day (hours)",
+          "scale": {
+            "domain": [
+              0,
+              24
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "axis": {
+            "values": [
+              0,
+              3,
+              6,
+              9,
+              12,
+              15,
+              18,
+              21,
+              24
+            ],
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "p25",
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "y2": {
+          "field": "p75"
+        },
+        "tooltip": [
+          {
+            "field": "tod",
+            "title": "hour"
+          },
+          {
+            "field": "p25",
+            "title": "25th"
+          },
+          {
+            "field": "p75",
+            "title": "75th"
+          }
+        ]
+      }
+    },
+    {
+      "name": "low-line",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "count",
+              "as": "n"
+            }
+          ]
+        }
+      ],
+      "mark": {
+        "type": "rule",
+        "strokeDash": [
+          4,
+          3
+        ],
+        "color": "#d03b3b"
+      },
+      "encoding": {
+        "y": {
+          "datum": {
+            "x-eas:slot": "low"
+          },
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        }
+      }
+    },
+    {
+      "name": "high-line",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "count",
+              "as": "n"
+            }
+          ]
+        }
+      ],
+      "mark": {
+        "type": "rule",
+        "strokeDash": [
+          4,
+          3
+        ],
+        "color": "#e09a00"
+      },
+      "encoding": {
+        "y": {
+          "datum": {
+            "x-eas:slot": "high"
+          },
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        }
+      }
+    },
+    {
+      "name": "median",
+      "mark": {
+        "type": "line",
+        "strokeWidth": 2.5,
+        "color": {
+          "x-eas:slot": "ink"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "tod",
+          "type": "quantitative",
+          "title": "time of day (hours)",
+          "scale": {
+            "domain": [
+              0,
+              24
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "axis": {
+            "values": [
+              0,
+              3,
+              6,
+              9,
+              12,
+              15,
+              18,
+              21,
+              24
+            ],
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "p50",
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "tooltip": [
+          {
+            "field": "tod",
+            "title": "hour"
+          },
+          {
+            "field": "p50",
+            "title": "median"
+          },
+          {
+            "field": "n",
+            "title": "readings"
+          }
+        ]
+      }
+    }
+  ]
+}
