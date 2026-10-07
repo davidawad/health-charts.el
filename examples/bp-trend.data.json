@@ -1,0 +1,130 @@
+{
+ "title": "Blood pressure (synthetic)",
+ "sys_low": 90,
+ "sys_high": 120,
+ "dia_low": 60,
+ "dia_high": 80,
+ "band_label": "normal 90-120 / 60-80 mmHg (illustrative)",
+ "data": [
+  {
+   "time": "2026-03-01T07:00:00",
+   "systolic": 110,
+   "diastolic": 72
+  },
+  {
+   "time": "2026-03-01T15:00:00",
+   "systolic": 113,
+   "diastolic": 74
+  },
+  {
+   "time": "2026-03-01T23:00:00",
+   "systolic": 114,
+   "diastolic": 75
+  },
+  {
+   "time": "2026-03-02T07:00:00",
+   "systolic": 108,
+   "diastolic": 73
+  },
+  {
+   "time": "2026-03-02T15:00:00",
+   "systolic": 118,
+   "diastolic": 74
+  },
+  {
+   "time": "2026-03-02T23:00:00",
+   "systolic": 119,
+   "diastolic": 72
+  },
+  {
+   "time": "2026-03-03T07:00:00",
+   "systolic": 115,
+   "diastolic": 72
+  },
+  {
+   "time": "2026-03-03T15:00:00",
+   "systolic": 115,
+   "diastolic": 74
+  },
+  {
+   "time": "2026-03-03T23:00:00",
+   "systolic": 134,
+   "diastolic": 84
+  },
+  {
+   "time": "2026-03-04T07:00:00",
+   "systolic": 135,
+   "diastolic": 88
+  },
+  {
+   "time": "2026-03-04T15:00:00",
+   "systolic": 115,
+   "diastolic": 71
+  },
+  {
+   "time": "2026-03-04T23:00:00",
+   "systolic": 114,
+   "diastolic": 70
+  },
+  {
+   "time": "2026-03-05T07:00:00",
+   "systolic": 111,
+   "diastolic": 69
+  },
+  {
+   "time": "2026-03-05T15:00:00",
+   "systolic": 73,
+   "diastolic": 55
+  },
+  {
+   "time": "2026-03-05T23:00:00",
+   "systolic": 104,
+   "diastolic": 68
+  },
+  {
+   "time": "2026-03-06T07:00:00",
+   "systolic": 110,
+   "diastolic": 72
+  },
+  {
+   "time": "2026-03-06T15:00:00",
+   "systolic": 102,
+   "diastolic": 71
+  },
+  {
+   "time": "2026-03-06T23:00:00",
+   "systolic": 128,
+   "diastolic": 81
+  },
+  {
+   "time": "2026-03-07T07:00:00",
+   "systolic": 100,
+   "diastolic": 71
+  },
+  {
+   "time": "2026-03-07T15:00:00",
+   "systolic": 105,
+   "diastolic": 71
+  },
+  {
+   "time": "2026-03-07T23:00:00",
+   "systolic": 107,
+   "diastolic": 67
+  },
+  {
+   "time": "2026-03-08T07:00:00",
+   "systolic": 102,
+   "diastolic": 66
+  },
+  {
+   "time": "2026-03-08T15:00:00",
+   "systolic": 101,
+   "diastolic": 66
+  },
+  {
+   "time": "2026-03-08T23:00:00",
+   "systolic": 104,
+   "diastolic": 70
+  }
+ ]
+}

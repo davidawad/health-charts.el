@@ -1,0 +1,537 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "bp-trend",
+    "version": "1.0.0",
+    "doc": "Blood pressure over time: each reading is a bar from diastolic to systolic, drawn over the normal systolic and diastolic bands; readings outside either band are flagged by color and shape.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {time, systolic, diastolic}: an ISO date or datetime and two mmHg values, oldest first"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Blood pressure over time: each reading is a bar from diastolic to systolic, drawn over the normal systolic and diastolic bands; readings outside either band are flagged by color and shape.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "sys_low": {
+        "type": "number",
+        "doc": "lower limit of the normal systolic range",
+        "required": true
+      },
+      "sys_high": {
+        "type": "number",
+        "doc": "upper limit of the normal systolic range",
+        "required": true
+      },
+      "dia_low": {
+        "type": "number",
+        "doc": "lower limit of the normal diastolic range",
+        "required": true
+      },
+      "dia_high": {
+        "type": "number",
+        "doc": "upper limit of the normal diastolic range",
+        "required": true
+      },
+      "band_label": {
+        "type": "string",
+        "default": "normal range",
+        "doc": "tooltip name of the shaded ranges"
+      },
+      "y_title": {
+        "type": "string",
+        "default": "Blood pressure (mmHg)"
+      },
+      "line_color": {
+        "type": "string",
+        "default": "#2a78d6"
+      },
+      "flag_color": {
+        "type": "string",
+        "default": "#d03b3b",
+        "doc": "out-of-range readings"
+      },
+      "band_color": {
+        "type": "string",
+        "default": "#2a9d8f",
+        "doc": "normal range bands"
+      },
+      "x_format": {
+        "type": "string",
+        "default": "%b %d",
+        "doc": "time axis label format"
+      },
+      "x_ticks": {
+        "type": "integer",
+        "default": 5,
+        "doc": "about this many time axis ticks"
+      }
+    },
+    "example": "examples/bp-trend.data.json",
+    "health": {
+      "group": "vitals",
+      "text_size": [
+        100,
+        28
+      ],
+      "svg_size": [
+        1000,
+        440
+      ],
+      "tables": {
+        "data": {
+          "fields": {
+            "time": "time",
+            "systolic": "nonneg",
+            "diastolic": "nonneg"
+          },
+          "order": "time",
+          "rows": [
+            {
+              "le": [
+                "diastolic",
+                "systolic"
+              ],
+              "code": "diastolic_above_systolic"
+            }
+          ]
+        }
+      },
+      "rules": [
+        {
+          "le": [
+            "sys_low",
+            "sys_high"
+          ],
+          "code": "range_inverted"
+        },
+        {
+          "le": [
+            "dia_low",
+            "dia_high"
+          ],
+          "code": "range_inverted"
+        }
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": 260,
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": {
+        "x-eas:expr": "datum.systolic > {{sys_high}} || datum.diastolic > {{dia_high}} ? '\u25b2 high' : datum.systolic < {{sys_low}} || datum.diastolic < {{dia_low}} ? '\u25bc low' : '\u25cf in range'"
+      },
+      "as": "status"
+    },
+    {
+      "calculate": "datum.systolic + '/' + datum.diastolic",
+      "as": "reading"
+    }
+  ],
+  "layer": [
+    {
+      "name": "systolic-range",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "count",
+              "as": "n"
+            }
+          ]
+        },
+        {
+          "calculate": {
+            "x-eas:expr": "{{sys_low}}"
+          },
+          "as": "lo"
+        },
+        {
+          "calculate": {
+            "x-eas:expr": "{{sys_high}}"
+          },
+          "as": "hi"
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.18,
+        "color": {
+          "x-eas:slot": "band_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "field": "lo",
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "y2": {
+          "field": "hi"
+        },
+        "tooltip": [
+          {
+            "value": {
+              "x-eas:text": "{{band_label}}"
+            },
+            "title": "range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "diastolic-range",
+      "transform": [
+        {
+          "aggregate": [
+            {
+              "op": "count",
+              "as": "n"
+            }
+          ]
+        },
+        {
+          "calculate": {
+            "x-eas:expr": "{{dia_low}}"
+          },
+          "as": "lo"
+        },
+        {
+          "calculate": {
+            "x-eas:expr": "{{dia_high}}"
+          },
+          "as": "hi"
+        }
+      ],
+      "mark": {
+        "type": "rect",
+        "opacity": 0.18,
+        "color": {
+          "x-eas:slot": "band_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "field": "lo",
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "y2": {
+          "field": "hi"
+        },
+        "tooltip": [
+          {
+            "value": {
+              "x-eas:text": "{{band_label}}"
+            },
+            "title": "range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "span",
+      "mark": {
+        "type": "rule",
+        "strokeWidth": 4,
+        "color": {
+          "x-eas:slot": "muted"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "time",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "grid": false,
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            }
+          }
+        },
+        "y": {
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          },
+          "title": {
+            "x-eas:slot": "y_title"
+          },
+          "field": "diastolic"
+        },
+        "y2": {
+          "field": "systolic"
+        },
+        "tooltip": [
+          {
+            "field": "time",
+            "type": "temporal",
+            "format": "%Y-%m-%d %H:%M"
+          },
+          {
+            "field": "reading",
+            "title": "systolic/diastolic"
+          },
+          {
+            "field": "status",
+            "title": "status"
+          }
+        ]
+      }
+    },
+    {
+      "name": "systolic",
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 80,
+        "opacity": 1,
+        "stroke": {
+          "x-eas:slot": "surface"
+        },
+        "strokeWidth": 1.5
+      },
+      "encoding": {
+        "x": {
+          "field": "time",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "grid": false,
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            }
+          }
+        },
+        "y": {
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          },
+          "title": null,
+          "field": "systolic"
+        },
+        "color": {
+          "field": "status",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25bc low",
+              "\u25cf in range",
+              "\u25b2 high"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "flag_color"
+              },
+              {
+                "x-eas:slot": "line_color"
+              },
+              {
+                "x-eas:slot": "flag_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "shape": {
+          "field": "status",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25bc low",
+              "\u25cf in range",
+              "\u25b2 high"
+            ],
+            "range": [
+              "triangle-down",
+              "circle",
+              "triangle-up"
+            ]
+          },
+          "legend": null
+        },
+        "tooltip": [
+          {
+            "field": "time",
+            "type": "temporal",
+            "format": "%Y-%m-%d %H:%M"
+          },
+          {
+            "field": "reading",
+            "title": "systolic/diastolic"
+          },
+          {
+            "field": "status",
+            "title": "status"
+          }
+        ]
+      }
+    },
+    {
+      "name": "diastolic",
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 80,
+        "opacity": 1,
+        "stroke": {
+          "x-eas:slot": "surface"
+        },
+        "strokeWidth": 1.5
+      },
+      "encoding": {
+        "x": {
+          "field": "time",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "grid": false,
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            }
+          }
+        },
+        "y": {
+          "type": "quantitative",
+          "scale": {
+            "zero": false,
+            "nice": true
+          },
+          "title": null,
+          "field": "diastolic"
+        },
+        "color": {
+          "field": "status",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25bc low",
+              "\u25cf in range",
+              "\u25b2 high"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "flag_color"
+              },
+              {
+                "x-eas:slot": "line_color"
+              },
+              {
+                "x-eas:slot": "flag_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "shape": {
+          "field": "status",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25bc low",
+              "\u25cf in range",
+              "\u25b2 high"
+            ],
+            "range": [
+              "triangle-down",
+              "circle",
+              "triangle-up"
+            ]
+          },
+          "legend": null
+        },
+        "tooltip": [
+          {
+            "field": "time",
+            "type": "temporal",
+            "format": "%Y-%m-%d %H:%M"
+          },
+          {
+            "field": "reading",
+            "title": "systolic/diastolic"
+          },
+          {
+            "field": "status",
+            "title": "status"
+          }
+        ]
+      }
+    }
+  ]
+}

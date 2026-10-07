@@ -1,0 +1,737 @@
+{
+ "title": "Vitals dashboard (synthetic)",
+ "hr_low": 60,
+ "hr_high": 100,
+ "sbp_low": 90,
+ "sbp_high": 120,
+ "dbp_low": 60,
+ "dbp_high": 80,
+ "temp_low": 36.1,
+ "temp_high": 37.2,
+ "spo2_low": 95,
+ "spo2_high": 100,
+ "rr_low": 12,
+ "rr_high": 20,
+ "data": [
+  {
+   "time": "2026-03-01T06:00:00",
+   "metric": "hr",
+   "value": 73
+  },
+  {
+   "time": "2026-03-01T06:00:00",
+   "metric": "sbp",
+   "value": 114
+  },
+  {
+   "time": "2026-03-01T06:00:00",
+   "metric": "dbp",
+   "value": 73
+  },
+  {
+   "time": "2026-03-01T06:00:00",
+   "metric": "temp",
+   "value": 36.8
+  },
+  {
+   "time": "2026-03-01T06:00:00",
+   "metric": "spo2",
+   "value": 97
+  },
+  {
+   "time": "2026-03-01T06:00:00",
+   "metric": "rr",
+   "value": 16
+  },
+  {
+   "time": "2026-03-01T10:00:00",
+   "metric": "hr",
+   "value": 81
+  },
+  {
+   "time": "2026-03-01T10:00:00",
+   "metric": "sbp",
+   "value": 113
+  },
+  {
+   "time": "2026-03-01T10:00:00",
+   "metric": "dbp",
+   "value": 73
+  },
+  {
+   "time": "2026-03-01T10:00:00",
+   "metric": "temp",
+   "value": 36.8
+  },
+  {
+   "time": "2026-03-01T10:00:00",
+   "metric": "spo2",
+   "value": 96
+  },
+  {
+   "time": "2026-03-01T10:00:00",
+   "metric": "rr",
+   "value": 15
+  },
+  {
+   "time": "2026-03-01T14:00:00",
+   "metric": "hr",
+   "value": 81
+  },
+  {
+   "time": "2026-03-01T14:00:00",
+   "metric": "sbp",
+   "value": 110
+  },
+  {
+   "time": "2026-03-01T14:00:00",
+   "metric": "dbp",
+   "value": 75
+  },
+  {
+   "time": "2026-03-01T14:00:00",
+   "metric": "temp",
+   "value": 36.9
+  },
+  {
+   "time": "2026-03-01T14:00:00",
+   "metric": "spo2",
+   "value": 97
+  },
+  {
+   "time": "2026-03-01T14:00:00",
+   "metric": "rr",
+   "value": 15
+  },
+  {
+   "time": "2026-03-01T18:00:00",
+   "metric": "hr",
+   "value": 86
+  },
+  {
+   "time": "2026-03-01T18:00:00",
+   "metric": "sbp",
+   "value": 118
+  },
+  {
+   "time": "2026-03-01T18:00:00",
+   "metric": "dbp",
+   "value": 76
+  },
+  {
+   "time": "2026-03-01T18:00:00",
+   "metric": "temp",
+   "value": 37.1
+  },
+  {
+   "time": "2026-03-01T18:00:00",
+   "metric": "spo2",
+   "value": 96
+  },
+  {
+   "time": "2026-03-01T18:00:00",
+   "metric": "rr",
+   "value": 16
+  },
+  {
+   "time": "2026-03-01T22:00:00",
+   "metric": "hr",
+   "value": 83
+  },
+  {
+   "time": "2026-03-01T22:00:00",
+   "metric": "sbp",
+   "value": 112
+  },
+  {
+   "time": "2026-03-01T22:00:00",
+   "metric": "dbp",
+   "value": 77
+  },
+  {
+   "time": "2026-03-01T22:00:00",
+   "metric": "temp",
+   "value": 37.1
+  },
+  {
+   "time": "2026-03-01T22:00:00",
+   "metric": "spo2",
+   "value": 97
+  },
+  {
+   "time": "2026-03-01T22:00:00",
+   "metric": "rr",
+   "value": 18
+  },
+  {
+   "time": "2026-03-02T02:00:00",
+   "metric": "hr",
+   "value": 81
+  },
+  {
+   "time": "2026-03-02T02:00:00",
+   "metric": "sbp",
+   "value": 121
+  },
+  {
+   "time": "2026-03-02T02:00:00",
+   "metric": "dbp",
+   "value": 74
+  },
+  {
+   "time": "2026-03-02T02:00:00",
+   "metric": "temp",
+   "value": 37.1
+  },
+  {
+   "time": "2026-03-02T02:00:00",
+   "metric": "spo2",
+   "value": 97
+  },
+  {
+   "time": "2026-03-02T02:00:00",
+   "metric": "rr",
+   "value": 17
+  },
+  {
+   "time": "2026-03-02T06:00:00",
+   "metric": "hr",
+   "value": 81
+  },
+  {
+   "time": "2026-03-02T06:00:00",
+   "metric": "sbp",
+   "value": 113
+  },
+  {
+   "time": "2026-03-02T06:00:00",
+   "metric": "dbp",
+   "value": 77
+  },
+  {
+   "time": "2026-03-02T06:00:00",
+   "metric": "temp",
+   "value": 37.1
+  },
+  {
+   "time": "2026-03-02T06:00:00",
+   "metric": "spo2",
+   "value": 98
+  },
+  {
+   "time": "2026-03-02T06:00:00",
+   "metric": "rr",
+   "value": 16
+  },
+  {
+   "time": "2026-03-02T10:00:00",
+   "metric": "hr",
+   "value": 87
+  },
+  {
+   "time": "2026-03-02T10:00:00",
+   "metric": "sbp",
+   "value": 122
+  },
+  {
+   "time": "2026-03-02T10:00:00",
+   "metric": "dbp",
+   "value": 76
+  },
+  {
+   "time": "2026-03-02T10:00:00",
+   "metric": "temp",
+   "value": 37.2
+  },
+  {
+   "time": "2026-03-02T10:00:00",
+   "metric": "spo2",
+   "value": 98
+  },
+  {
+   "time": "2026-03-02T10:00:00",
+   "metric": "rr",
+   "value": 17
+  },
+  {
+   "time": "2026-03-02T14:00:00",
+   "metric": "hr",
+   "value": 79
+  },
+  {
+   "time": "2026-03-02T14:00:00",
+   "metric": "sbp",
+   "value": 118
+  },
+  {
+   "time": "2026-03-02T14:00:00",
+   "metric": "dbp",
+   "value": 77
+  },
+  {
+   "time": "2026-03-02T14:00:00",
+   "metric": "temp",
+   "value": 37.0
+  },
+  {
+   "time": "2026-03-02T14:00:00",
+   "metric": "spo2",
+   "value": 98
+  },
+  {
+   "time": "2026-03-02T14:00:00",
+   "metric": "rr",
+   "value": 17
+  },
+  {
+   "time": "2026-03-02T18:00:00",
+   "metric": "hr",
+   "value": 80
+  },
+  {
+   "time": "2026-03-02T18:00:00",
+   "metric": "sbp",
+   "value": 116
+  },
+  {
+   "time": "2026-03-02T18:00:00",
+   "metric": "dbp",
+   "value": 75
+  },
+  {
+   "time": "2026-03-02T18:00:00",
+   "metric": "temp",
+   "value": 37.0
+  },
+  {
+   "time": "2026-03-02T18:00:00",
+   "metric": "spo2",
+   "value": 98
+  },
+  {
+   "time": "2026-03-02T18:00:00",
+   "metric": "rr",
+   "value": 15
+  },
+  {
+   "time": "2026-03-02T22:00:00",
+   "metric": "hr",
+   "value": 74
+  },
+  {
+   "time": "2026-03-02T22:00:00",
+   "metric": "sbp",
+   "value": 113
+  },
+  {
+   "time": "2026-03-02T22:00:00",
+   "metric": "dbp",
+   "value": 76
+  },
+  {
+   "time": "2026-03-02T22:00:00",
+   "metric": "temp",
+   "value": 37.2
+  },
+  {
+   "time": "2026-03-02T22:00:00",
+   "metric": "spo2",
+   "value": 97
+  },
+  {
+   "time": "2026-03-02T22:00:00",
+   "metric": "rr",
+   "value": 15
+  },
+  {
+   "time": "2026-03-03T02:00:00",
+   "metric": "hr",
+   "value": 76
+  },
+  {
+   "time": "2026-03-03T02:00:00",
+   "metric": "sbp",
+   "value": 119
+  },
+  {
+   "time": "2026-03-03T02:00:00",
+   "metric": "dbp",
+   "value": 73
+  },
+  {
+   "time": "2026-03-03T02:00:00",
+   "metric": "temp",
+   "value": 37.0
+  },
+  {
+   "time": "2026-03-03T02:00:00",
+   "metric": "spo2",
+   "value": 98
+  },
+  {
+   "time": "2026-03-03T02:00:00",
+   "metric": "rr",
+   "value": 14
+  },
+  {
+   "time": "2026-03-03T06:00:00",
+   "metric": "hr",
+   "value": 71
+  },
+  {
+   "time": "2026-03-03T06:00:00",
+   "metric": "sbp",
+   "value": 113
+  },
+  {
+   "time": "2026-03-03T06:00:00",
+   "metric": "dbp",
+   "value": 73
+  },
+  {
+   "time": "2026-03-03T06:00:00",
+   "metric": "temp",
+   "value": 37.0
+  },
+  {
+   "time": "2026-03-03T06:00:00",
+   "metric": "spo2",
+   "value": 97
+  },
+  {
+   "time": "2026-03-03T06:00:00",
+   "metric": "rr",
+   "value": 14
+  },
+  {
+   "time": "2026-03-03T10:00:00",
+   "metric": "hr",
+   "value": 70
+  },
+  {
+   "time": "2026-03-03T10:00:00",
+   "metric": "sbp",
+   "value": 111
+  },
+  {
+   "time": "2026-03-03T10:00:00",
+   "metric": "dbp",
+   "value": 71
+  },
+  {
+   "time": "2026-03-03T10:00:00",
+   "metric": "temp",
+   "value": 36.9
+  },
+  {
+   "time": "2026-03-03T10:00:00",
+   "metric": "spo2",
+   "value": 98
+  },
+  {
+   "time": "2026-03-03T10:00:00",
+   "metric": "rr",
+   "value": 13
+  },
+  {
+   "time": "2026-03-03T14:00:00",
+   "metric": "hr",
+   "value": 101
+  },
+  {
+   "time": "2026-03-03T14:00:00",
+   "metric": "sbp",
+   "value": 142
+  },
+  {
+   "time": "2026-03-03T14:00:00",
+   "metric": "dbp",
+   "value": 87
+  },
+  {
+   "time": "2026-03-03T14:00:00",
+   "metric": "temp",
+   "value": 37.8
+  },
+  {
+   "time": "2026-03-03T14:00:00",
+   "metric": "spo2",
+   "value": 97
+  },
+  {
+   "time": "2026-03-03T14:00:00",
+   "metric": "rr",
+   "value": 21
+  },
+  {
+   "time": "2026-03-03T18:00:00",
+   "metric": "hr",
+   "value": 72
+  },
+  {
+   "time": "2026-03-03T18:00:00",
+   "metric": "sbp",
+   "value": 140
+  },
+  {
+   "time": "2026-03-03T18:00:00",
+   "metric": "dbp",
+   "value": 87
+  },
+  {
+   "time": "2026-03-03T18:00:00",
+   "metric": "temp",
+   "value": 37.6
+  },
+  {
+   "time": "2026-03-03T18:00:00",
+   "metric": "spo2",
+   "value": 97
+  },
+  {
+   "time": "2026-03-03T18:00:00",
+   "metric": "rr",
+   "value": 19
+  },
+  {
+   "time": "2026-03-03T22:00:00",
+   "metric": "hr",
+   "value": 71
+  },
+  {
+   "time": "2026-03-03T22:00:00",
+   "metric": "sbp",
+   "value": 108
+  },
+  {
+   "time": "2026-03-03T22:00:00",
+   "metric": "dbp",
+   "value": 69
+  },
+  {
+   "time": "2026-03-03T22:00:00",
+   "metric": "temp",
+   "value": 37.6
+  },
+  {
+   "time": "2026-03-03T22:00:00",
+   "metric": "spo2",
+   "value": 98
+  },
+  {
+   "time": "2026-03-03T22:00:00",
+   "metric": "rr",
+   "value": 13
+  },
+  {
+   "time": "2026-03-04T02:00:00",
+   "metric": "hr",
+   "value": 71
+  },
+  {
+   "time": "2026-03-04T02:00:00",
+   "metric": "sbp",
+   "value": 106
+  },
+  {
+   "time": "2026-03-04T02:00:00",
+   "metric": "dbp",
+   "value": 70
+  },
+  {
+   "time": "2026-03-04T02:00:00",
+   "metric": "temp",
+   "value": 36.4
+  },
+  {
+   "time": "2026-03-04T02:00:00",
+   "metric": "spo2",
+   "value": 97
+  },
+  {
+   "time": "2026-03-04T02:00:00",
+   "metric": "rr",
+   "value": 13
+  },
+  {
+   "time": "2026-03-04T06:00:00",
+   "metric": "hr",
+   "value": 65
+  },
+  {
+   "time": "2026-03-04T06:00:00",
+   "metric": "sbp",
+   "value": 108
+  },
+  {
+   "time": "2026-03-04T06:00:00",
+   "metric": "dbp",
+   "value": 73
+  },
+  {
+   "time": "2026-03-04T06:00:00",
+   "metric": "temp",
+   "value": 36.6
+  },
+  {
+   "time": "2026-03-04T06:00:00",
+   "metric": "spo2",
+   "value": 98
+  },
+  {
+   "time": "2026-03-04T06:00:00",
+   "metric": "rr",
+   "value": 14
+  },
+  {
+   "time": "2026-03-04T10:00:00",
+   "metric": "hr",
+   "value": 68
+  },
+  {
+   "time": "2026-03-04T10:00:00",
+   "metric": "sbp",
+   "value": 113
+  },
+  {
+   "time": "2026-03-04T10:00:00",
+   "metric": "dbp",
+   "value": 70
+  },
+  {
+   "time": "2026-03-04T10:00:00",
+   "metric": "temp",
+   "value": 36.5
+  },
+  {
+   "time": "2026-03-04T10:00:00",
+   "metric": "spo2",
+   "value": 92
+  },
+  {
+   "time": "2026-03-04T10:00:00",
+   "metric": "rr",
+   "value": 14
+  },
+  {
+   "time": "2026-03-04T14:00:00",
+   "metric": "hr",
+   "value": 74
+  },
+  {
+   "time": "2026-03-04T14:00:00",
+   "metric": "sbp",
+   "value": 110
+  },
+  {
+   "time": "2026-03-04T14:00:00",
+   "metric": "dbp",
+   "value": 72
+  },
+  {
+   "time": "2026-03-04T14:00:00",
+   "metric": "temp",
+   "value": 36.5
+  },
+  {
+   "time": "2026-03-04T14:00:00",
+   "metric": "spo2",
+   "value": 97
+  },
+  {
+   "time": "2026-03-04T14:00:00",
+   "metric": "rr",
+   "value": 16
+  },
+  {
+   "time": "2026-03-04T18:00:00",
+   "metric": "hr",
+   "value": 77
+  },
+  {
+   "time": "2026-03-04T18:00:00",
+   "metric": "sbp",
+   "value": 105
+  },
+  {
+   "time": "2026-03-04T18:00:00",
+   "metric": "dbp",
+   "value": 70
+  },
+  {
+   "time": "2026-03-04T18:00:00",
+   "metric": "temp",
+   "value": 36.4
+  },
+  {
+   "time": "2026-03-04T18:00:00",
+   "metric": "spo2",
+   "value": 98
+  },
+  {
+   "time": "2026-03-04T18:00:00",
+   "metric": "rr",
+   "value": 15
+  },
+  {
+   "time": "2026-03-04T22:00:00",
+   "metric": "hr",
+   "value": 78
+  },
+  {
+   "time": "2026-03-04T22:00:00",
+   "metric": "sbp",
+   "value": 111
+  },
+  {
+   "time": "2026-03-04T22:00:00",
+   "metric": "dbp",
+   "value": 66
+  },
+  {
+   "time": "2026-03-04T22:00:00",
+   "metric": "temp",
+   "value": 36.6
+  },
+  {
+   "time": "2026-03-04T22:00:00",
+   "metric": "spo2",
+   "value": 98
+  },
+  {
+   "time": "2026-03-04T22:00:00",
+   "metric": "rr",
+   "value": 18
+  },
+  {
+   "time": "2026-03-05T02:00:00",
+   "metric": "hr",
+   "value": 79
+  },
+  {
+   "time": "2026-03-05T02:00:00",
+   "metric": "sbp",
+   "value": 104
+  },
+  {
+   "time": "2026-03-05T02:00:00",
+   "metric": "dbp",
+   "value": 68
+  },
+  {
+   "time": "2026-03-05T02:00:00",
+   "metric": "temp",
+   "value": 36.8
+  },
+  {
+   "time": "2026-03-05T02:00:00",
+   "metric": "spo2",
+   "value": 98
+  },
+  {
+   "time": "2026-03-05T02:00:00",
+   "metric": "rr",
+   "value": 16
+  }
+ ]
+}

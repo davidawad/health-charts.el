@@ -1,0 +1,1492 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "vitals-dashboard",
+    "version": "1.0.0",
+    "doc": "Five vitals on one time axis, each against its normal range: heart rate, blood pressure (systolic and diastolic), temperature, SpO2 and respiratory rate. Readings outside a range are flagged by color and shape.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {time, metric, value}: metric is one of hr, sbp, dbp, temp, spo2, rr; oldest first"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Five vitals on one time axis, each against its normal range: heart rate, blood pressure (systolic and diastolic), temperature, SpO2 and respiratory rate. Readings outside a range are flagged by color and shape.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "hr_title": {
+        "type": "string",
+        "default": "Heart rate (bpm)",
+        "doc": "y-axis title of the hr panel"
+      },
+      "bp_title": {
+        "type": "string",
+        "default": "Blood pressure (mmHg)",
+        "doc": "y-axis title of the bp panel"
+      },
+      "temp_title": {
+        "type": "string",
+        "default": "Temp (C)",
+        "doc": "y-axis title of the temp panel"
+      },
+      "spo2_title": {
+        "type": "string",
+        "default": "SpO2 (%)",
+        "doc": "y-axis title of the spo2 panel"
+      },
+      "rr_title": {
+        "type": "string",
+        "default": "Resp (/min)",
+        "doc": "y-axis title of the rr panel"
+      },
+      "hr_low": {
+        "type": "number",
+        "doc": "lower limit of the normal range of hr",
+        "required": true
+      },
+      "hr_high": {
+        "type": "number",
+        "doc": "upper limit of the normal range of hr",
+        "required": true
+      },
+      "sbp_low": {
+        "type": "number",
+        "doc": "lower limit of the normal range of sbp",
+        "required": true
+      },
+      "sbp_high": {
+        "type": "number",
+        "doc": "upper limit of the normal range of sbp",
+        "required": true
+      },
+      "dbp_low": {
+        "type": "number",
+        "doc": "lower limit of the normal range of dbp",
+        "required": true
+      },
+      "dbp_high": {
+        "type": "number",
+        "doc": "upper limit of the normal range of dbp",
+        "required": true
+      },
+      "temp_low": {
+        "type": "number",
+        "doc": "lower limit of the normal range of temp",
+        "required": true
+      },
+      "temp_high": {
+        "type": "number",
+        "doc": "upper limit of the normal range of temp",
+        "required": true
+      },
+      "spo2_low": {
+        "type": "number",
+        "doc": "lower limit of the normal range of spo2",
+        "required": true
+      },
+      "spo2_high": {
+        "type": "number",
+        "doc": "upper limit of the normal range of spo2",
+        "required": true
+      },
+      "rr_low": {
+        "type": "number",
+        "doc": "lower limit of the normal range of rr",
+        "required": true
+      },
+      "rr_high": {
+        "type": "number",
+        "doc": "upper limit of the normal range of rr",
+        "required": true
+      },
+      "line_color": {
+        "type": "string",
+        "default": "#2a78d6"
+      },
+      "flag_color": {
+        "type": "string",
+        "default": "#d03b3b"
+      },
+      "band_color": {
+        "type": "string",
+        "default": "#2a9d8f"
+      },
+      "x_format": {
+        "type": "string",
+        "default": "%b %d",
+        "doc": "time axis label format"
+      },
+      "x_ticks": {
+        "type": "integer",
+        "default": 5,
+        "doc": "about this many time axis ticks"
+      }
+    },
+    "example": "examples/vitals-dashboard.data.json",
+    "health": {
+      "group": "vitals",
+      "text_size": [
+        100,
+        56
+      ],
+      "svg_size": [
+        1000,
+        760
+      ],
+      "tables": {
+        "data": {
+          "fields": {
+            "time": "time",
+            "metric": "enum:hr|sbp|dbp|temp|spo2|rr",
+            "value": "number"
+          },
+          "order": "time"
+        }
+      },
+      "rules": [
+        {
+          "le": [
+            "hr_low",
+            "hr_high"
+          ],
+          "code": "range_inverted"
+        },
+        {
+          "le": [
+            "sbp_low",
+            "sbp_high"
+          ],
+          "code": "range_inverted"
+        },
+        {
+          "le": [
+            "dbp_low",
+            "dbp_high"
+          ],
+          "code": "range_inverted"
+        },
+        {
+          "le": [
+            "temp_low",
+            "temp_high"
+          ],
+          "code": "range_inverted"
+        },
+        {
+          "le": [
+            "spo2_low",
+            "spo2_high"
+          ],
+          "code": "range_inverted"
+        },
+        {
+          "le": [
+            "rr_low",
+            "rr_high"
+          ],
+          "code": "range_inverted"
+        }
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "data": {
+    "name": "data"
+  },
+  "vconcat": [
+    {
+      "height": 70,
+      "width": "container",
+      "layer": [
+        {
+          "name": "hr-range",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "hr"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "count",
+                  "as": "n"
+                }
+              ]
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "{{hr_low}}"
+              },
+              "as": "lo"
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "{{hr_high}}"
+              },
+              "as": "hi"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.18,
+            "color": {
+              "x-eas:slot": "band_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "lo",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "hi"
+            }
+          }
+        },
+        {
+          "name": "hr-line",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "hr"
+              }
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "datum.value < {{hr_low}} ? '\u25bc low' : datum.value > {{hr_high}} ? '\u25b2 high' : '\u25cf in range'"
+              },
+              "as": "status"
+            }
+          ],
+          "mark": {
+            "type": "line",
+            "strokeWidth": 2,
+            "color": {
+              "x-eas:slot": "muted"
+            },
+            "strokeDash": []
+          },
+          "encoding": {
+            "x": {
+              "field": "time",
+              "type": "temporal",
+              "title": null,
+              "axis": {
+                "labels": false,
+                "ticks": false,
+                "grid": false
+              }
+            },
+            "y": {
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              },
+              "title": {
+                "x-eas:slot": "hr_title"
+              },
+              "field": "value"
+            }
+          }
+        },
+        {
+          "name": "hr-points",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "hr"
+              }
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "datum.value < {{hr_low}} ? '\u25bc low' : datum.value > {{hr_high}} ? '\u25b2 high' : '\u25cf in range'"
+              },
+              "as": "status"
+            }
+          ],
+          "mark": {
+            "type": "point",
+            "filled": true,
+            "size": 60,
+            "opacity": 1,
+            "stroke": {
+              "x-eas:slot": "surface"
+            },
+            "strokeWidth": 1
+          },
+          "encoding": {
+            "x": {
+              "field": "time",
+              "type": "temporal",
+              "title": null,
+              "axis": {
+                "labels": false,
+                "ticks": false,
+                "grid": false
+              }
+            },
+            "y": {
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              },
+              "title": null,
+              "field": "value"
+            },
+            "color": {
+              "field": "status",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "\u25bc low",
+                  "\u25cf in range",
+                  "\u25b2 high"
+                ],
+                "range": [
+                  {
+                    "x-eas:slot": "flag_color"
+                  },
+                  {
+                    "x-eas:slot": "line_color"
+                  },
+                  {
+                    "x-eas:slot": "flag_color"
+                  }
+                ]
+              },
+              "legend": {
+                "title": null
+              }
+            },
+            "shape": {
+              "field": "status",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "\u25bc low",
+                  "\u25cf in range",
+                  "\u25b2 high"
+                ],
+                "range": [
+                  "triangle-down",
+                  "circle",
+                  "triangle-up"
+                ]
+              },
+              "legend": null
+            },
+            "tooltip": [
+              {
+                "field": "time",
+                "type": "temporal",
+                "format": "%Y-%m-%d %H:%M"
+              },
+              {
+                "field": "value",
+                "title": "hr"
+              },
+              {
+                "field": "status"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "height": 70,
+      "width": "container",
+      "layer": [
+        {
+          "name": "sbp-range",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "sbp"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "count",
+                  "as": "n"
+                }
+              ]
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "{{sbp_low}}"
+              },
+              "as": "lo"
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "{{sbp_high}}"
+              },
+              "as": "hi"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.18,
+            "color": {
+              "x-eas:slot": "band_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "lo",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "hi"
+            }
+          }
+        },
+        {
+          "name": "sbp-line",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "sbp"
+              }
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "datum.value < {{sbp_low}} ? '\u25bc low' : datum.value > {{sbp_high}} ? '\u25b2 high' : '\u25cf in range'"
+              },
+              "as": "status"
+            }
+          ],
+          "mark": {
+            "type": "line",
+            "strokeWidth": 2,
+            "color": {
+              "x-eas:slot": "muted"
+            },
+            "strokeDash": []
+          },
+          "encoding": {
+            "x": {
+              "field": "time",
+              "type": "temporal",
+              "title": null,
+              "axis": {
+                "labels": false,
+                "ticks": false,
+                "grid": false
+              }
+            },
+            "y": {
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              },
+              "title": {
+                "x-eas:slot": "bp_title"
+              },
+              "field": "value"
+            }
+          }
+        },
+        {
+          "name": "sbp-points",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "sbp"
+              }
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "datum.value < {{sbp_low}} ? '\u25bc low' : datum.value > {{sbp_high}} ? '\u25b2 high' : '\u25cf in range'"
+              },
+              "as": "status"
+            }
+          ],
+          "mark": {
+            "type": "point",
+            "filled": true,
+            "size": 60,
+            "opacity": 1,
+            "stroke": {
+              "x-eas:slot": "surface"
+            },
+            "strokeWidth": 1
+          },
+          "encoding": {
+            "x": {
+              "field": "time",
+              "type": "temporal",
+              "title": null,
+              "axis": {
+                "labels": false,
+                "ticks": false,
+                "grid": false
+              }
+            },
+            "y": {
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              },
+              "title": null,
+              "field": "value"
+            },
+            "color": {
+              "field": "status",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "\u25bc low",
+                  "\u25cf in range",
+                  "\u25b2 high"
+                ],
+                "range": [
+                  {
+                    "x-eas:slot": "flag_color"
+                  },
+                  {
+                    "x-eas:slot": "line_color"
+                  },
+                  {
+                    "x-eas:slot": "flag_color"
+                  }
+                ]
+              },
+              "legend": null
+            },
+            "shape": {
+              "field": "status",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "\u25bc low",
+                  "\u25cf in range",
+                  "\u25b2 high"
+                ],
+                "range": [
+                  "triangle-down",
+                  "circle",
+                  "triangle-up"
+                ]
+              },
+              "legend": null
+            },
+            "tooltip": [
+              {
+                "field": "time",
+                "type": "temporal",
+                "format": "%Y-%m-%d %H:%M"
+              },
+              {
+                "field": "value",
+                "title": "sbp"
+              },
+              {
+                "field": "status"
+              }
+            ]
+          }
+        },
+        {
+          "name": "dbp-range",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "dbp"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "count",
+                  "as": "n"
+                }
+              ]
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "{{dbp_low}}"
+              },
+              "as": "lo"
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "{{dbp_high}}"
+              },
+              "as": "hi"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.18,
+            "color": {
+              "x-eas:slot": "band_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "lo",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "hi"
+            }
+          }
+        },
+        {
+          "name": "dbp-line",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "dbp"
+              }
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "datum.value < {{dbp_low}} ? '\u25bc low' : datum.value > {{dbp_high}} ? '\u25b2 high' : '\u25cf in range'"
+              },
+              "as": "status"
+            }
+          ],
+          "mark": {
+            "type": "line",
+            "strokeWidth": 2,
+            "color": {
+              "x-eas:slot": "muted"
+            },
+            "strokeDash": [
+              4,
+              3
+            ]
+          },
+          "encoding": {
+            "x": {
+              "field": "time",
+              "type": "temporal",
+              "title": null,
+              "axis": {
+                "labels": false,
+                "ticks": false,
+                "grid": false
+              }
+            },
+            "y": {
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              },
+              "title": null,
+              "field": "value"
+            }
+          }
+        },
+        {
+          "name": "dbp-points",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "dbp"
+              }
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "datum.value < {{dbp_low}} ? '\u25bc low' : datum.value > {{dbp_high}} ? '\u25b2 high' : '\u25cf in range'"
+              },
+              "as": "status"
+            }
+          ],
+          "mark": {
+            "type": "point",
+            "filled": true,
+            "size": 60,
+            "opacity": 1,
+            "stroke": {
+              "x-eas:slot": "surface"
+            },
+            "strokeWidth": 1
+          },
+          "encoding": {
+            "x": {
+              "field": "time",
+              "type": "temporal",
+              "title": null,
+              "axis": {
+                "labels": false,
+                "ticks": false,
+                "grid": false
+              }
+            },
+            "y": {
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              },
+              "title": null,
+              "field": "value"
+            },
+            "color": {
+              "field": "status",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "\u25bc low",
+                  "\u25cf in range",
+                  "\u25b2 high"
+                ],
+                "range": [
+                  {
+                    "x-eas:slot": "flag_color"
+                  },
+                  {
+                    "x-eas:slot": "line_color"
+                  },
+                  {
+                    "x-eas:slot": "flag_color"
+                  }
+                ]
+              },
+              "legend": null
+            },
+            "shape": {
+              "field": "status",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "\u25bc low",
+                  "\u25cf in range",
+                  "\u25b2 high"
+                ],
+                "range": [
+                  "triangle-down",
+                  "circle",
+                  "triangle-up"
+                ]
+              },
+              "legend": null
+            },
+            "tooltip": [
+              {
+                "field": "time",
+                "type": "temporal",
+                "format": "%Y-%m-%d %H:%M"
+              },
+              {
+                "field": "value",
+                "title": "dbp"
+              },
+              {
+                "field": "status"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "height": 70,
+      "width": "container",
+      "layer": [
+        {
+          "name": "temp-range",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "temp"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "count",
+                  "as": "n"
+                }
+              ]
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "{{temp_low}}"
+              },
+              "as": "lo"
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "{{temp_high}}"
+              },
+              "as": "hi"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.18,
+            "color": {
+              "x-eas:slot": "band_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "lo",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "hi"
+            }
+          }
+        },
+        {
+          "name": "temp-line",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "temp"
+              }
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "datum.value < {{temp_low}} ? '\u25bc low' : datum.value > {{temp_high}} ? '\u25b2 high' : '\u25cf in range'"
+              },
+              "as": "status"
+            }
+          ],
+          "mark": {
+            "type": "line",
+            "strokeWidth": 2,
+            "color": {
+              "x-eas:slot": "muted"
+            },
+            "strokeDash": []
+          },
+          "encoding": {
+            "x": {
+              "field": "time",
+              "type": "temporal",
+              "title": null,
+              "axis": {
+                "labels": false,
+                "ticks": false,
+                "grid": false
+              }
+            },
+            "y": {
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              },
+              "title": {
+                "x-eas:slot": "temp_title"
+              },
+              "field": "value"
+            }
+          }
+        },
+        {
+          "name": "temp-points",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "temp"
+              }
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "datum.value < {{temp_low}} ? '\u25bc low' : datum.value > {{temp_high}} ? '\u25b2 high' : '\u25cf in range'"
+              },
+              "as": "status"
+            }
+          ],
+          "mark": {
+            "type": "point",
+            "filled": true,
+            "size": 60,
+            "opacity": 1,
+            "stroke": {
+              "x-eas:slot": "surface"
+            },
+            "strokeWidth": 1
+          },
+          "encoding": {
+            "x": {
+              "field": "time",
+              "type": "temporal",
+              "title": null,
+              "axis": {
+                "labels": false,
+                "ticks": false,
+                "grid": false
+              }
+            },
+            "y": {
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              },
+              "title": null,
+              "field": "value"
+            },
+            "color": {
+              "field": "status",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "\u25bc low",
+                  "\u25cf in range",
+                  "\u25b2 high"
+                ],
+                "range": [
+                  {
+                    "x-eas:slot": "flag_color"
+                  },
+                  {
+                    "x-eas:slot": "line_color"
+                  },
+                  {
+                    "x-eas:slot": "flag_color"
+                  }
+                ]
+              },
+              "legend": null
+            },
+            "shape": {
+              "field": "status",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "\u25bc low",
+                  "\u25cf in range",
+                  "\u25b2 high"
+                ],
+                "range": [
+                  "triangle-down",
+                  "circle",
+                  "triangle-up"
+                ]
+              },
+              "legend": null
+            },
+            "tooltip": [
+              {
+                "field": "time",
+                "type": "temporal",
+                "format": "%Y-%m-%d %H:%M"
+              },
+              {
+                "field": "value",
+                "title": "temp"
+              },
+              {
+                "field": "status"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "height": 70,
+      "width": "container",
+      "layer": [
+        {
+          "name": "spo2-range",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "spo2"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "count",
+                  "as": "n"
+                }
+              ]
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "{{spo2_low}}"
+              },
+              "as": "lo"
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "{{spo2_high}}"
+              },
+              "as": "hi"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.18,
+            "color": {
+              "x-eas:slot": "band_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "lo",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "hi"
+            }
+          }
+        },
+        {
+          "name": "spo2-line",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "spo2"
+              }
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "datum.value < {{spo2_low}} ? '\u25bc low' : datum.value > {{spo2_high}} ? '\u25b2 high' : '\u25cf in range'"
+              },
+              "as": "status"
+            }
+          ],
+          "mark": {
+            "type": "line",
+            "strokeWidth": 2,
+            "color": {
+              "x-eas:slot": "muted"
+            },
+            "strokeDash": []
+          },
+          "encoding": {
+            "x": {
+              "field": "time",
+              "type": "temporal",
+              "title": null,
+              "axis": {
+                "labels": false,
+                "ticks": false,
+                "grid": false
+              }
+            },
+            "y": {
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              },
+              "title": {
+                "x-eas:slot": "spo2_title"
+              },
+              "field": "value"
+            }
+          }
+        },
+        {
+          "name": "spo2-points",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "spo2"
+              }
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "datum.value < {{spo2_low}} ? '\u25bc low' : datum.value > {{spo2_high}} ? '\u25b2 high' : '\u25cf in range'"
+              },
+              "as": "status"
+            }
+          ],
+          "mark": {
+            "type": "point",
+            "filled": true,
+            "size": 60,
+            "opacity": 1,
+            "stroke": {
+              "x-eas:slot": "surface"
+            },
+            "strokeWidth": 1
+          },
+          "encoding": {
+            "x": {
+              "field": "time",
+              "type": "temporal",
+              "title": null,
+              "axis": {
+                "labels": false,
+                "ticks": false,
+                "grid": false
+              }
+            },
+            "y": {
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              },
+              "title": null,
+              "field": "value"
+            },
+            "color": {
+              "field": "status",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "\u25bc low",
+                  "\u25cf in range",
+                  "\u25b2 high"
+                ],
+                "range": [
+                  {
+                    "x-eas:slot": "flag_color"
+                  },
+                  {
+                    "x-eas:slot": "line_color"
+                  },
+                  {
+                    "x-eas:slot": "flag_color"
+                  }
+                ]
+              },
+              "legend": null
+            },
+            "shape": {
+              "field": "status",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "\u25bc low",
+                  "\u25cf in range",
+                  "\u25b2 high"
+                ],
+                "range": [
+                  "triangle-down",
+                  "circle",
+                  "triangle-up"
+                ]
+              },
+              "legend": null
+            },
+            "tooltip": [
+              {
+                "field": "time",
+                "type": "temporal",
+                "format": "%Y-%m-%d %H:%M"
+              },
+              {
+                "field": "value",
+                "title": "spo2"
+              },
+              {
+                "field": "status"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "height": 70,
+      "width": "container",
+      "layer": [
+        {
+          "name": "rr-range",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "rr"
+              }
+            },
+            {
+              "aggregate": [
+                {
+                  "op": "count",
+                  "as": "n"
+                }
+              ]
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "{{rr_low}}"
+              },
+              "as": "lo"
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "{{rr_high}}"
+              },
+              "as": "hi"
+            }
+          ],
+          "mark": {
+            "type": "rect",
+            "opacity": 0.18,
+            "color": {
+              "x-eas:slot": "band_color"
+            }
+          },
+          "encoding": {
+            "y": {
+              "field": "lo",
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              }
+            },
+            "y2": {
+              "field": "hi"
+            }
+          }
+        },
+        {
+          "name": "rr-line",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "rr"
+              }
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "datum.value < {{rr_low}} ? '\u25bc low' : datum.value > {{rr_high}} ? '\u25b2 high' : '\u25cf in range'"
+              },
+              "as": "status"
+            }
+          ],
+          "mark": {
+            "type": "line",
+            "strokeWidth": 2,
+            "color": {
+              "x-eas:slot": "muted"
+            },
+            "strokeDash": []
+          },
+          "encoding": {
+            "x": {
+              "field": "time",
+              "type": "temporal",
+              "title": null,
+              "axis": {
+                "grid": false,
+                "format": {
+                  "x-eas:slot": "x_format"
+                },
+                "tickCount": {
+                  "x-eas:slot": "x_ticks"
+                }
+              }
+            },
+            "y": {
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              },
+              "title": {
+                "x-eas:slot": "rr_title"
+              },
+              "field": "value"
+            }
+          }
+        },
+        {
+          "name": "rr-points",
+          "transform": [
+            {
+              "filter": {
+                "field": "metric",
+                "equal": "rr"
+              }
+            },
+            {
+              "calculate": {
+                "x-eas:expr": "datum.value < {{rr_low}} ? '\u25bc low' : datum.value > {{rr_high}} ? '\u25b2 high' : '\u25cf in range'"
+              },
+              "as": "status"
+            }
+          ],
+          "mark": {
+            "type": "point",
+            "filled": true,
+            "size": 60,
+            "opacity": 1,
+            "stroke": {
+              "x-eas:slot": "surface"
+            },
+            "strokeWidth": 1
+          },
+          "encoding": {
+            "x": {
+              "field": "time",
+              "type": "temporal",
+              "title": null,
+              "axis": {
+                "grid": false,
+                "format": {
+                  "x-eas:slot": "x_format"
+                },
+                "tickCount": {
+                  "x-eas:slot": "x_ticks"
+                }
+              }
+            },
+            "y": {
+              "type": "quantitative",
+              "scale": {
+                "zero": false,
+                "nice": true
+              },
+              "title": null,
+              "field": "value"
+            },
+            "color": {
+              "field": "status",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "\u25bc low",
+                  "\u25cf in range",
+                  "\u25b2 high"
+                ],
+                "range": [
+                  {
+                    "x-eas:slot": "flag_color"
+                  },
+                  {
+                    "x-eas:slot": "line_color"
+                  },
+                  {
+                    "x-eas:slot": "flag_color"
+                  }
+                ]
+              },
+              "legend": null
+            },
+            "shape": {
+              "field": "status",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "\u25bc low",
+                  "\u25cf in range",
+                  "\u25b2 high"
+                ],
+                "range": [
+                  "triangle-down",
+                  "circle",
+                  "triangle-up"
+                ]
+              },
+              "legend": null
+            },
+            "tooltip": [
+              {
+                "field": "time",
+                "type": "temporal",
+                "format": "%Y-%m-%d %H:%M"
+              },
+              {
+                "field": "value",
+                "title": "rr"
+              },
+              {
+                "field": "status"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
