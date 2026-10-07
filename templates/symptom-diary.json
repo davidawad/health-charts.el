@@ -1,0 +1,245 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "symptom-diary",
+    "version": "1.0.0",
+    "doc": "Symptom or pain diary: one row per symptom, one column per day, each cell shaded and numbered by the severity logged (0 none to 10 worst); a note rides in the tooltip.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {date, symptom, severity 0-10, note?}"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Symptom or pain diary: one row per symptom, one column per day, each cell shaded and numbered by the severity logged (0 none to 10 worst); a note rides in the tooltip.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "low_color": {
+        "type": "string",
+        "default": "#f4f1ea",
+        "doc": "colour of severity 0"
+      },
+      "high_color": {
+        "type": "string",
+        "default": "#b3261e",
+        "doc": "colour of severity 10"
+      },
+      "row_step": {
+        "type": "integer",
+        "default": 28,
+        "doc": "row height in pixels (use 14 for a text chart)"
+      },
+      "col_step": {
+        "type": "integer",
+        "default": 34,
+        "doc": "column width in pixels"
+      }
+    },
+    "example": "examples/symptom-diary.data.json",
+    "health": {
+      "group": "symptoms",
+      "tables": {
+        "data": {
+          "fields": {
+            "date": "date",
+            "symptom": "string",
+            "severity": "range:0:10",
+            "note": "?string"
+          },
+          "order": "date"
+        }
+      },
+      "text_size": [
+        100,
+        16
+      ],
+      "svg_size": [
+        1000,
+        360
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": {
+    "step": {
+      "x-eas:slot": "col_step"
+    }
+  },
+  "height": {
+    "step": {
+      "x-eas:slot": "row_step"
+    }
+  },
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": "substring(datum.date, 5, 10)",
+      "as": "day"
+    },
+    {
+      "calculate": "isValid(datum.note) ? datum.note : ''",
+      "as": "note_text"
+    }
+  ],
+  "encoding": {
+    "x": {
+      "field": "day",
+      "type": "ordinal",
+      "title": "day (MM-DD)",
+      "sort": null,
+      "axis": {
+        "orient": "bottom",
+        "labelAngle": -45
+      }
+    },
+    "y": {
+      "field": "symptom",
+      "type": "nominal",
+      "title": null,
+      "sort": null,
+      "axis": {
+        "domain": false,
+        "ticks": false,
+        "labelLimit": 200
+      }
+    }
+  },
+  "layer": [
+    {
+      "name": "cells",
+      "mark": {
+        "type": "rect",
+        "stroke": {
+          "x-eas:slot": "surface"
+        },
+        "strokeWidth": 1.5
+      },
+      "encoding": {
+        "color": {
+          "field": "severity",
+          "type": "quantitative",
+          "title": "severity",
+          "scale": {
+            "domain": [
+              0,
+              10
+            ],
+            "range": [
+              {
+                "x-eas:slot": "low_color"
+              },
+              {
+                "x-eas:slot": "high_color"
+              }
+            ]
+          }
+        },
+        "tooltip": [
+          {
+            "field": "date"
+          },
+          {
+            "field": "symptom"
+          },
+          {
+            "field": "severity"
+          },
+          {
+            "field": "note_text",
+            "title": "note"
+          }
+        ]
+      }
+    },
+    {
+      "name": "numbers-light",
+      "transform": [
+        {
+          "filter": "datum.severity < 6"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "fontSize": 12,
+        "color": {
+          "x-eas:slot": "ink"
+        }
+      },
+      "encoding": {
+        "text": {
+          "field": "severity",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "name": "numbers-dark",
+      "transform": [
+        {
+          "filter": "datum.severity >= 6"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "fontSize": 12,
+        "color": "#ffffff",
+        "fontWeight": "bold"
+      },
+      "encoding": {
+        "text": {
+          "field": "severity",
+          "type": "quantitative"
+        }
+      }
+    }
+  ]
+}

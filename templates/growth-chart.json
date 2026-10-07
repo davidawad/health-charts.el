@@ -1,0 +1,329 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "growth-chart",
+    "version": "1.0.0",
+    "doc": "Paediatric growth chart: percentile curves bound by the caller (bind published CDC or WHO curves; this package ships none) with the patient's measurements drawn over them. The example curves are synthetic.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {age, value}: the patient's measurements"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Paediatric growth chart: percentile curves bound by the caller (bind published CDC or WHO curves; this package ships none) with the patient's measurements drawn over them. The example curves are synthetic.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "curves": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {age, percentile, value}: one curve per percentile label such as P3, P50, P97"
+      },
+      "x_title": {
+        "type": "string",
+        "default": "age (months)"
+      },
+      "y_title": {
+        "type": "string",
+        "default": "weight (kg)"
+      },
+      "patient_color": {
+        "type": "string",
+        "default": "#2a78d6",
+        "doc": "the patient's line and points"
+      }
+    },
+    "example": "examples/growth-chart.data.json",
+    "health": {
+      "group": "pediatrics",
+      "tables": {
+        "data": {
+          "fields": {
+            "age": "nonneg",
+            "value": "number"
+          }
+        },
+        "curves": {
+          "fields": {
+            "age": "nonneg",
+            "percentile": "string",
+            "value": "number"
+          }
+        }
+      },
+      "text_size": [
+        100,
+        26
+      ],
+      "svg_size": [
+        1000,
+        440
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": 300,
+  "data": {
+    "name": "data"
+  },
+  "layer": [
+    {
+      "name": "curves",
+      "data": {
+        "name": "curves"
+      },
+      "mark": {
+        "type": "line",
+        "strokeWidth": 1.4
+      },
+      "encoding": {
+        "x": {
+          "field": "age",
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "x_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": false
+          },
+          "axis": {
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "y_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "color": {
+          "field": "percentile",
+          "type": "nominal",
+          "legend": null,
+          "scale": {
+            "range": [
+              "#b3b1a6",
+              "#9a988f",
+              "#52514e",
+              "#9a988f",
+              "#b3b1a6"
+            ]
+          }
+        },
+        "tooltip": [
+          {
+            "field": "percentile"
+          },
+          {
+            "field": "age"
+          },
+          {
+            "field": "value"
+          }
+        ]
+      }
+    },
+    {
+      "name": "curve-labels",
+      "data": {
+        "name": "curves"
+      },
+      "transform": [
+        {
+          "joinaggregate": [
+            {
+              "op": "max",
+              "field": "age",
+              "as": "last_age"
+            }
+          ]
+        },
+        {
+          "filter": "datum.age == datum.last_age"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "align": "right",
+        "dx": -2,
+        "dy": -7,
+        "fontSize": 11,
+        "color": {
+          "x-eas:slot": "secondary"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "age",
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "x_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": false
+          },
+          "axis": {
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "y_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "text": {
+          "field": "percentile"
+        }
+      }
+    },
+    {
+      "name": "patient",
+      "mark": {
+        "type": "line",
+        "strokeWidth": 2.5,
+        "color": {
+          "x-eas:slot": "patient_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "age",
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "x_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": false
+          },
+          "axis": {
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "y_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        }
+      }
+    },
+    {
+      "name": "measurements",
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 90,
+        "opacity": 1,
+        "color": {
+          "x-eas:slot": "patient_color"
+        },
+        "stroke": {
+          "x-eas:slot": "surface"
+        },
+        "strokeWidth": 1.5
+      },
+      "encoding": {
+        "x": {
+          "field": "age",
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "x_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": false
+          },
+          "axis": {
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "y_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": true
+          }
+        },
+        "tooltip": [
+          {
+            "field": "age"
+          },
+          {
+            "field": "value"
+          }
+        ]
+      }
+    }
+  ]
+}

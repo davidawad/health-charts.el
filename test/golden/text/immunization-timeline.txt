@@ -1,0 +1,22 @@
+                                  Immunization history (synthetic)
+                                                                                         ● ● given
+                                                                                         ◆ ◇ due
+                                                                                         ▲ ▲ overdue
+
+          1   2        3                                        4
+Vaccine A ●⠉⠉⠉●⠉⠉⠉⠉⠉⠉⠉⠉●                                        ▲
+
+
+          1   2                              3
+Vaccine B ●⠉⠉⠉●                              ▲
+
+
+                           1                         2                                3
+Vaccine C                  ●⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉●                                ◆
+
+
+                                                     annual                     annual
+Vaccine D                                               ●                         ▲
+
+          ──────────────────────────┬─────────────────────────┬────────────────────────
+                                Jan 2025                   Jan 2026

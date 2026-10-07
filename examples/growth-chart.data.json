@@ -1,0 +1,361 @@
+{
+ "title": "Weight for age (synthetic)",
+ "subtitle": "synthetic percentile curves, not CDC or WHO data",
+ "curves": [
+  {
+   "age": 0,
+   "percentile": "P3",
+   "value": 2.72
+  },
+  {
+   "age": 3,
+   "percentile": "P3",
+   "value": 4.51
+  },
+  {
+   "age": 6,
+   "percentile": "P3",
+   "value": 5.9
+  },
+  {
+   "age": 9,
+   "percentile": "P3",
+   "value": 7.0
+  },
+  {
+   "age": 12,
+   "percentile": "P3",
+   "value": 7.86
+  },
+  {
+   "age": 15,
+   "percentile": "P3",
+   "value": 8.56
+  },
+  {
+   "age": 18,
+   "percentile": "P3",
+   "value": 9.12
+  },
+  {
+   "age": 21,
+   "percentile": "P3",
+   "value": 9.59
+  },
+  {
+   "age": 24,
+   "percentile": "P3",
+   "value": 9.98
+  },
+  {
+   "age": 27,
+   "percentile": "P3",
+   "value": 10.3
+  },
+  {
+   "age": 30,
+   "percentile": "P3",
+   "value": 10.59
+  },
+  {
+   "age": 33,
+   "percentile": "P3",
+   "value": 10.84
+  },
+  {
+   "age": 36,
+   "percentile": "P3",
+   "value": 11.07
+  },
+  {
+   "age": 0,
+   "percentile": "P15",
+   "value": 3.06
+  },
+  {
+   "age": 3,
+   "percentile": "P15",
+   "value": 5.07
+  },
+  {
+   "age": 6,
+   "percentile": "P15",
+   "value": 6.64
+  },
+  {
+   "age": 9,
+   "percentile": "P15",
+   "value": 7.87
+  },
+  {
+   "age": 12,
+   "percentile": "P15",
+   "value": 8.85
+  },
+  {
+   "age": 15,
+   "percentile": "P15",
+   "value": 9.63
+  },
+  {
+   "age": 18,
+   "percentile": "P15",
+   "value": 10.27
+  },
+  {
+   "age": 21,
+   "percentile": "P15",
+   "value": 10.79
+  },
+  {
+   "age": 24,
+   "percentile": "P15",
+   "value": 11.22
+  },
+  {
+   "age": 27,
+   "percentile": "P15",
+   "value": 11.59
+  },
+  {
+   "age": 30,
+   "percentile": "P15",
+   "value": 11.91
+  },
+  {
+   "age": 33,
+   "percentile": "P15",
+   "value": 12.2
+  },
+  {
+   "age": 36,
+   "percentile": "P15",
+   "value": 12.45
+  },
+  {
+   "age": 0,
+   "percentile": "P50",
+   "value": 3.4
+  },
+  {
+   "age": 3,
+   "percentile": "P50",
+   "value": 5.63
+  },
+  {
+   "age": 6,
+   "percentile": "P50",
+   "value": 7.38
+  },
+  {
+   "age": 9,
+   "percentile": "P50",
+   "value": 8.75
+  },
+  {
+   "age": 12,
+   "percentile": "P50",
+   "value": 9.83
+  },
+  {
+   "age": 15,
+   "percentile": "P50",
+   "value": 10.7
+  },
+  {
+   "age": 18,
+   "percentile": "P50",
+   "value": 11.41
+  },
+  {
+   "age": 21,
+   "percentile": "P50",
+   "value": 11.99
+  },
+  {
+   "age": 24,
+   "percentile": "P50",
+   "value": 12.47
+  },
+  {
+   "age": 27,
+   "percentile": "P50",
+   "value": 12.88
+  },
+  {
+   "age": 30,
+   "percentile": "P50",
+   "value": 13.24
+  },
+  {
+   "age": 33,
+   "percentile": "P50",
+   "value": 13.55
+  },
+  {
+   "age": 36,
+   "percentile": "P50",
+   "value": 13.83
+  },
+  {
+   "age": 0,
+   "percentile": "P85",
+   "value": 3.81
+  },
+  {
+   "age": 3,
+   "percentile": "P85",
+   "value": 6.31
+  },
+  {
+   "age": 6,
+   "percentile": "P85",
+   "value": 8.26
+  },
+  {
+   "age": 9,
+   "percentile": "P85",
+   "value": 9.79
+  },
+  {
+   "age": 12,
+   "percentile": "P85",
+   "value": 11.01
+  },
+  {
+   "age": 15,
+   "percentile": "P85",
+   "value": 11.98
+  },
+  {
+   "age": 18,
+   "percentile": "P85",
+   "value": 12.77
+  },
+  {
+   "age": 21,
+   "percentile": "P85",
+   "value": 13.42
+  },
+  {
+   "age": 24,
+   "percentile": "P85",
+   "value": 13.97
+  },
+  {
+   "age": 27,
+   "percentile": "P85",
+   "value": 14.43
+  },
+  {
+   "age": 30,
+   "percentile": "P85",
+   "value": 14.83
+  },
+  {
+   "age": 33,
+   "percentile": "P85",
+   "value": 15.18
+  },
+  {
+   "age": 36,
+   "percentile": "P85",
+   "value": 15.49
+  },
+  {
+   "age": 0,
+   "percentile": "P97",
+   "value": 4.22
+  },
+  {
+   "age": 3,
+   "percentile": "P97",
+   "value": 6.98
+  },
+  {
+   "age": 6,
+   "percentile": "P97",
+   "value": 9.15
+  },
+  {
+   "age": 9,
+   "percentile": "P97",
+   "value": 10.84
+  },
+  {
+   "age": 12,
+   "percentile": "P97",
+   "value": 12.19
+  },
+  {
+   "age": 15,
+   "percentile": "P97",
+   "value": 13.27
+  },
+  {
+   "age": 18,
+   "percentile": "P97",
+   "value": 14.14
+  },
+  {
+   "age": 21,
+   "percentile": "P97",
+   "value": 14.86
+  },
+  {
+   "age": 24,
+   "percentile": "P97",
+   "value": 15.46
+  },
+  {
+   "age": 27,
+   "percentile": "P97",
+   "value": 15.97
+  },
+  {
+   "age": 30,
+   "percentile": "P97",
+   "value": 16.41
+  },
+  {
+   "age": 33,
+   "percentile": "P97",
+   "value": 16.8
+  },
+  {
+   "age": 36,
+   "percentile": "P97",
+   "value": 17.15
+  }
+ ],
+ "data": [
+  {
+   "age": 0,
+   "value": 3.5
+  },
+  {
+   "age": 3,
+   "value": 6.1
+  },
+  {
+   "age": 6,
+   "value": 7.9
+  },
+  {
+   "age": 9,
+   "value": 9.4
+  },
+  {
+   "age": 12,
+   "value": 10.3
+  },
+  {
+   "age": 18,
+   "value": 11.6
+  },
+  {
+   "age": 24,
+   "value": 13.2
+  }
+ ]
+}

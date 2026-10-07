@@ -1,0 +1,163 @@
+{
+ "title": "Cycle tracker (synthetic)",
+ "data": [
+  {
+   "cycle": "Cycle 1",
+   "start_day": 1,
+   "end_day": 5,
+   "phase": "menstruation"
+  },
+  {
+   "cycle": "Cycle 1",
+   "start_day": 6,
+   "end_day": 12,
+   "phase": "follicular"
+  },
+  {
+   "cycle": "Cycle 1",
+   "start_day": 13,
+   "end_day": 15,
+   "phase": "ovulation"
+  },
+  {
+   "cycle": "Cycle 1",
+   "start_day": 16,
+   "end_day": 28,
+   "phase": "luteal"
+  },
+  {
+   "cycle": "Cycle 2",
+   "start_day": 1,
+   "end_day": 5,
+   "phase": "menstruation"
+  },
+  {
+   "cycle": "Cycle 2",
+   "start_day": 6,
+   "end_day": 14,
+   "phase": "follicular"
+  },
+  {
+   "cycle": "Cycle 2",
+   "start_day": 15,
+   "end_day": 17,
+   "phase": "ovulation"
+  },
+  {
+   "cycle": "Cycle 2",
+   "start_day": 18,
+   "end_day": 30,
+   "phase": "luteal"
+  },
+  {
+   "cycle": "Cycle 3",
+   "start_day": 1,
+   "end_day": 4,
+   "phase": "menstruation"
+  },
+  {
+   "cycle": "Cycle 3",
+   "start_day": 5,
+   "end_day": 11,
+   "phase": "follicular"
+  },
+  {
+   "cycle": "Cycle 3",
+   "start_day": 12,
+   "end_day": 14,
+   "phase": "ovulation"
+  },
+  {
+   "cycle": "Cycle 3",
+   "start_day": 15,
+   "end_day": 27,
+   "phase": "luteal"
+  },
+  {
+   "cycle": "Cycle 4",
+   "start_day": 1,
+   "end_day": 5,
+   "phase": "menstruation"
+  },
+  {
+   "cycle": "Cycle 4",
+   "start_day": 6,
+   "end_day": 13,
+   "phase": "follicular"
+  },
+  {
+   "cycle": "Cycle 4",
+   "start_day": 14,
+   "end_day": 16,
+   "phase": "ovulation"
+  },
+  {
+   "cycle": "Cycle 4",
+   "start_day": 17,
+   "end_day": 29,
+   "phase": "luteal"
+  }
+ ],
+ "markers": [
+  {
+   "cycle": "Cycle 1",
+   "day": 2,
+   "marker": "heavy flow"
+  },
+  {
+   "cycle": "Cycle 1",
+   "day": 3,
+   "marker": "heavy flow"
+  },
+  {
+   "cycle": "Cycle 1",
+   "day": 26,
+   "marker": "cramps"
+  },
+  {
+   "cycle": "Cycle 2",
+   "day": 2,
+   "marker": "heavy flow"
+  },
+  {
+   "cycle": "Cycle 2",
+   "day": 3,
+   "marker": "heavy flow"
+  },
+  {
+   "cycle": "Cycle 2",
+   "day": 28,
+   "marker": "cramps"
+  },
+  {
+   "cycle": "Cycle 3",
+   "day": 2,
+   "marker": "heavy flow"
+  },
+  {
+   "cycle": "Cycle 3",
+   "day": 3,
+   "marker": "heavy flow"
+  },
+  {
+   "cycle": "Cycle 3",
+   "day": 25,
+   "marker": "cramps"
+  },
+  {
+   "cycle": "Cycle 4",
+   "day": 2,
+   "marker": "heavy flow"
+  },
+  {
+   "cycle": "Cycle 4",
+   "day": 3,
+   "marker": "heavy flow"
+  },
+  {
+   "cycle": "Cycle 4",
+   "day": 27,
+   "marker": "cramps"
+  }
+ ]
+}

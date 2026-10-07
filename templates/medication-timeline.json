@@ -1,0 +1,372 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "medication-timeline",
+    "version": "1.0.0",
+    "doc": "Medication courses as bars on a timeline, each scheduled dose marked taken, late or missed (shape and colour), with the adherence share per medication.",
+    "slots": {
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Medication courses as bars on a timeline, each scheduled dose marked taken, late or missed (shape and colour), with the adherence share per medication.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "courses": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {medication, start, end, dose?}: one bar per course"
+      },
+      "doses": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {medication, time, status}: scheduled doses with taken, late or missed"
+      },
+      "taken_color": {
+        "type": "string",
+        "default": "#2a78d6"
+      },
+      "late_color": {
+        "type": "string",
+        "default": "#e09a00"
+      },
+      "missed_color": {
+        "type": "string",
+        "default": "#d03b3b"
+      },
+      "bar_color": {
+        "type": "string",
+        "default": "#cfd8e3",
+        "doc": "course bars"
+      },
+      "x_format": {
+        "type": "string",
+        "default": "%b %d",
+        "doc": "time axis label format"
+      },
+      "x_ticks": {
+        "type": "integer",
+        "default": 5,
+        "doc": "about this many time axis ticks"
+      }
+    },
+    "example": "examples/medication-timeline.data.json",
+    "health": {
+      "group": "medication",
+      "tables": {
+        "courses": {
+          "fields": {
+            "medication": "string",
+            "start": "time",
+            "end": "time",
+            "dose": "?string"
+          },
+          "rows": [
+            {
+              "le": [
+                "start",
+                "end"
+              ],
+              "code": "interval_inverted"
+            }
+          ]
+        },
+        "doses": {
+          "fields": {
+            "medication": "string",
+            "time": "time",
+            "status": "enum:taken|late|missed"
+          },
+          "order": "time"
+        }
+      },
+      "text_size": [
+        100,
+        26
+      ],
+      "svg_size": [
+        1000,
+        420
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": {
+    "step": 44
+  },
+  "layer": [
+    {
+      "name": "courses",
+      "data": {
+        "name": "courses"
+      },
+      "mark": {
+        "type": "bar",
+        "height": {
+          "band": 0.3
+        },
+        "color": {
+          "x-eas:slot": "bar_color"
+        }
+      },
+      "encoding": {
+        "y": {
+          "field": "medication",
+          "type": "nominal",
+          "title": null,
+          "sort": null,
+          "axis": {
+            "domain": false,
+            "ticks": false,
+            "labelLimit": 200
+          }
+        },
+        "x": {
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            },
+            "grid": false
+          },
+          "field": "start"
+        },
+        "x2": {
+          "field": "end"
+        },
+        "tooltip": [
+          {
+            "field": "medication"
+          },
+          {
+            "field": "dose",
+            "title": "dose"
+          },
+          {
+            "field": "start",
+            "type": "temporal",
+            "format": "%Y-%m-%d"
+          },
+          {
+            "field": "end",
+            "type": "temporal",
+            "format": "%Y-%m-%d"
+          }
+        ]
+      }
+    },
+    {
+      "name": "adherence",
+      "data": {
+        "name": "doses"
+      },
+      "transform": [
+        {
+          "calculate": "datum.status == 'missed' ? 0 : 1",
+          "as": "ok"
+        },
+        {
+          "aggregate": [
+            {
+              "op": "sum",
+              "field": "ok",
+              "as": "done"
+            },
+            {
+              "op": "count",
+              "as": "n"
+            },
+            {
+              "op": "min",
+              "field": "time",
+              "as": "t0"
+            }
+          ],
+          "groupby": [
+            "medication"
+          ]
+        },
+        {
+          "calculate": "datum.medication + ': ' + round(100 * datum.done / datum.n) + '% adherence (' + datum.done + '/' + datum.n + ')'",
+          "as": "adh"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "baseline": "bottom",
+        "dy": -9,
+        "dx": 2,
+        "fontSize": 11,
+        "color": {
+          "x-eas:slot": "ink"
+        }
+      },
+      "encoding": {
+        "y": {
+          "field": "medication",
+          "type": "nominal",
+          "title": null,
+          "sort": null,
+          "axis": null
+        },
+        "x": {
+          "field": "t0",
+          "type": "temporal"
+        },
+        "text": {
+          "field": "adh"
+        }
+      }
+    },
+    {
+      "name": "doses",
+      "data": {
+        "name": "doses"
+      },
+      "transform": [
+        {
+          "calculate": {
+            "x-eas:expr": "datum.status == 'taken' ? '\u25cf taken' : datum.status == 'late' ? '\u25c6 late' : '\u2715 missed'"
+          },
+          "as": "st"
+        }
+      ],
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 70,
+        "opacity": 1,
+        "strokeWidth": 2
+      },
+      "encoding": {
+        "y": {
+          "field": "medication",
+          "type": "nominal",
+          "title": null,
+          "sort": null,
+          "axis": null
+        },
+        "x": {
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            },
+            "grid": false
+          },
+          "field": "time"
+        },
+        "color": {
+          "field": "st",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25cf taken",
+              "\u25c6 late",
+              "\u2715 missed"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "taken_color"
+              },
+              {
+                "x-eas:slot": "late_color"
+              },
+              {
+                "x-eas:slot": "missed_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "shape": {
+          "field": "st",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25cf taken",
+              "\u25c6 late",
+              "\u2715 missed"
+            ],
+            "range": [
+              "circle",
+              "diamond",
+              "cross"
+            ]
+          },
+          "legend": null
+        },
+        "tooltip": [
+          {
+            "field": "medication"
+          },
+          {
+            "field": "time",
+            "type": "temporal",
+            "format": "%Y-%m-%d %H:%M"
+          },
+          {
+            "field": "st",
+            "title": "status"
+          }
+        ]
+      }
+    }
+  ]
+}

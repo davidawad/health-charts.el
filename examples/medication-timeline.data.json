@@ -1,0 +1,206 @@
+{
+ "title": "Medications and adherence (synthetic)",
+ "x_format": "%b %d",
+ "courses": [
+  {
+   "medication": "Metformin 500 mg",
+   "start": "2026-03-01",
+   "end": "2026-04-20",
+   "dose": "twice daily"
+  },
+  {
+   "medication": "Lisinopril 10 mg",
+   "start": "2026-03-01",
+   "end": "2026-04-20",
+   "dose": "once daily"
+  },
+  {
+   "medication": "Amoxicillin 500 mg",
+   "start": "2026-03-10",
+   "end": "2026-03-20",
+   "dose": "three times daily"
+  }
+ ],
+ "doses": [
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-03-01T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Lisinopril 10 mg",
+   "time": "2026-03-01T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-03-04T08:00:00",
+   "status": "late"
+  },
+  {
+   "medication": "Lisinopril 10 mg",
+   "time": "2026-03-05T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-03-07T08:00:00",
+   "status": "late"
+  },
+  {
+   "medication": "Lisinopril 10 mg",
+   "time": "2026-03-09T08:00:00",
+   "status": "missed"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-03-10T08:00:00",
+   "status": "missed"
+  },
+  {
+   "medication": "Amoxicillin 500 mg",
+   "time": "2026-03-10T08:00:00",
+   "status": "missed"
+  },
+  {
+   "medication": "Amoxicillin 500 mg",
+   "time": "2026-03-12T08:00:00",
+   "status": "late"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-03-13T08:00:00",
+   "status": "late"
+  },
+  {
+   "medication": "Lisinopril 10 mg",
+   "time": "2026-03-13T08:00:00",
+   "status": "late"
+  },
+  {
+   "medication": "Amoxicillin 500 mg",
+   "time": "2026-03-14T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-03-16T08:00:00",
+   "status": "missed"
+  },
+  {
+   "medication": "Amoxicillin 500 mg",
+   "time": "2026-03-16T08:00:00",
+   "status": "missed"
+  },
+  {
+   "medication": "Lisinopril 10 mg",
+   "time": "2026-03-17T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Amoxicillin 500 mg",
+   "time": "2026-03-18T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-03-19T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Amoxicillin 500 mg",
+   "time": "2026-03-20T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Lisinopril 10 mg",
+   "time": "2026-03-21T08:00:00",
+   "status": "late"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-03-22T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-03-25T08:00:00",
+   "status": "missed"
+  },
+  {
+   "medication": "Lisinopril 10 mg",
+   "time": "2026-03-25T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-03-28T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Lisinopril 10 mg",
+   "time": "2026-03-29T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-03-31T08:00:00",
+   "status": "missed"
+  },
+  {
+   "medication": "Lisinopril 10 mg",
+   "time": "2026-04-02T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-04-03T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-04-06T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Lisinopril 10 mg",
+   "time": "2026-04-06T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-04-09T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Lisinopril 10 mg",
+   "time": "2026-04-10T08:00:00",
+   "status": "late"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-04-12T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Lisinopril 10 mg",
+   "time": "2026-04-14T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-04-15T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Metformin 500 mg",
+   "time": "2026-04-18T08:00:00",
+   "status": "taken"
+  },
+  {
+   "medication": "Lisinopril 10 mg",
+   "time": "2026-04-18T08:00:00",
+   "status": "taken"
+  }
+ ]
+}

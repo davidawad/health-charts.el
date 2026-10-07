@@ -1,0 +1,26 @@
+                                Medications and adherence (synthetic)
+                                                                                          ● ● taken
+                                                                                          ◆ ◆ late
+                                                                                          ✚ ✕ missed
+
+                   Metformin 500 mg: 76% adherence (13/17)
+  Metformin 500 mg ●███◆███◆███✚████◆███✚███●███●███✚███●███✚████●███●███●███●███●███●██
+
+
+
+
+
+                   Lisinopril 10 mg: 92% adherence (12/13)
+  Lisinopril 10 mg ●████●█████✚█████◆████●█████◆████●█████●████●█████●████◆█████●████●██
+
+
+
+
+
+                                Amoxicillin 500 mg: 67% adherence (4/6)
+Amoxicillin 500 mg             ✚██◆██●██✚█●██●
+
+
+
+                   ┬──────────────────┬──────────────────┬──────────────────┬───────────
+                   Mar 01          Mar 15              Mar 29             Apr 12

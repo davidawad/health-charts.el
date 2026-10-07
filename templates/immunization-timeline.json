@@ -1,0 +1,328 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "immunization-timeline",
+    "version": "1.0.0",
+    "doc": "Immunization history: one row per vaccine, doses given as filled points, doses still due as grey diamonds and doses due before the as_of date as red triangles.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {vaccine, date, dose?, status}"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Immunization history: one row per vaccine, doses given as filled points, doses still due as grey diamonds and doses due before the as_of date as red triangles.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "as_of": {
+        "type": "string",
+        "doc": "ISO date (YYYY-MM-DD) that decides what is overdue; never the current date implicitly",
+        "required": true
+      },
+      "given_color": {
+        "type": "string",
+        "default": "#2a78d6"
+      },
+      "due_color": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "overdue_color": {
+        "type": "string",
+        "default": "#d03b3b"
+      },
+      "x_format": {
+        "type": "string",
+        "default": "%Y",
+        "doc": "time axis label format"
+      },
+      "x_ticks": {
+        "type": "integer",
+        "default": 5,
+        "doc": "about this many time axis ticks"
+      }
+    },
+    "example": "examples/immunization-timeline.data.json",
+    "health": {
+      "group": "records",
+      "tables": {
+        "data": {
+          "fields": {
+            "vaccine": "string",
+            "date": "date",
+            "dose": "?string",
+            "status": "enum:given|due"
+          }
+        }
+      },
+      "text_size": [
+        100,
+        22
+      ],
+      "svg_size": [
+        1000,
+        400
+      ],
+      "slots": {
+        "as_of": "date"
+      }
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": {
+    "step": 30
+  },
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": {
+        "x-eas:expr": "datum.status == 'given' ? '\u25cf given' : substring(datum.date, 0, 10) < {{as_of}} ? '\u25b2 overdue' : '\u25c7 due'"
+      },
+      "as": "state"
+    },
+    {
+      "calculate": "isValid(datum.dose) ? datum.dose : ''",
+      "as": "dose_label"
+    }
+  ],
+  "layer": [
+    {
+      "name": "span",
+      "transform": [
+        {
+          "filter": "datum.state == '\u25cf given'"
+        }
+      ],
+      "mark": {
+        "type": "line",
+        "strokeWidth": 1,
+        "color": {
+          "x-eas:slot": "muted"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            },
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "vaccine",
+          "type": "nominal",
+          "title": null,
+          "sort": null,
+          "axis": {
+            "domain": false,
+            "ticks": false,
+            "labelLimit": 200
+          }
+        },
+        "detail": {
+          "field": "vaccine"
+        }
+      }
+    },
+    {
+      "name": "marks",
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 110,
+        "opacity": 1,
+        "strokeWidth": 2
+      },
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            },
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "vaccine",
+          "type": "nominal",
+          "title": null,
+          "sort": null,
+          "axis": {
+            "domain": false,
+            "ticks": false,
+            "labelLimit": 200
+          }
+        },
+        "color": {
+          "field": "state",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25cf given",
+              "\u25c7 due",
+              "\u25b2 overdue"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "given_color"
+              },
+              {
+                "x-eas:slot": "due_color"
+              },
+              {
+                "x-eas:slot": "overdue_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "shape": {
+          "field": "state",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25cf given",
+              "\u25c7 due",
+              "\u25b2 overdue"
+            ],
+            "range": [
+              "circle",
+              "diamond",
+              "triangle-up"
+            ]
+          },
+          "legend": null
+        },
+        "tooltip": [
+          {
+            "field": "vaccine"
+          },
+          {
+            "field": "dose_label",
+            "title": "dose"
+          },
+          {
+            "field": "date",
+            "type": "temporal",
+            "format": "%Y-%m-%d"
+          },
+          {
+            "field": "state",
+            "title": "status"
+          }
+        ]
+      }
+    },
+    {
+      "name": "dose-numbers",
+      "transform": [
+        {
+          "filter": "datum.dose_label != ''"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "dy": -12,
+        "fontSize": 10,
+        "color": {
+          "x-eas:slot": "secondary"
+        }
+      },
+      "encoding": {
+        "x": {
+          "field": "date",
+          "type": "temporal",
+          "title": null,
+          "axis": {
+            "format": {
+              "x-eas:slot": "x_format"
+            },
+            "tickCount": {
+              "x-eas:slot": "x_ticks"
+            },
+            "grid": false
+          }
+        },
+        "y": {
+          "field": "vaccine",
+          "type": "nominal",
+          "title": null,
+          "sort": null,
+          "axis": {
+            "domain": false,
+            "ticks": false,
+            "labelLimit": 200
+          }
+        },
+        "text": {
+          "field": "dose_label"
+        }
+      }
+    }
+  ]
+}

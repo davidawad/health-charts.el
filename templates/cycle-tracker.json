@@ -1,0 +1,400 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "cycle-tracker",
+    "version": "1.0.0",
+    "doc": "Menstrual cycle tracker: one row per cycle on a cycle-day axis, phases as labelled coloured segments and optional daily markers. The caller supplies every phase boundary; nothing is predicted.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {cycle, start_day, end_day, phase}"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Menstrual cycle tracker: one row per cycle on a cycle-day axis, phases as labelled coloured segments and optional daily markers. The caller supplies every phase boundary; nothing is predicted.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "markers": {
+        "shape": "plist",
+        "default": [],
+        "doc": "optional rows {cycle, day, marker}: a daily event such as flow or cramps"
+      },
+      "menstruation_color": {
+        "type": "string",
+        "default": "#d03b3b"
+      },
+      "follicular_color": {
+        "type": "string",
+        "default": "#2a78d6"
+      },
+      "ovulation_color": {
+        "type": "string",
+        "default": "#e09a00"
+      },
+      "luteal_color": {
+        "type": "string",
+        "default": "#7b5ea7"
+      },
+      "x_title": {
+        "type": "string",
+        "default": "cycle day"
+      }
+    },
+    "example": "examples/cycle-tracker.data.json",
+    "health": {
+      "group": "womens-health",
+      "tables": {
+        "data": {
+          "fields": {
+            "cycle": "string",
+            "start_day": "nonnegint",
+            "end_day": "nonnegint",
+            "phase": "enum:menstruation|follicular|ovulation|luteal"
+          },
+          "rows": [
+            {
+              "le": [
+                "start_day",
+                "end_day"
+              ],
+              "code": "interval_inverted"
+            }
+          ]
+        },
+        "markers": {
+          "optional": true,
+          "fields": {
+            "cycle": "string",
+            "day": "nonnegint",
+            "marker": "string"
+          }
+        }
+      },
+      "text_size": [
+        100,
+        20
+      ],
+      "svg_size": [
+        1000,
+        380
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": {
+    "step": 34
+  },
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": "datum.phase == 'menstruation' ? '\u25cf menstruation' : datum.phase == 'follicular' ? '\u25a0 follicular' : datum.phase == 'ovulation' ? '\u25c6 ovulation window' : '\u25b2 luteal'",
+      "as": "phase_label"
+    },
+    {
+      "calculate": "datum.start_day - 0.5",
+      "as": "x0"
+    },
+    {
+      "calculate": "datum.end_day + 0.5",
+      "as": "x1"
+    },
+    {
+      "joinaggregate": [
+        {
+          "op": "max",
+          "field": "end_day",
+          "as": "len"
+        }
+      ],
+      "groupby": [
+        "cycle"
+      ]
+    }
+  ],
+  "layer": [
+    {
+      "name": "phases",
+      "mark": {
+        "type": "bar",
+        "height": {
+          "band": 0.62
+        }
+      },
+      "encoding": {
+        "y": {
+          "field": "cycle",
+          "type": "nominal",
+          "title": null,
+          "sort": null,
+          "axis": {
+            "domain": false,
+            "ticks": false,
+            "labelLimit": 200
+          }
+        },
+        "x": {
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "x_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": false
+          },
+          "field": "x0"
+        },
+        "x2": {
+          "field": "x1"
+        },
+        "color": {
+          "field": "phase_label",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25cf menstruation",
+              "\u25a0 follicular",
+              "\u25c6 ovulation window",
+              "\u25b2 luteal"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "menstruation_color"
+              },
+              {
+                "x-eas:slot": "follicular_color"
+              },
+              {
+                "x-eas:slot": "ovulation_color"
+              },
+              {
+                "x-eas:slot": "luteal_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "tooltip": [
+          {
+            "field": "cycle"
+          },
+          {
+            "field": "phase_label",
+            "title": "phase"
+          },
+          {
+            "field": "start_day",
+            "title": "from day"
+          },
+          {
+            "field": "end_day",
+            "title": "to day"
+          }
+        ]
+      }
+    },
+    {
+      "name": "glyphs",
+      "transform": [
+        {
+          "calculate": "(datum.x0 + datum.x1) / 2",
+          "as": "xm"
+        },
+        {
+          "calculate": "substring(datum.phase_label, 0, 1)",
+          "as": "g"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "fontSize": 12,
+        "color": "#ffffff",
+        "fontWeight": "bold"
+      },
+      "encoding": {
+        "y": {
+          "field": "cycle",
+          "type": "nominal",
+          "title": null,
+          "sort": null,
+          "axis": {
+            "domain": false,
+            "ticks": false,
+            "labelLimit": 200
+          }
+        },
+        "x": {
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "x_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": false
+          },
+          "field": "xm"
+        },
+        "text": {
+          "field": "g"
+        }
+      }
+    },
+    {
+      "name": "length",
+      "transform": [
+        {
+          "filter": "datum.end_day == datum.len"
+        },
+        {
+          "calculate": "datum.len + ' days'",
+          "as": "len_text"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "dx": 6,
+        "fontSize": 11,
+        "color": {
+          "x-eas:slot": "ink"
+        }
+      },
+      "encoding": {
+        "y": {
+          "field": "cycle",
+          "type": "nominal",
+          "title": null,
+          "sort": null,
+          "axis": {
+            "domain": false,
+            "ticks": false,
+            "labelLimit": 200
+          }
+        },
+        "x": {
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "x_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": false
+          },
+          "field": "x1"
+        },
+        "text": {
+          "field": "len_text"
+        }
+      }
+    },
+    {
+      "name": "markers",
+      "data": {
+        "name": "markers"
+      },
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 60,
+        "opacity": 1,
+        "color": "#ffffff",
+        "stroke": "#0b0b0b",
+        "strokeWidth": 1.5,
+        "dy": 0
+      },
+      "encoding": {
+        "y": {
+          "field": "cycle",
+          "type": "nominal",
+          "title": null,
+          "sort": null,
+          "axis": {
+            "domain": false,
+            "ticks": false,
+            "labelLimit": 200
+          }
+        },
+        "x": {
+          "type": "quantitative",
+          "title": {
+            "x-eas:slot": "x_title"
+          },
+          "scale": {
+            "zero": false,
+            "nice": false
+          },
+          "field": "day"
+        },
+        "shape": {
+          "field": "marker",
+          "type": "nominal",
+          "legend": {
+            "title": null
+          }
+        },
+        "tooltip": [
+          {
+            "field": "cycle"
+          },
+          {
+            "field": "day"
+          },
+          {
+            "field": "marker"
+          }
+        ]
+      }
+    }
+  ]
+}
