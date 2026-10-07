@@ -1,22 +1,22 @@
                                 Change between two draws (synthetic)
-                        hollow = earlier, filled = later; illustrative ranges
-                                                                                       ━ ✔ improved
-                                                                                       ━ ✖ worsened
-                                                                                       ━ ● unchanged
+  synthetic, illustrative ranges; hollow earlier, filled later; blue line improved, black worsened
+                                                                                        ▼ low
+                                                                                        ◆ near limit
+                                                                                        ● in range
+                                                                                        ▲ high
+LDL cholesterol  5.6 > 3.9 mmol/L             ▓▓▓▒▒▒▒▒▒▒▒▒●──────────△        improved  ■ no range
 
-LDL cholesterol  5.6 > 3.9 mmol/L               ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒●────────────○
+               HbA1c  6.4 > 5.7 %             ▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓ ▲───────△   improved
 
-               HbA1c  6.4 > 5.7 %               ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ ●─────────○
+  Triglycerides  1.4 > 2.3 mmol/L             ▓▓▓▒▒▒▒▒▒▒▒▒▒▒○────────────▲    worsened
 
-  Triglycerides  1.4 > 2.3 mmol/L               ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒○───────────────●
+           Ferritin  12 > 41 ug/L           ▽─◆▓▓▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓             improved
 
-           Ferritin  12 > 41 ug/L             ○─●▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+                 ALT  36 > 29 U/L             ▓▓▓▒▒▒▒▒▒▒▒▒●───◇▓▓             improved
 
-                 ALT  31 > 29 U/L               ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒●○▒▒▒▒▒▒
+             TSH  2.4 > 4.6 mIU/L             ▒▒▒▒▒▒▒▒▒▒▒○─────────▲          worsened
 
-        Vitamin D  38 > 74 nmol/L           ○──────────●▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+        Vitamin D  38 > 74 nmol/L                  no range
+                                  ────────────────────────────────────────────────────
 
-             TSH  2.4 > 4.6 mIU/L               ▒▒▒▒▒▒▒▒▒▒▒▒○─────────────●
-                                  ───────────────────────────────────────────────────
-
-               position within each reference range (left edge = low limit, right edge = high limit)
+                       position within each reference range (green in range, yellow near a limit)

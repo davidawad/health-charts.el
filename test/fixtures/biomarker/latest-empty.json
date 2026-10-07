@@ -1,0 +1,9 @@
+{
+ "schema": "biomarker/v1",
+ "kind": "latest",
+ "generated_at": "2026-01-01T00:00:00Z",
+ "filters": {
+  "person": "synthetic-a"
+ },
+ "data": []
+}

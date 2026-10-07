@@ -1,0 +1,155 @@
+{
+ "schema": "biomarker/v1",
+ "kind": "measurements",
+ "generated_at": "2026-01-01T00:00:00Z",
+ "filters": {
+  "person": "synthetic-a",
+  "category": "lipids"
+ },
+ "data": [
+  {
+   "person": "synthetic-a",
+   "marker": "ldl",
+   "marker_name": "LDL cholesterol",
+   "category": "lipids",
+   "taken_at": "2025-03-01",
+   "qualifier": null,
+   "value": 4.4,
+   "unit": "mmol/L",
+   "value_canonical": 4.4,
+   "unit_canonical": "mmol/L",
+   "ref_low": null,
+   "ref_high": 4.9,
+   "ref_flag": null,
+   "opt_low": null,
+   "opt_high": 3.4,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  },
+  {
+   "person": "synthetic-a",
+   "marker": "hdl",
+   "marker_name": "HDL cholesterol",
+   "category": "lipids",
+   "taken_at": "2025-03-01",
+   "qualifier": null,
+   "value": 1.2,
+   "unit": "mmol/L",
+   "value_canonical": 1.2,
+   "unit_canonical": "mmol/L",
+   "ref_low": 1.0,
+   "ref_high": null,
+   "ref_flag": null,
+   "opt_low": null,
+   "opt_high": null,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  },
+  {
+   "person": "synthetic-a",
+   "marker": "trig",
+   "marker_name": "Triglycerides",
+   "category": "lipids",
+   "taken_at": "2025-03-01",
+   "qualifier": null,
+   "value": 1.5,
+   "unit": "mmol/L",
+   "value_canonical": 1.5,
+   "unit_canonical": "mmol/L",
+   "ref_low": null,
+   "ref_high": 1.7,
+   "ref_flag": null,
+   "opt_low": null,
+   "opt_high": null,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  },
+  {
+   "person": "synthetic-a",
+   "marker": "ldl",
+   "marker_name": "LDL cholesterol",
+   "category": "lipids",
+   "taken_at": "2026-03-01",
+   "qualifier": null,
+   "value": 3.9,
+   "unit": "mmol/L",
+   "value_canonical": 3.9,
+   "unit_canonical": "mmol/L",
+   "ref_low": null,
+   "ref_high": 4.9,
+   "ref_flag": null,
+   "opt_low": null,
+   "opt_high": 3.4,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  },
+  {
+   "person": "synthetic-a",
+   "marker": "hdl",
+   "marker_name": "HDL cholesterol",
+   "category": "lipids",
+   "taken_at": "2026-03-01",
+   "qualifier": null,
+   "value": 0.9,
+   "unit": "mmol/L",
+   "value_canonical": 0.9,
+   "unit_canonical": "mmol/L",
+   "ref_low": 1.0,
+   "ref_high": null,
+   "ref_flag": null,
+   "opt_low": null,
+   "opt_high": null,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  },
+  {
+   "person": "synthetic-a",
+   "marker": "trig",
+   "marker_name": "Triglycerides",
+   "category": "lipids",
+   "taken_at": "2026-03-01",
+   "qualifier": null,
+   "value": 1.8,
+   "unit": "mmol/L",
+   "value_canonical": 1.8,
+   "unit_canonical": "mmol/L",
+   "ref_low": null,
+   "ref_high": 1.7,
+   "ref_flag": null,
+   "opt_low": null,
+   "opt_high": null,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  }
+ ]
+}

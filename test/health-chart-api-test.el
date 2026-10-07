@@ -56,11 +56,14 @@
     (health-chart-test-should-code
      "slot_unknown" "nonsense"
      (lambda () (health-chart-validate "vitals-trend" (plist-put (copy-sequence good) :nonsense 1))))
-    ;; a required slot left out
+    ;; the data table left out; the range is optional (a missing range draws grey)
     (health-chart-test-should-code
-     "missing_slot" "low"
+     "missing_slot" "data"
      (lambda () (health-chart-validate
-                 "vitals-trend" (cl-loop for (k v) on good by #'cddr unless (eq k :low) append (list k v)))))
+                 "vitals-trend" (cl-loop for (k v) on good by #'cddr unless (eq k :data) append (list k v)))))
+    (should (eq t (health-chart-validate
+                   "vitals-trend"
+                   (cl-loop for (k v) on good by #'cddr unless (memq k '(:low :high)) append (list k v)))))
     ;; a slot of the wrong type
     (health-chart-test-should-code
      "slot_type" "high"

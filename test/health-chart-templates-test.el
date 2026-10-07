@@ -120,7 +120,8 @@
                   (let* ((a (intern (concat ":" (aref (plist-get rule :le) 0))))
                          (b (intern (concat ":" (aref (plist-get rule :le) 1))))
                          (row (car (health-chart-test--rows example table))))
-                    (unless (equal (plist-get row a) (plist-get row b))
+                    (when (and (plist-get row a) (plist-get row b)
+                               (not (equal (plist-get row a) (plist-get row b))))
                       (health-chart-test-should-code
                        (plist-get rule :code) nil
                        (lambda ()
@@ -135,7 +136,8 @@
         (let* ((a (intern (concat ":" (aref pair 0)))) (b (intern (concat ":" (aref pair 1))))
                (swapped (plist-put (plist-put (copy-sequence example) a (plist-get example b))
                                    b (plist-get example a))))
-          (unless (equal (plist-get example a) (plist-get example b))
+          (when (and (plist-get example a) (plist-get example b)
+                     (not (equal (plist-get example a) (plist-get example b))))
             (health-chart-test-should-code (plist-get rule :code) (aref pair 1)
                                            (lambda () (health-chart-validate name swapped)))))))))
 

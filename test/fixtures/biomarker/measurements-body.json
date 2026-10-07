@@ -1,0 +1,154 @@
+{
+ "schema": "biomarker/v1",
+ "kind": "measurements",
+ "generated_at": "2026-01-01T00:00:00Z",
+ "filters": {
+  "person": "synthetic-a"
+ },
+ "data": [
+  {
+   "person": "synthetic-a",
+   "marker": "weight",
+   "marker_name": "Body weight",
+   "category": "body",
+   "taken_at": "2025-01-05",
+   "qualifier": null,
+   "value": 82.0,
+   "unit": "kg",
+   "value_canonical": 82.0,
+   "unit_canonical": "kg",
+   "ref_low": null,
+   "ref_high": null,
+   "ref_flag": null,
+   "opt_low": null,
+   "opt_high": null,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  },
+  {
+   "person": "synthetic-a",
+   "marker": "weight",
+   "marker_name": "Body weight",
+   "category": "body",
+   "taken_at": "2025-03-05",
+   "qualifier": null,
+   "value": 80.5,
+   "unit": "kg",
+   "value_canonical": 80.5,
+   "unit_canonical": "kg",
+   "ref_low": null,
+   "ref_high": null,
+   "ref_flag": null,
+   "opt_low": null,
+   "opt_high": null,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  },
+  {
+   "person": "synthetic-a",
+   "marker": "weight",
+   "marker_name": "Body weight",
+   "category": "body",
+   "taken_at": "2025-05-05",
+   "qualifier": null,
+   "value": 79.0,
+   "unit": "kg",
+   "value_canonical": 79.0,
+   "unit_canonical": "kg",
+   "ref_low": null,
+   "ref_high": null,
+   "ref_flag": null,
+   "opt_low": null,
+   "opt_high": null,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  },
+  {
+   "person": "synthetic-a",
+   "marker": "weight",
+   "marker_name": "Body weight",
+   "category": "body",
+   "taken_at": "2025-07-05",
+   "qualifier": null,
+   "value": 78.0,
+   "unit": "kg",
+   "value_canonical": 78.0,
+   "unit_canonical": "kg",
+   "ref_low": null,
+   "ref_high": null,
+   "ref_flag": null,
+   "opt_low": null,
+   "opt_high": null,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  },
+  {
+   "person": "synthetic-a",
+   "marker": "height",
+   "marker_name": "Height",
+   "category": "body",
+   "taken_at": "2025-01-05",
+   "qualifier": null,
+   "value": 178,
+   "unit": "cm",
+   "value_canonical": 178,
+   "unit_canonical": "cm",
+   "ref_low": null,
+   "ref_high": null,
+   "ref_flag": null,
+   "opt_low": null,
+   "opt_high": null,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  },
+  {
+   "person": "synthetic-a",
+   "marker": "bmi",
+   "marker_name": "Body mass index",
+   "category": "body",
+   "taken_at": "2025-07-05",
+   "qualifier": null,
+   "value": 24.6,
+   "unit": "kg/m2",
+   "value_canonical": 24.6,
+   "unit_canonical": "kg/m2",
+   "ref_low": 20.0,
+   "ref_high": 26.0,
+   "ref_flag": null,
+   "opt_low": null,
+   "opt_high": null,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  }
+ ]
+}

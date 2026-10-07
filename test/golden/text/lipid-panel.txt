@@ -1,20 +1,20 @@
                                       Lipid panel (synthetic)
-                    illustrative goals; tick = goal, hollow marker = prior draw
-                                                                            │        ■ ✔ goal met
-  Total cholesterol  214 mg/dL  (goal <200) ████████████████████████████████│█▊  ○   ■ ✖ goal missed
+            synthetic data; illustrative goals; tick = goal, hollow marker = prior draw
+                                                                                   │    ■ low
+Total cholesterol  188 mg/dL  (goal <200)  ◆ near limit █████████████████████████▋ │ ○  ■ near limit
+                                                                                   │    ■ in range
+                                                                     │                  ■ high
+        LDL cholesterol  128 mg/dL  (goal <100)  ▲ high █████████████│███▌ ○            ■ no range
+                                                                     │
+                                                             │
+      HDL cholesterol  56 mg/dL  (goal >40)  ● in range █████│○▋
+                                                             │
                                                                             │
-                                                            │
-    LDL cholesterol  128 mg/dL  (goal <100) ████████████████│███▊ ○
-                                                            │
-                                                  │
-      HDL cholesterol  52 mg/dL  (goal >40) ██████│○▌
-                                                  │
-                                                                    │
-      Triglycerides  142 mg/dL  (goal <150) ███████████████████████▏│  ○
-                                                                    │
-                                                                 │
-Non-HDL cholesterol  162 mg/dL  (goal <130) █████████████████████│████▍  ○
-                                                                 │
-                                            ┬───────┬───────┬───────┬───────┬──────
-                                            0      50      100     150     200
-                                                             mg/dL
+    Triglycerides  142 mg/dL  (goal <150)  ◆ near limit ███████████████████▍│  ○
+                                                                            │
+                                                                         │
+    Non-HDL cholesterol  162 mg/dL  (goal <130)  ▲ high █████████████████│████▏ ○
+                                                                         │
+                                                        ┬─────┬──────┬──────┬──────┬──
+                                                        0     50    100    150    200
+                                                                    mg/dL

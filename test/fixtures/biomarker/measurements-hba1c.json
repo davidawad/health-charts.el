@@ -1,0 +1,131 @@
+{
+ "schema": "biomarker/v1",
+ "kind": "measurements",
+ "generated_at": "2026-01-01T00:00:00Z",
+ "filters": {
+  "person": "synthetic-a",
+  "marker": "hba1c"
+ },
+ "data": [
+  {
+   "person": "synthetic-a",
+   "marker": "hba1c",
+   "marker_name": "Hemoglobin A1c",
+   "category": "metabolic",
+   "taken_at": "2024-03-01",
+   "qualifier": null,
+   "value": 5.2,
+   "unit": "%",
+   "value_canonical": 5.2,
+   "unit_canonical": "%",
+   "ref_low": 4.0,
+   "ref_high": 5.6,
+   "ref_flag": null,
+   "opt_low": 4.5,
+   "opt_high": 5.3,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  },
+  {
+   "person": "synthetic-a",
+   "marker": "hba1c",
+   "marker_name": "Hemoglobin A1c",
+   "category": "metabolic",
+   "taken_at": "2024-09-01",
+   "qualifier": null,
+   "value": 5.5,
+   "unit": "%",
+   "value_canonical": 5.5,
+   "unit_canonical": "%",
+   "ref_low": 4.0,
+   "ref_high": 5.6,
+   "ref_flag": null,
+   "opt_low": 4.5,
+   "opt_high": 5.3,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  },
+  {
+   "person": "synthetic-a",
+   "marker": "hba1c",
+   "marker_name": "Hemoglobin A1c",
+   "category": "metabolic",
+   "taken_at": "2025-03-01",
+   "qualifier": null,
+   "value": 5.7,
+   "unit": "%",
+   "value_canonical": 5.7,
+   "unit_canonical": "%",
+   "ref_low": 4.0,
+   "ref_high": 5.6,
+   "ref_flag": null,
+   "opt_low": 4.5,
+   "opt_high": 5.3,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  },
+  {
+   "person": "synthetic-a",
+   "marker": "hba1c",
+   "marker_name": "Hemoglobin A1c",
+   "category": "metabolic",
+   "taken_at": "2025-09-01",
+   "qualifier": null,
+   "value": 5.4,
+   "unit": "%",
+   "value_canonical": 5.4,
+   "unit_canonical": "%",
+   "ref_low": 4.0,
+   "ref_high": 5.6,
+   "ref_flag": null,
+   "opt_low": 4.5,
+   "opt_high": 5.3,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  },
+  {
+   "person": "synthetic-a",
+   "marker": "hba1c",
+   "marker_name": "Hemoglobin A1c",
+   "category": "metabolic",
+   "taken_at": "2026-03-01",
+   "qualifier": null,
+   "value": 5.9,
+   "unit": "%",
+   "value_canonical": 5.9,
+   "unit_canonical": "%",
+   "ref_low": 4.0,
+   "ref_high": 5.6,
+   "ref_flag": null,
+   "opt_low": 4.5,
+   "opt_high": 5.3,
+   "opt_flag": null,
+   "flag": null,
+   "lab": "Synthetic Lab",
+   "fasting": true,
+   "tags": [
+    "synthetic"
+   ]
+  }
+ ]
+}
