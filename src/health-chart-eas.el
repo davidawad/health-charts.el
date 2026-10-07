@@ -30,7 +30,9 @@
 
 (eas-template-add-directory (health-chart-eas-template-directory) "health")
 
+(require 'health-chart-theme)
 (require 'health-chart-transforms)
+(require 'health-chart-status)
 
 (provide 'health-chart-eas)
 ;;; health-chart-eas.el ends here

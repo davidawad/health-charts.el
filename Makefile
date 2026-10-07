@@ -15,9 +15,9 @@ ERT = $(EMACS) -Q --batch $(LOAD_PATHS) -L test $(foreach t,$(1),-l $(t)) \
 test:
 	$(call ERT,$(TESTS),$(if $(SELECTOR),"$(SELECTOR)",t))
 
-# Rewrite every golden, then review the diff.
+# Rewrite every golden (or those of SELECTOR=regexp), then review the diff.
 goldens:
-	HEALTH_CHART_UPDATE_GOLDEN=1 $(call ERT,$(TESTS),t)
+	HEALTH_CHART_UPDATE_GOLDEN=1 $(call ERT,$(TESTS),$(if $(SELECTOR),"$(SELECTOR)",t))
 
 compile:
 	$(EMACS) -Q --batch $(LOAD_PATHS) --eval '(setq byte-compile-error-on-warn t)' -f batch-byte-compile $(SOURCES)

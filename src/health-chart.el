@@ -36,6 +36,8 @@
 (require 'subr-x)
 (require 'eas)
 (require 'health-chart-eas)
+(require 'health-chart-theme)
+(require 'health-chart-status)
 (require 'health-chart-core)
 (require 'health-chart-validate)
 
@@ -200,6 +202,8 @@ Hover, crosshair and zoom come from eas.  PROPS: :backend `text' or
   "Open template NAME over its synthetic example data."
   (interactive (list (completing-read "Template: " (health-chart-template-names) nil t)))
   (health-chart-open name (health-chart-example name)))
+
+(require 'health-chart-biomarker)
 
 (provide 'health-chart)
 ;;; health-chart.el ends here
