@@ -1,1053 +1,494 @@
 # health-charts.el
 
-Biomarker charts in Emacs: lab results in, chart out — an image in a
-GUI or an Org file, propertized unicode text in a terminal. Lisp never
-draws. The default engine is [eas.el](https://github.com/davidawad/eas.el):
-each kind is an [eas template](docs/design/eas-migration.md) (a
-Vega-Lite document with typed slots) plus a few domain transforms that
-do the range and status logic inside the chart, so the same document is
-an interactive SVG view in a GUI, text in a terminal, and plain
-Vega-Lite for [vl2svg](https://vega.github.io/vega-lite/). A
-[gnuplot](http://gnuplot.info) backend fills its own templates from a
-neutral [chart spec](docs/chartspec.md). Pick a backend per chart or
-globally, and bring your own templates. Around that: a kind registry, a
-shape registry, a validate / explain / describe surface for programs and
-agents, a JSON command line, and ert tests.
+Medical and health charts in Emacs from data you supply. health-chart
+never fetches anything and never ships reference data: you hand it plain
+Lisp data (or JSON), it validates that data strictly, with a reason code
+and a JSON path for every failure, and draws it through the
+[eas.el](https://github.com/davidawad/eas.el) chart engine. One call
+draws any of the 28 templates (vitals, labs, glucose, medication, sleep,
+growth, ...) as text in a terminal frame or as an SVG image in a GUI
+frame. Pure Elisp; the only external process is the optional PNG export
+of the screenshots.
 
-[![LDL-C over four years for a synthetic person: points by status (▲ high, then ◐ suboptimal) falling through the shaded reference (0–100) and optimal (≤70) bands](docs/screenshots/vega-lite/timeseries.png)](docs/screenshots/vega-lite/timeseries.png)
+![Vitals dashboard rendered by health-charts.el](docs/screenshots/vitals-dashboard.png)
 
-*`timeseries` with the Vega-Lite backend: one marker's draws, reference
-and optimal ranges shaded, each point's status shown as glyph and word.
-Data: [`examples/sample-panel.json`](examples/sample-panel.json) (two
-made-up people). Regenerate:
-[`examples/screenshots.el`](examples/screenshots.el).*
+All example data in this repository is synthetic. Reference ranges in the
+examples are illustrative and labelled so. **These charts are for
+visualisation, not diagnosis or medical advice.**
 
-| kind | Vega-Lite | gnuplot |
-|---|---|---|
-| `bullet`: each latest value in its ranges | <img src="docs/screenshots/vega-lite/bullet.png" width="260" alt="bullet, Vega-Lite"> | <img src="docs/screenshots/gnuplot/bullet.png" width="260" alt="bullet, gnuplot"> |
-| `heatmap`: every draw's status per marker | <img src="docs/screenshots/vega-lite/heatmap.png" width="260" alt="heatmap, Vega-Lite"> | <img src="docs/screenshots/gnuplot/heatmap.png" width="260" alt="heatmap, gnuplot"> |
-| `compare`: one marker, several people | <img src="docs/screenshots/vega-lite/compare.png" width="260" alt="compare, Vega-Lite"> | <img src="docs/screenshots/gnuplot/compare.png" width="260" alt="compare, gnuplot"> |
-| `delta`: change between two draws, toward or away from target | <img src="docs/screenshots/vega-lite/delta.png" width="260" alt="delta, Vega-Lite"> | <img src="docs/screenshots/gnuplot/delta.png" width="260" alt="delta, gnuplot"> |
-| `staleness`: days since each test, against due and stale | <img src="docs/screenshots/vega-lite/staleness.png" width="260" alt="staleness, Vega-Lite"> | <img src="docs/screenshots/gnuplot/staleness.png" width="260" alt="staleness, gnuplot"> |
-| `panel`: a small time series per marker | <img src="docs/screenshots/vega-lite/panel.png" width="170" alt="panel, Vega-Lite"> | <img src="docs/screenshots/gnuplot/panel.png" width="170" alt="panel, gnuplot"> |
-| `trend`: draws, 3-draw mean and a linear trend with its slope in words | <img src="docs/screenshots/vega-lite/trend.png" width="260" alt="trend, Vega-Lite"> | <img src="docs/screenshots/gnuplot/trend.png" width="260" alt="trend, gnuplot"> |
-| `lollipop`: how far past its limit each draw was | <img src="docs/screenshots/vega-lite/lollipop.png" width="260" alt="lollipop, Vega-Lite"> | <img src="docs/screenshots/gnuplot/lollipop.png" width="260" alt="lollipop, gnuplot"> |
-| `strip`: every draw of every marker on its own range scale | <img src="docs/screenshots/vega-lite/strip.png" width="260" alt="strip, Vega-Lite"> | <img src="docs/screenshots/gnuplot/strip.png" width="260" alt="strip, gnuplot"> |
-| `dumbbell`: first draw to latest, toward or away from range | <img src="docs/screenshots/vega-lite/dumbbell.png" width="260" alt="dumbbell, Vega-Lite"> | <img src="docs/screenshots/gnuplot/dumbbell.png" width="260" alt="dumbbell, gnuplot"> |
-| `dual`: two related markers on two axes | <img src="docs/screenshots/vega-lite/dual.png" width="260" alt="dual, Vega-Lite"> | <img src="docs/screenshots/gnuplot/dual.png" width="260" alt="dual, gnuplot"> |
-| `inrange`: share of draws below, inside and above range | <img src="docs/screenshots/vega-lite/inrange.png" width="260" alt="inrange, Vega-Lite"> | <img src="docs/screenshots/gnuplot/inrange.png" width="260" alt="inrange, gnuplot"> |
-
-*The same spec through both backends, from
-[`examples/sample-panel.json`](examples/sample-panel.json); full size
-under [Screenshots](#screenshots). Regenerate:
-[`examples/screenshots.el`](examples/screenshots.el).*
-
-[<img src="docs/screenshots/org-report.png" width="460" alt="The lab-draw Org report exported to HTML: title, out-of-range list, latest-results table with status glyphs and words, and a bullet chart">](examples/reports/lab-draw.html)
-
-*An [Org report](#org-reports): the `lab-draw` template stamped for a
-synthetic person, its dynamic blocks refreshed, exported to HTML. Source:
-[`examples/reports/lab-draw.org`](examples/reports/lab-draw.org), data:
-[`examples/sample-panel.json`](examples/sample-panel.json). Regenerate:
-[`examples/reports.el`](examples/reports.el), then
-[`examples/report-screenshot.sh`](examples/report-screenshot.sh).*
-
-### 60-second usage
-
-```elisp
-(require 'health-chart)
-;; no biomarker CLI needed: serve the synthetic sample panel
-(setq health-chart-source-function #'health-chart-source-static
-      health-chart-source-static-data (json-read-file "examples/sample-panel.json"))
-
-(health-chart-write 'timeseries (health-chart-source-trend :person "alex" :marker "ldl-c")
-                    "ldl.svg")                                  ; image file
-(health-chart-plot 'bullet (health-chart-source-latest :person "alex")
-                   :backend 'text)                              ; unicode, any terminal
-(health-chart-org-new-report "lab-draw" "draw.org"
-                             :person "alex" :until "2025-09-30") ; a whole Org report
-```
-
-or in any Org file, then `C-c C-c` on the `#+BEGIN` line:
-
-```org
-#+BEGIN: health-chart :kind timeseries :person "alex" :marker "ldl-c" :caption "LDL-C"
-#+END:
-```
-
-Data comes from plain Lisp (plists or alists) or from
-[biomarker-cli](#data-source-biomarker-cli) through a thin, swappable
-source layer. Every example in this file uses synthetic data.
-
-- [Install](#install)
-- [Use](#use)
-- [Chart kinds](#chart-kinds)
-- [Backends](#backends)
-- [Screenshots](#screenshots)
-- [Templates](#templates)
-- [Org reports](#org-reports)
-- [The dashboard](#the-dashboard)
-- [Data: plain Lisp](#data-plain-lisp)
-- [Data source: biomarker-cli](#data-source-biomarker-cli)
-- [For programs and agents](#for-programs-and-agents)
-- [Command line](#command-line)
-- [Customization](#customization)
-- [Layout](#layout)
-- [Tests](#tests)
+Requires Emacs 30.1+ and [eas.el](https://github.com/davidawad/eas.el) 0.2.2+.
 
 ## Install
 
-Requires Emacs 29.1 or later, on Linux, macOS or Windows (native
-Emacs; WSL works as Linux), and no Emacs packages. eas.el (Emacs 30.1)
-is optional and is the best backend when present: put its `src/`
-directory on `load-path`. Without it, images need at least one other
-backend tool (see [Backends](#backends)); without any, every kind still
-renders as unicode text. Showing images inline needs an Emacs built with
-librsvg (SVG) or libpng (PNG).
-
-### Requirements per OS
-
-Every tool is optional. Tools are found with `executable-find` on
-`exec-path`, then in `health-chart-tool-directories` (by default
-gnuplot's install directory and npm's global directory on Windows,
-Homebrew's on macOS, for a GUI Emacs started without the shell's PATH).
-`M-x health-chart-doctor` (or `bin/health-chart doctor`) shows what was
-found.
-
-Linux (Debian/Ubuntu; other distributions have the same packages):
+Install eas, then this package. On macOS or Linux with Homebrew the eas
+command-line tool comes from the tap:
 
 ```sh
-sudo apt install gnuplot-nox librsvg2-bin   # gnuplot backend; rsvg-convert
-npm install -g vega vega-lite vega-cli      # vega-lite backend (needs Node.js)
+brew install davidawad/tap/eas
 ```
 
-macOS (Homebrew):
-
-```sh
-brew install gnuplot librsvg node
-npm install -g vega vega-lite vega-cli
-```
-
-Windows (PowerShell; any one of winget, Chocolatey or Scoop):
-
-```powershell
-winget install gnuplot.gnuplot     # or: choco install gnuplot / scoop install gnuplot
-winget install OpenJS.NodeJS.LTS   # then:
-npm install -g vega vega-lite vega-cli
-choco install rsvg-convert         # optional, for vega-lite PNG/PDF without node-canvas
-```
-
-On Windows use `gnuplot.exe`, not `wgnuplot.exe` (the GUI build does
-not write charts to stdout); point `health-chart-gnuplot-command` at
-it if the installer did not put it on PATH or in `C:\Program
-Files\gnuplot\bin`. npm installs `vl2svg`/`vl2png` as `.cmd` shims,
-which Emacs runs directly; with no `vl2svg` at all the backend falls
-back to `npx`. `bin/health-chart.cmd` is the command line for cmd.exe
-and PowerShell.
-
-What degrades without each tool:
-
-| missing | effect |
-|---|---|
-| eas.el | the `eas` backend is unavailable and `auto` falls through; the `vega-lite` backend then draws only your own templates (the bundled kinds are eas templates it exports), so images come from gnuplot |
-| `vl2svg` (vega-cli) | vega-lite is skipped; images come from eas or gnuplot. `health-chart-vl2svg-command` nil also tries `npx`, which downloads vega on first use |
-| `vl2png`/`vl2pdf` working (node-canvas) | vega-lite PNG/PDF go through `vl2svg \| rsvg-convert` |
-| `rsvg-convert` | with no node-canvas either, vega-lite writes SVG only; a PNG/PDF request fails with an error saying so (gnuplot still writes PNG/PDF itself) |
-| `gnuplot` | images come from eas (or vega-lite); kinds drawn only by templates (`trend`, `lollipop`, `strip`, `dumbbell`, `dual`, `inrange`) need one of the three |
-| every image backend | every kind with a native renderer draws as unicode text |
-| librsvg in Emacs | inline charts use PNG where Emacs has libpng, else text (`svg-display` in the doctor) |
-| `biomarker` CLI | no live data; plain Lisp data and `health-chart-source-static` still work |
-| `gzip` | nothing in this package runs gzip. Compressed genome kits are read by genetics.el (a soft dependency); where gzip is absent (Windows), decompress the kit first, read it through genome-cli, or rely on Emacs's own `zlib-decompress-region` when `(zlib-available-p)` |
-
-Data files the package writes (reports, templates' output, specs) are
-UTF-8 with LF line ends on every OS; input with CRLF line ends (a spec
-file, CLI output) is read as well. `.gitattributes` keeps a Windows
-checkout LF, which the golden fixtures need.
-
-With `package-vc` (built into Emacs 29+):
+For Emacs (30.1 or newer), with `:vc`:
 
 ```elisp
-(package-vc-install "https://github.com/davidawad/health-charts.el")
-```
-
-or with straight.el:
-
-```elisp
+(use-package eas
+  :vc (:url "https://github.com/davidawad/eas.el" :lisp-dir "src"))
 (use-package health-chart
-  :straight (health-chart :host github :repo "davidawad/health-charts.el")
-  :commands (health-charts health-chart-plot health-chart-plot-view))
+  :vc (:url "https://github.com/davidawad/health-charts.el" :lisp-dir "src"))
 ```
 
-or from a local checkout:
-
-```elisp
-(use-package health-chart
-  :load-path "~/src/health-charts.el"
-  :commands (health-charts health-chart-plot health-chart-plot-view)
-  :custom
-  (health-chart-source-executable "biomarker")
-  (health-chart-default-person "alex"))
-```
-
-or `(add-to-list 'load-path "~/src/health-charts.el")` and
-`(require 'health-chart)`.
+or add both `src/` directories to `load-path` and `(require 'health-chart)`.
 
 ## Use
 
-`M-x health-charts` opens the dashboard. `M-x health-chart-demo` shows
-every kind over built-in synthetic data, no CLI needed.
-
-From Lisp, one function draws any kind:
-
-```elisp
-(health-chart-render KIND DATA &rest PROPS)      ; -> image object in a GUI, text in a terminal
-(health-chart-render KIND DATA :format 'png)     ; -> that format as a string (svg png pdf text vega-lite)
-(health-chart-write KIND DATA "ldl.png" &rest PROPS) ; -> file; format from the extension
-(health-chart-plot KIND DATA &rest PROPS)        ; -> string (SVG document or text)
-(health-chart-plot-insert KIND DATA &rest PROPS) ; at point
-(health-chart-plot-view KIND DATA &rest PROPS)   ; in its own buffer
-(health-chart-spec KIND DATA &rest PROPS)        ; -> the chartspec/v1 plist, pure
-```
+A chart is a template plus bindings: the data and the few numbers the
+template needs (a reference range, a target). Bindings are JSON, or the
+same thing as a Lisp plist.
 
 ```elisp
-(health-chart-write 'timeseries (health-chart-source-trend :marker "ldl-c")
-                    "~/notes/ldl.svg" :backend 'vega-lite)
-(health-chart-render 'heatmap (health-chart-source-query :person "alex")
-                     :backend 'gnuplot :format 'vega-lite) ; signals: gnuplot writes no Vega-Lite
+(require 'health-chart)
+
+;; the synthetic example bindings of a template, drawn: SVG in a GUI
+;; frame, text in a terminal
+(health-chart-render "vitals-trend" (health-chart-example "vitals-trend"))
+
+;; your own data
+(health-chart-render
+ "vitals-trend"
+ '(:title "Resting heart rate" :y_title "Heart rate (bpm)" :low 60 :high 100
+   :data [(:time "2026-03-01T08:00" :value 72)
+          (:time "2026-03-02T08:00" :value 104)
+          (:time "2026-03-03T08:00" :value 58)])
+ :backend 'text)
+
+;; from JSON, into a live view with hover, crosshair and zoom
+(health-chart-open "bp-trend" (health-chart-read-bindings "bp.json"))
+
+;; every template over its example
+(health-chart-demo "agp")
 ```
 
-In Org, `health-chart-write` returns the file, so a source block can
-produce the image link (`:format 'vega-lite` gives the spec JSON for a
-web page instead):
-
-```org
-#+begin_src emacs-lisp :results file
-(health-chart-write 'timeseries (health-chart-source-trend :marker "ldl-c") "ldl.svg")
-#+end_src
-```
-
-```elisp
-(health-chart-plot 'timeseries (health-chart-source-trend :marker "ldl_c")
-                   :backend 'text :width 72)
-```
-
-```
-LDL-C · alex · mg/dL   latest 88 mg/dL (2025-06-02) ◐ suboptimal
-    │●······
-    │       ······●···
-120 ┤                 ······
-    │                       ···●···                    ···●··
-    │                              ·······       ······      ····
-100 ┤░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░···●···░░░░░░░░░░░░░░░░····░░░
-    │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░··●
- 80 ┤░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-    │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-    │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
-    └───────────────────────────────────────────────────────────────────
-     2024-03-04                  2024-10-17                   2025-06-02
-● value   ▒ optimal ≤70   ░ reference 0–100
-```
-
-Common props:
-
-| prop | meaning |
-|---|---|
-| `:backend` | `auto` (default `health-chart-backend`), `eas`, `vega-lite`, `gnuplot`, `text`, or `svg` (native, obsolete) |
-| `:format` | `svg`, `png`, `pdf`, `text` or `vega-lite` (the filled Vega-Lite JSON, for Org or the web) |
-| `:width` `:height` | text columns overall / plot rows |
-| `:pixel-width` `:pixel-height` | image size in CSS pixels (default `health-chart-image-width`, 720) |
-| `:scale` | PNG pixel ratio (`health-chart-image-scale`, 1) |
-| `:theme` | `light` or `dark` (default `health-chart-theme`, `auto`) |
-| `:person` `:marker` | which person and marker to draw (default: the first present) |
-| `:ref` `:optimal` | shade the reference / optimal band (default `health-chart-show-ref-range` / `-optimal-range`) |
-| `:title` | replaces the derived title |
-| `:from` `:to` | `delta`: the two draw dates (default: the latest two) |
-| `:columns` | `panel`: cells per row |
-
-Every status is shown as a glyph *and* a word, never color alone:
-`● optimal`, `○ normal` (in range, no optimal range known),
-`◐ suboptimal` (in the reference range, outside optimal), `▲ high`,
-`▼ low`, `? n/a`. The reference and optimal bounds decide the status;
-the source's `flag` is used only when a measurement has no ranges.
-
-## Chart kinds
-
-`(health-chart-list-kinds)` lists them. Every kind except those marked ◇ has a
-native text renderer, and the seven marked ◆ also have templates for both image
-backends (`(health-chart-templates)` lists them). The six marked ◇
-(adapted from the Vega-Lite gallery, see
-[docs/chart-gallery.md](docs/chart-gallery.md)) are drawn by templates
-only, Vega-Lite and gnuplot: `:backend text` and `:backend svg` decline
-them with an `unsupported_kind` error that names the template backends,
-and `auto` picks one of those.
-
-| kind | shows |
-|---|---|
-| `timeseries` ◆ | one marker over time, reference (░) and optimal (▒) ranges shaded, points by status |
-| `panel` ◆ | small multiples: a compact time series per marker |
-| `table` | sparkline table: marker, latest, date, trend, flag, reference |
-| `bullet` ◆ | range bars: where each latest value sits in its ranges |
-| `heatmap` ◆ | markers by draw dates, each cell the draw's status |
-| `compare` ◆ | one marker over time for several people, one glyph/color each |
-| `delta` ◆ | percent change per marker between two draws, judged against target |
-| `trend` ◇ | one marker with a 3-draw rolling mean and a linear trend, slope in words |
-| `lollipop` ◇ | one marker's draws as stems to its target limit, labeled with the distance past it |
-| `strip` ◇ | every draw of every marker on its own range scale (0 = reference low, 1 = high) |
-| `dumbbell` ◇ | first draw to latest per marker on its range scale, colored by verdict |
-| `dual` ◇ | two related markers (default glucose and HbA1c) on a left and a right axis (`:marker '("a" "b")`) |
-| `inrange` ◇ | share of each marker's draws below, inside and above its reference range |
-| `sparkline` | one-row sparkline of plain numbers |
-| `scorecard` | indicator values: indicator, value, unit, status, trend sparkline |
-| `cohort` | cohort panel: a card per indicator with value, status, range track, trend |
-| `staleness` ◆ | days since each indicator's draw, against due and stale lines |
-
-The last three take indicator values, not measurements; see
-[Indicators and cohorts](#indicators-and-cohorts).
-
-`table`:
-
-```
-Biomarkers · alex
-Marker            Latest  Date        Trend         Flag          Reference
-LDL-C           88 mg/dL  2025-06-02  █▇▄▂▅▁        ◐ suboptimal  0–100 (opt ≤70)
-HDL-C           61 mg/dL  2025-06-02  ▁▃▆▅▃█        ● optimal     ≥40 (opt ≥60)
-Triglycerides  104 mg/dL  2025-06-02  █▅▃▃▅▁        ◐ suboptimal  0–150 (opt ≤100)
-hs-CRP          3.4 mg/L  2025-06-02  ▄█▃▁▄▇        ▲ high        ≤3 (opt ≤1)
-```
-
-`bullet`:
-
-```
-Latest vs range · alex
-LDL-C          ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░┃░░░───   88 mg/dL  ◐ suboptimal
-HDL-C          ───░░░░░░░░░░░░░░░░░░░░░░░░░┃▒▒▒   61 mg/dL  ● optimal
-Vitamin D      ───░░░░▒▒┃▒▒▒▒░░░░░░░░░░░░░░░───   48 ng/mL  ● optimal
-hs-CRP         ▒▒▒░░░░░░░░░░░░░░░░░░░░░░───┃───   3.4 mg/L  ▲ high
-┃ latest   ▒ optimal   ░ reference   ─ outside
-```
-
-`heatmap`:
-
-```
-Out of range · alex
-               24 24 24 24 25 25
-               03 06 09 12 03 06  out
-LDL-C           ▲  ▲  ▲  ◐  ▲  ◐  4/6
-HDL-C           ◐  ◐  ◐  ◐  ◐  ●  0/6
-Vitamin D       ▼  ◐  ◐  ●  ◐  ●  1/6
-● optimal  ○ normal  ◐ suboptimal  ▲ high  ▼ low  · no draw
-```
-
-`delta` — a verdict per marker: `improved` / `worsened` (closer to /
-further from the optimal range, or the reference range when there is no
-optimal one), `on-target` (inside it both times), `steady`:
-
-```
-Change 2025-03-03 → 2025-06-02 · alex
-LDL-C          112 → 88 mg/dL         ███│            -21.4%  improved
-Vitamin D      36 → 48 ng/mL             │█████       +33.3%  improved
-TSH            2.4 → 2.1 mIU/L         ██│            -12.5%  on-target
-hs-CRP         2.1 → 3.4 mg/L            │█████████   +61.9%  worsened
-```
-
-`compare` overlays people with distinct glyphs (and colors in SVG):
-
-```elisp
-(health-chart-plot 'compare (health-chart-source-trend :marker "vitamin_d" :person nil)
-                   :backend 'text)
-```
-
-SVG output uses a palette with selected light and dark variants
-(`health-chart-svg-theme`), reserved status colors that always travel
-with a glyph and a label, and a hover `<title>` on every point, bar and
-cell. Each document carries a `<title>`/`<desc>` naming the kind and
-data extent, so a saved file explains itself.
-
-## Backends
-
-| backend | formats | needs | role |
-|---|---|---|---|
-| `eas` | svg, text | [eas.el](https://github.com/davidawad/eas.el) on `load-path` (Emacs 30.1), no external tool | first choice everywhere it is installed: images in a GUI, text in a terminal, live views with `health-chart-show` |
-| `vega-lite` | svg, png, pdf, vega-lite | `vl2svg` (`npm install -g vega vega-lite vega-cli`); PNG/PDF via `vl2png`/`vl2pdf` (node-canvas) or `vl2svg` + `rsvg-convert`; eas.el for the bundled kinds | PNG and PDF; draws the eas templates exported as standalone Vega-Lite, and your own `vega-lite/` templates |
-| `gnuplot` | svg, png, pdf, text | `gnuplot` 5.4+ with the cairo terminals (see [Requirements per OS](#requirements-per-os)) | images and text without eas; PNG/PDF without Node |
-| `text` | text | nothing | native unicode renderers; last-resort terminal fallback, and the only renderer of `table`, `sparkline`, `scorecard`, `cohort` |
-| `svg` | svg | nothing | native SVG renderers: **obsolete**, never chosen by default, no new features |
-
-`health-chart-backend` (or `:backend` per call) is `auto` by default:
-
-- where images can be shown (GUI frame, or an image `:format`): the
-  first of `health-chart-graphic-backends` (`eas`, `vega-lite`,
-  `gnuplot`) that is installed, writes the format and has a template for
-  the kind (eas writes svg and text, so PNG and PDF go to the next);
-- in a terminal: the first of `health-chart-terminal-backends`
-  (`eas`, `gnuplot`, `text`);
-- otherwise native text.
-
-`(health-chart-explain KIND DATA)` says which backend and why, and for
-a template backend shows the template file, the generated program and
-the exact argv of each step. Programs go to the tools on stdin — no
-shell is involved, so no value is ever shell-interpolated. The Vega-Lite
-commands are `health-chart-vl2svg-command`, `-vl2png-command`,
-`-vl2pdf-command` (nil: the tool on `exec-path` or in
-`health-chart-tool-directories`, else
-`npx -p vega -p vega-lite -p vega-cli vl2svg`); `vl2png`/`vl2pdf` need
-node-canvas, and when they fail the backend renders `vl2svg | rsvg-convert`
-instead (`health-chart-vega-lite-raster`). `M-x health-chart-doctor`
-reports which tools are installed and checks every template.
-
-## The eas backend
-
-Every templated kind has an eas template in `templates/eas/` (named
-`health-KIND`: eas's template registry is one namespace and it ships
-`heatmap`, `line` and others). A template is Vega-Lite with typed
-slots; the range and status logic that the chart spec used to compute in
-Lisp runs inside the document as registered domain transforms
-(`health-chart-eas.el`):
-
-| piece | what it does |
-|---|---|
-| adapter `biomarker` | measurements (plists, alists, JSON, snake_case or kebab-case, a biomarker/v1 envelope) to tidy rows; a draw with no ranges takes its marker's |
-| adapter `indicator-values` | indicator values to rows (staleness) |
-| transform `status` | status, glyph, `status_label` (glyph and word), `value_label` per row, from `health-chart-status` |
-| transform `reference-band` | band extents in value units (`scale: value`), 0..1 positions in a padded domain (`domain`, bullet) or on the reference range (`range`, strip and dumbbell) |
-| transform `change` | first to last draw per marker: percent, verdict (`health-chart-model--verdict`) |
-| transforms `staleness`, `trend` | days and freshness state; rolling mean and least-squares line |
-
-The transforms call the package's own rules, so "high", "optimal" and
-"improved" have one definition across every backend, and
-`(health-chart-eas-parity KIND DATA)` checks, as data, that a template
-plots the numbers `health-chart-spec` has for the kind (the tests do, for
-all thirteen). In Lisp:
-
-```elisp
-(health-chart-render 'panel data :backend 'eas :format 'text :person "alex")  ; a string
-(health-chart-show 'timeseries data :person "alex" :marker "ldl-c")          ; live eas view
-(health-chart-eas-resolve 'bullet data :person "alex")  ; the pure Vega-Lite spec
-```
-
-`health-chart-show` opens an eas view: hover tooltips, crosshair, zoom
-and pan work in a GUI, and `eas-agent` (`inspect`, `dispatch`, `log`,
-`selection`) reads and drives it as data. After `(require
-'health-chart-eas)` the templates are in eas's registry, so
-`(eas-agent "describe" "templates")`, `"example"`, `"check"` and
-`"render"` work on `health-bullet` and the rest.
-
-```
-                              Panel · alex
-                  4 markers, 2021-11-08 to 2025-09-15
-         LDL-C · mg/dL                HDL-C · mg/dL
-   │▲⠒⠤▲⢄⡀                    60┤██████████████████⢀◆⠤⠔●  ● ● optimal
-   │     ⠈▲⠒⠒▲⢄⣀                │█████████████⢀⡠⠔◆⠉⠁████  ◆ ◐ suboptimal
-100┤████████████▲⠉⠑⠒◆⠢⠤◆⢄⣀◆   50┤█████████◆⠤⠒◆⠁█████████  ▼ ▼ low
-   │███████████████████████     │████⢀⡠◆⠒⠉██████████████  ▲ ▲ high
-   │███████████████████████   40┤▼⠔⠒◆⠁┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-  0└─┬──────────┬──────────     └─┬──────────┬──────────
-    2022       2024              2022       2024
-
-       Vitamin D · ng/mL               TSH · mIU/L
- 60┤███████████████████████  2.5┤███████████████████████
-   │█████████████████⣀⡠●⠒⠊●     │█████████●⠢⡀███████●███
-   │██████████████⡠⠒●██████     │████████⡜██⠈●⡀███⢀⠜⠈⠢⡀█
- 40┤██████◆⠤⠒●⠉⠒◆⠉█████████     │███●⢄██⡜█████⠈⠒⢄⢠⠊███⠈●
-   │    ⡠⠊                   2.0┤█⢀⠎██⠣●█████████●██████
- 20┤▼⠔⠒▼┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈     │●⠃█████████████████████
-   └─┬──────────┬──────────     └─┬──────────┬──────────
-    2022       2024              2022       2024
-```
-
-*`panel` as eas text: four markers of the synthetic sample, each on its
-own scale, bands shaded, every point a status glyph.*
-
-Write your own kind the same way: `templates/eas/health-KIND.json` with
-the example in `examples/eas/` (`examples/eas-examples.el` regenerates
-the bundled ones), then an entry in `health-chart-eas-kinds` naming the
-template and the function that builds its slots from the data.
-
-## Screenshots
-
-Every templated kind rendered from the synthetic
-[`examples/sample-panel.csv`](examples/sample-panel.csv) (two made-up
-people, thirteen markers, seven or eight draws over four years) by both
-backends, 1200 px wide. Regenerate with
-`emacs -Q --batch -L . -l examples/screenshots.el`.
-
-| kind | Vega-Lite | gnuplot |
-|---|---|---|
-| `timeseries` | ![timeseries, Vega-Lite](docs/screenshots/vega-lite/timeseries.png) | ![timeseries, gnuplot](docs/screenshots/gnuplot/timeseries.png) |
-| `panel` | ![panel, Vega-Lite](docs/screenshots/vega-lite/panel.png) | ![panel, gnuplot](docs/screenshots/gnuplot/panel.png) |
-| `bullet` | ![bullet, Vega-Lite](docs/screenshots/vega-lite/bullet.png) | ![bullet, gnuplot](docs/screenshots/gnuplot/bullet.png) |
-| `heatmap` | ![heatmap, Vega-Lite](docs/screenshots/vega-lite/heatmap.png) | ![heatmap, gnuplot](docs/screenshots/gnuplot/heatmap.png) |
-| `compare` | ![compare, Vega-Lite](docs/screenshots/vega-lite/compare.png) | ![compare, gnuplot](docs/screenshots/gnuplot/compare.png) |
-| `delta` | ![delta, Vega-Lite](docs/screenshots/vega-lite/delta.png) | ![delta, gnuplot](docs/screenshots/gnuplot/delta.png) |
-| `staleness` | ![staleness, Vega-Lite](docs/screenshots/vega-lite/staleness.png) | ![staleness, gnuplot](docs/screenshots/gnuplot/staleness.png) |
-| `trend` | ![trend, Vega-Lite](docs/screenshots/vega-lite/trend.png) | ![trend, gnuplot](docs/screenshots/gnuplot/trend.png) |
-| `lollipop` | ![lollipop, Vega-Lite](docs/screenshots/vega-lite/lollipop.png) | ![lollipop, gnuplot](docs/screenshots/gnuplot/lollipop.png) |
-| `strip` | ![strip, Vega-Lite](docs/screenshots/vega-lite/strip.png) | ![strip, gnuplot](docs/screenshots/gnuplot/strip.png) |
-| `dumbbell` | ![dumbbell, Vega-Lite](docs/screenshots/vega-lite/dumbbell.png) | ![dumbbell, gnuplot](docs/screenshots/gnuplot/dumbbell.png) |
-| `dual` | ![dual, Vega-Lite](docs/screenshots/vega-lite/dual.png) | ![dual, gnuplot](docs/screenshots/gnuplot/dual.png) |
-| `inrange` | ![inrange, Vega-Lite](docs/screenshots/vega-lite/inrange.png) | ![inrange, gnuplot](docs/screenshots/gnuplot/inrange.png) |
-
-The last six are adapted from the Vega-Lite example gallery; which
-patterns were taken or rejected, and why, is in
-[docs/chart-gallery.md](docs/chart-gallery.md).
-
-## Templates
-
-A template is a chart program with slots or placeholders where the data
-goes. The bundled eas templates are described under
-[The eas backend](#the-eas-backend). The gnuplot backend (and a
-Vega-Lite template of your own) fills placeholders from the
-[chart spec](docs/chartspec.md): `templates/gnuplot/KIND.gp` (a gnuplot
-script, data inlined as `$data << EOD … EOD` blocks) and
-`vega-lite/KIND.vl.json` in a template directory of yours (a Vega-Lite
-spec, data inlined under `"data": {"values": {{data}}}`).
-
-Templates are looked up in `health-chart-template-directories` first,
-then the bundled `templates/`; the first `DIR/BACKEND/KIND.EXT` wins.
-So to restyle a chart, copy its template into your directory and edit
-it; to add a kind, drop a file in:
-
-```elisp
-(setq health-chart-template-directories '("~/.emacs.d/health-chart-templates"))
-;; ~/.emacs.d/health-chart-templates/vega-lite/my-kind.vl.json
-(health-chart-render 'my-kind (health-chart-source-query :person "alex")
-                     :backend 'vega-lite)
-```
-
-A template-only kind takes measurements; its spec has every measurement
-as a row plus the timeseries members of the first marker.
-`(health-chart-templates)` lists every `(backend, kind)` with its path
-and whether it is yours or bundled.
-
-### Placeholder syntax
-
-| form | inserts |
-|---|---|
-| `{{title}}` | a member of the spec, escaped for the template's language |
-| `{{overlays.ref_low}}` | a nested member (dot path, snake_case as in the JSON) |
-| `{{legend.label}}` | a member of every element of an array: an array |
-| `{{x.ticks.0.label}}` | an array element by index |
-| `{{data}}` | the spec's `rows` |
-| `{{rows\|length}}` | an array's element count |
-| `{{width\|bare}}` | a number or plain word unquoted (anything else is an error) |
-| `{{x\|json}}` / `{{rows\|data}}` | force JSON / datablock encoding |
-
-Escaping by language:
-
-| value | Vega-Lite (JSON) | gnuplot |
-|---|---|---|
-| string | `"JSON string"` | `'single-quoted'` (no backslash or backquote substitution; `'` doubled) |
-| number | `76`, `5.3` | `76`, `5.3` |
-| null | `null` | `NaN` |
-| array of scalars | JSON array | array literal `['a', 'b']` (for `array A = {{…}}`) |
-| array of objects | JSON array of objects | tab-separated lines with a header row, for a `$data << EOD` block |
-| object | JSON object | an error: name a member |
-
-Templates also see `{{format}}` (`svg`, `png`, `pdf`, `text`,
-`vega-lite`) and `{{scale}}`. The gnuplot backend prepends the terminal
-(`svg`, `pngcairo`, `pdfcairo` sized from `width`/`height`, or `dumb`
-for text), `set output`, `set encoding utf8`, `set datafile separator
-"\t"` and `set datafile columnheaders`, so templates address columns by
-name: `plot $data using 'date':'value'`. An unknown placeholder fails
-with the template's file and line. Keep the house rule: every status
-shows its glyph and word (`{{legend.label}}`), never color alone.
-
-## Org reports
-
-`health-chart-org.el` composes charts, tables and indicator scorecards
-into Org documents with dynamic blocks. Refresh one block with `C-c C-c`
-on its `#+BEGIN` line, every health block with `M-x
-health-chart-org-update` (or `org-update-all-dblocks`). It loads on first
-use; plain charts never load Org.
-
-| block | writes |
-|---|---|
-| `health-chart` | the chart image, via `health-chart-write`, into the document's asset directory, and its `[[file:...]]` link (`#+CAPTION` from `:caption`). A kind no image template draws (`scorecard`, `cohort`, `table`), or `:backend text`, becomes a text chart in an example block |
-| `health-table` | the latest value per marker: marker, value, unit, date, status (glyph and word), reference, optimal; with a `#+PLOT` line (above the table, where org-plot reads it) so `C-c " g` charts it too |
-| `health-scorecard` | a cohort's indicator values with status and trend words |
-| `health-flags` | the markers whose latest value is out of range, as a list |
-| `health-genetics` | genetics.el's `genetics-summary`, `genetics-hits` or `genetics-apoe` block (`:section summary\|hits\|apoe`, `:kit NAME` or `:file KIT`) when genetics.el is loaded; never loads it, and writes a one-line note without it |
-| `health-genetics-labs` | per gene in `health-chart-gene-lab-links` (`:genes` picks some): the genotype or APOE haplotype and its call source (observed or inferred reference) from genetics.el, then the linked markers' latest values with status words and a small time series each (`:charts nil` drops them). Genes with no linked lab get one informational line; a missing genetics.el or call becomes a one-line note; always ends with "informational only, not medical advice". See [docs/gene-lab-links.md](docs/gene-lab-links.md) |
-
-Params: `:person :marker :markers :category :cohort :since :until
-:as-of` select the data (`:cohort` takes one name or a list);
-`:kind :backend :format (svg png pdf) :width :height :title :columns
-:file :caption` shape the chart, and `:baseline DATE` makes a `delta`
-compare the last draw on or before DATE with the latest. Without
-`:kind` a block with `:cohort` draws `staleness`, one `:marker` a
-`timeseries`, anything else a `panel`.
-
-```org
-#+BEGIN: health-flags :person "alex"
-- ▲ high · *Lp(a)* 144 nmol/L (2025-09-15), reference 0–75
-#+END:
-
-#+BEGIN: health-chart :kind delta :person "alex" :baseline "2024-10-01" :caption "Since last year"
-#+CAPTION: Since last year
-#+ATTR_HTML: :alt Since last year
-[[file:report-assets/delta-alex-b2c523aa.svg]]
-#+END:
-```
-
-Images go to `health-chart-org-asset-directory` (default `"%s-assets"`,
-`%s` the document's base name, next to it) under a stable name: the
-kind, person, markers and cohort plus a hash of every param that
-changes the picture. Re-running a block rewrites the same file;
-`:file` picks the path yourself. A block that fails writes one Org
-comment line with the error code and how to fix it, e.g.
-`# health-table (source_missing): cannot find biomarker; install
-biomarker-cli or set ...`, and never breaks the document.
-
-Each block has a pure explain twin that returns the data query (the
-source call or cohort plans, the local filter) and the output path
-without fetching or drawing: `health-chart-org-chart-explain`,
-`-table-explain`, `-scorecard-explain`, `-flags-explain`,
-`-genetics-explain`, `-genetics-labs-explain`; `(health-chart-org-explain "health-chart" PARAMS
-[ORG-FILE])` dispatches by name and `M-x health-chart-org-explain-block`
-explains the block at point.
-
-**Report templates** are plain Org files in `templates/org/`; files in
-`health-chart-org-template-directories` come first and shadow them.
-
-| template | contents |
-|---|---|
-| `lab-draw` | one draw: flags, results table, bullet chart, per-category panels |
-| `annual-review` | a year: panel, heatmap, delta vs the year before, cohort scorecards, due tests (staleness), remaining flags |
-| `cardiometabolic` | the cardio and metabolic cohorts, a time series per marker, APOE and MTHFR next to their labs, the latest values |
-| `genetics-summary` | genetics.el blocks only |
-| `full-health-report` | labs and genetics composed, ending with every linked gene next to its labs |
-
-They use the chart templates' placeholder syntax, filled once at stamp
-time: `{{person}}`, `{{date}}`, `{{since}}`, `{{until}}`, `{{period}}`
-(`"since – until"`) and `{{year}}`. `M-x health-chart-org-new-report`
-asks for a template, person, period and output file, stamps it,
-refreshes every block and opens it; from Lisp:
-
-```elisp
-(health-chart-org-new-report "annual-review" "~/notes/review-2025.org"
-                             :person "alex" :since "2024-10-01" :until "2025-09-30")
-(health-chart-org-new-report-explain "annual-review" "~/notes/review-2025.org"
-                                     :person "alex")   ; pure: context, assets, block plans
-(health-chart-org-templates)                           ; M-x lists them
-```
-
-**Export.** HTML export shows the SVG images inline. For LaTeX/PDF,
-`health-chart-org-latex-png` (on by default) re-runs the chart blocks
-in the export copy as PNG at 2× density, so the document keeps its SVG
-links; `:format png` on a block does the same permanently.
-[`examples/reports/`](examples/reports/) holds every template stamped
-for the sample panel with its images and HTML export; regenerate with
-`emacs -Q --batch -L . -l examples/reports.el`.
-
-## The dashboard
-
-`M-x health-charts` (an alias of `health-chart-dashboard`; with a prefix
-argument it asks for the person) shows one person's sparkline table, then
-the kinds in `health-chart-dashboard-sections` (range bars and the
-heatmap by default).
-
-| key | action |
-|---|---|
-| `RET` | open the marker at point as a time series |
-| `m` | compare the marker at point across every person |
-| `s` | select person |
-| `c` | filter by category (`health-chart-marker-categories`) |
-| `C` | select an indicator cohort (or `none`); its scorecard is drawn below the table |
-| `K` | open the selected cohort as a cohort panel |
-| `v` | small-multiples panel of the visible markers |
-| `d` | change between the two latest draws |
-| `g` | refetch from the source and redraw |
-| `t` | toggle text / image (Vega-Lite or gnuplot) for the chart sections |
-| `r` / `o` | toggle the reference / optimal band |
-| `n` / `p` | next / previous marker row |
-| `q` | quit |
-
-Chart buffers opened from it (`health-chart-plot-mode`) have `g`
-(redraw), `t`, `r` and `o` too. Source errors are shown in the buffer
-with the fix, never swallowed.
-
-## Indicators and cohorts
-
-An **indicator** is a named recipe — "latest ApoB", "days since the last
-draw", "markers out of range" — described by an external catalog and
-evaluated here over measurements. A **cohort** is a named set of
-indicators (`cardio`, `metabolic`, `inflammation`, `vitamins`,
-`overview`), kept as data in `health-chart-indicator-cohorts`.
-
-```elisp
-(health-chart-list-cohorts)                  ; summary per cohort, pure
-(health-chart-describe-cohort 'cardio)       ; does each member resolve? is it in the catalog?
-(health-chart-cohort-values 'cardio :person "alex")    ; fetch + evaluate -> indicator values
-(health-chart-cohort-plot 'cardio :person "alex" :kind 'scorecard :backend 'text)
-(health-chart-cohort-view 'vitamins 'staleness)        ; M-x health-chart-cohort-view
-```
-
-```
-Indicators · cardio
-Indicator        Value  Unit      Status        Trend
-ApoB                84  mg/dL     ◐ suboptimal  █▆▃▂▄▁       ↘ improved
-Lp(a)              140  nmol/L    ▲ high        ▁█           ↗ worsened
-HbA1c              5.4  %         ○ normal      █▅▁          ↘ improved
-Vitamin D           26  ng/mL     ▼ low         █▄▁          ↘ worsened
-Ferritin           n/a  ng/mL     ? n/a
-```
-
-```
-Days since draw · cardio · as of 2025-08-01
-Lp(a)            2024-02-12  ████████████████████  536 d  ▲ stale
-Vitamin D        2024-11-18  ██████████───│──────  256 d  ◐ due
-ApoB             2025-06-02  ██──┆────────│──────   60 d  ● fresh
-Ferritin         no draw     ────┆────────│──────      –  ? undated
-┆ due after 120 d   │ stale after 365 d   ● fresh  ◐ due  ▲ stale
-```
-
-**The catalog.** `health-chart-indicator-catalog-function` (nil by
-default) is a function called as `(FN RECIPE-ID)` → that indicator's
-record, or nil, and as `(FN nil)` → every record (when it returns nil,
-listing probes each known id instead). A record is the resource-catalog
-object
-
-```json
-{"ref": {"kind": "indicator", "id": "health.cardio.apob"},
- "name": "Apolipoprotein B", "revision": "1.0.0",
- "attributes": {"description": "...", "owner": "...", "tags": ["health", "cardio"],
-                "parameters": {}, "recipe": {...},
-                "value": {"type": "number", "unit": "mg/dL", "scale": "linear",
-                          "bounds": {"min": null, "max": 90}},
-                "semantics": {"measure": "latest", "subject": {"kind": "biomarker", "key": "apob"},
-                              "time_basis": "draw", "direction": "lower_is_better"}}}
-```
-
-as an alist, hash table or plist; its member names live only in
-`health-chart-indicator-record-paths`. Without a catalog everything
-still works from the local evaluator table; with one, cohort members are
-checked against it and their records supply direction, bounds and unit.
-To work without an external catalog, serve records from Lisp:
-
-```elisp
-(setq health-chart-indicator-catalog-function #'health-chart-indicator-catalog-static
-      health-chart-indicator-catalog-static-data my-records)
-(health-chart-indicator-list)               ; records tagged "health" (health-chart-indicator-tag)
-(health-chart-indicator-list :tag nil)      ; every record
-(health-chart-indicator-describe "health.vitamin-d")
-```
-
-**Evaluation.** A catalog recipe is a DAG, not elisp, so
-`health-chart-indicator-evaluators` maps each recipe id to a local
-measure (`latest`, `series`, `status`, `range-position`, `trend-slope`,
-`days-since-draw`, `out-of-range-count`; see
-`health-chart-indicator-measures`) and a marker — or a list of candidate
-markers, the first present winning. An id without an entry is reported
-unresolvable, never dropped; supporting a recipe is one data entry.
-`health-chart-indicator-evaluate` and `health-chart-cohort-evaluate` are
-pure over measurements you already hold.
-
-**Status.** A value with reference or optimal ranges is judged like a
-measurement. Otherwise its `direction` and `bounds` decide:
-`lower-better` is `▲ high` above the max and `● optimal` below the min,
-`higher-better` the mirror image, `in-range`/`neutral` `▼ low`/`▲ high`
-outside; inside is `○ normal`. The trend word compares the series' ends
-the same way: `improved`, `worsened`, `on-target`, `steady`, or `rising`
-/ `falling` when the direction is neutral. Freshness is `● fresh`, `◐
-due` (past `health-chart-indicator-due-days`, 120) or `▲ stale` (past
-`health-chart-indicator-stale-days`, 365), counted to `:as-of` (default
-the values' own as-of date, else today).
-
-**Indicator values** — the data of the three indicator kinds — are
-plists or JSON objects:
-
-```json
-{"id": "health.cardio.apob", "label": "ApoB", "cohort": "cardio", "value": 84,
- "unit": "mg/dL", "date": "2025-06-02", "as_of": "2025-08-01",
- "series": [104, 99, 91, 86, 93, 84], "direction": "lower_is_better",
- "bounds": {"min": null, "max": 90}, "ref_low": 0, "ref_high": 90, "opt_high": 80}
-```
-
-**Plans.** Every effectful call has a pure twin that names the calls it
-would make and makes none:
-
-| call | pure twin |
-|---|---|
-| `health-chart-indicator-list` | `health-chart-indicator-list-explain` |
-| `health-chart-indicator-describe` | `health-chart-indicator-describe-explain` |
-| `health-chart-describe-cohort` | `health-chart-describe-cohort-explain` |
-| `health-chart-cohort-values` | `health-chart-cohort-values-explain` (incl. the biomarker argv) |
-| `health-chart-cohort-plot` | `health-chart-cohort-plot-explain` (plus `health-chart-explain`) |
-
-Errors: `health-chart-unresolvable-cohort` (`unknown_cohort`,
-`unresolvable_cohort`), `health-chart-unknown-indicator`
-(`unknown_indicator`, `unknown_measure`, `missing_marker`) and
-`health-chart-catalog-error` (`catalog_missing`, `catalog_failed`), all
-under `health-chart-error`. The doctor adds `indicator-catalog`,
-`indicator-evaluators` and one `cohort:NAME` row per cohort; it never
-calls the catalog.
-
-## Data: plain Lisp
-
-Charts take measurements in any of these forms, mixed freely — no CLI
-involved:
-
-```elisp
-;; canonical plists
-(:person "alex" :marker "ldl_c" :value 112.0 :unit "mg/dL" :date "2025-03-01"
- :ref-low 0 :ref-high 100 :opt-low nil :opt-high 70 :flag high)
-
-;; plists with the wire names
-(:marker "ldl_c" :value 112.0 :date "2025-03-01" :ref_low 0 :ref_high 100)
-
-;; alists, as `json-parse-string' returns them (symbol or string keys)
-((marker . "glucose") (value . 104) (date . "2025-04-10") (ref_low . 70) (ref_high . 99))
-
-;; or a whole biomarker/v1 envelope
-((schema . "biomarker/v1") (measurements . (...)))
-```
-
-Required: `marker`, `date` (`YYYY-MM-DD`) and a numeric `value`; the rest
-is optional. `health-chart-source-normalize-list` returns the canonical
-plists, and the helpers in `health-chart-core.el` work on them:
-`health-chart-filter` (`:person :marker :category :since :until`),
-`health-chart-latest`, `health-chart-by-marker`, `health-chart-status`.
-
-```elisp
-(health-chart-plot-view
- 'bullet
- '(((marker . "glucose") (value . 93) (unit . "mg/dL") (date . "2025-06-02")
-    (ref_low . 70) (ref_high . 99) (opt_low . 72) (opt_high . 90))
-   ((marker . "vitamin_d") (value . 48) (unit . "ng/mL") (date . "2025-06-02")
-    (ref_low . 30) (ref_high . 100) (opt_low . 40) (opt_high . 60))))
-```
-
-## Data source: biomarker-cli
-
-`health-chart-source.el` is the only file that knows the biomarker CLI
-and its wire format. It calls `health-chart-source-function`, a function
-of `(COMMAND &rest ARGS)` where COMMAND is `query`, `trend`, `latest` or
-`flag` and ARGS a plist of `:person :marker :since :until`:
-
-```elisp
-(health-chart-source-query :person "alex")          ; every measurement
-(health-chart-source-trend :marker "ldl_c")          ; one marker, oldest first
-(health-chart-source-latest :person nil)             ; newest draw per marker, everyone
-(health-chart-source-flag)                           ; out-of-range draws
-```
-
-A request without `:person` uses `health-chart-default-person`.
-
-The default function, `health-chart-source-cli`, runs
-
-```
-biomarker [--db DB] COMMAND [--person P] [--marker M] [--since D] [--until D] --format json
-```
-
-with `health-chart-source-executable`, `health-chart-source-db` and
-`health-chart-source-extra-args`. It expects a JSON array of
-measurements, or an envelope `{"schema": "biomarker/v1", "measurements":
-[...]}`, and a measurement shaped
-
-```json
-{"person":"alex","marker":"ldl_c","value":112.0,"unit":"mg/dL","date":"2025-03-01",
- "ref_low":0,"ref_high":100,"opt_low":null,"opt_high":70,"flag":"high"}
-```
-
-A different schema (`biomarker/v2`), an `"error"` member, invalid JSON,
-a non-zero exit or a missing executable each signal
-`health-chart-source-error` with a `:code` (`schema_mismatch`,
-`source_reported_error`, `bad_json`, `source_failed`, `source_missing`)
-and a message naming the fix.
-
-**This wire format is an assumption** made while biomarker-cli is being
-built. If it settles differently, adjust `health-chart-source-fields`
-(member names), `health-chart-source-list-keys` (envelope members) and
-`health-chart-source-cli-args` (flags) — nothing else changes.
-
-To use another source, set the function:
-
-```elisp
-;; Lisp data, no process
-(setq health-chart-source-function #'health-chart-source-static
-      health-chart-source-static-data (my-lab-results))
-
-;; anything else
-(setq health-chart-source-function
-      (lambda (command &rest args)
-        (my-fetch-measurements command (plist-get args :person))))
-```
-
-## For programs and agents
-
-Ask the package; don't read source to learn its state.
-
-```elisp
-(health-chart-describe)              ; kinds, shapes, statuses, indicators, cohorts, source, entry points
-(health-chart-describe-kind 'bullet) ; doc, shape doc, example data, renderers
-(health-chart-validate 'table DATA)  ; t, or a typed error with :index
-(health-chart-explain 'timeseries DATA :marker "ldl_c" :backend 'text)
-(health-chart-explain 'bullet DATA :backend 'gnuplot :format 'png) ; template, program, argv
-(health-chart-spec 'bullet DATA)     ; the chartspec/v1 a template receives
-(health-chart-templates)             ; every (backend, kind) template and its path
-(health-chart-doctor-checks)         ; (:name :status pass|fail|skip :detail :remediation)
-```
-
-`health-chart-explain` returns the exact renderer and args
-`health-chart-plot` will use (for a template backend: the template, the
-generated program and each step's argv), why that backend, and a data summary
-(points, markers, persons, date span, out-of-range count); it never
-renders and never signals for bad data. Errors are `define-error`s under
-`health-chart-error` with data `(MESSAGE :code CODE ...)`:
-
-```elisp
-(health-chart-validate 'table '(((marker . "tsh") (date . "2025-01-01") (value . "2"))))
-;; => (health-chart-invalid-data "element 0: needs a numeric \"value\", got \"2\""
-;;                                :code "invalid_data" :index 0)
-```
-
-Prefer `:backend 'text` to read a chart yourself; the text renderers are
-deterministic.
-
-New kind: drop a template in (see [Templates](#templates)), or register
-it with a text renderer `(FN DATA &rest PROPS)` and, optionally, a spec
-builder `(FN DATA PROPS)` returning the kind's chartspec body:
-
-```elisp
-(health-chart-register-kind 'my-kind :shape 'measurements
-                            :text #'my-text :spec #'my-spec :doc "What it shows.")
-```
-
-`describe` and the doctor pick it up.
-
-## Command line
-
-`bin/health-chart` drives the package from a shell with JSON:
+From the shell, `bin/health-chart` is eas's command line with the health
+templates registered (set `EAS` to your eas.el checkout if it is not
+beside this repository):
 
 ```sh
-bin/health-chart kinds
-bin/health-chart example bullet > spec.json      # a spec render accepts as-is
-bin/health-chart render spec.json
-bin/health-chart write spec.json ldl.png         # .svg .png .pdf .txt .vl.json
-bin/health-chart spec spec.json                  # the chartspec/v1 JSON
-bin/health-chart explain spec.json               # backend, template, program, argv
-bin/health-chart backends                        # which are installed
-bin/health-chart templates
-bin/health-chart validate spec.json              # {"ok":true} or the error envelope
-bin/health-chart describe
-bin/health-chart doctor
-bin/health-chart cohorts
-bin/health-chart cohort cardio '{"person":"alex","kind":"staleness"}'
-bin/health-chart cohort-explain cardio '{"person":"alex"}'   # the plan, no I/O
-
-# biomarker output straight in:
-biomarker trend --marker ldl_c --format json | bin/health-chart pipe timeseries
-biomarker query --person alex --format json  | bin/health-chart pipe heatmap '{"width":60}'
+bin/health-chart templates                                  # the catalog
+bin/health-chart example vitals-trend --raw > b.json        # bindings that render as is
+bin/health-chart validate vitals-trend --data b.json        # error code and JSON path, exit 1 on failure
+bin/health-chart render vitals-trend --data b.json --backend text --raw
+bin/health-chart render vitals-trend --data b.json --backend svg --raw > chart.svg
 ```
 
-A spec is `{"kind": "...", "data": [...], ...props}`, props being the
-keyword arguments of `health-chart-plot` without the colon
-(`"backend": "gnuplot"`, `"format": "svg"`, `"ref": false`). `data` may be a biomarker/v1
-envelope. Failures print `{"ok":false,"error":{"code":...,"message":...}}`
-and exit 1. Set `EMACS` to choose the Emacs binary.
+`check`, `explain`, `export --vl`, `describe` and `doctor` are eas's own
+verbs (see its README); every verb answers the `chart/v1` envelope.
 
-## Customization
+## The data contract
 
-`M-x customize-group RET health-charts`. Highlights:
+Every template takes **bindings**: an object keyed by the template's slots.
+One or more slots are tables, lists of row objects (`data`, and for some
+templates `curves`, `panels`, `bands`, `doses`, ...). The rest are scalars
+(a title, `low` and `high` for a range, an `as_of` date). `describe`
+shows both:
 
-| option | default |
+```elisp
+(health-chart-describe-template "lab-trend")
+;; => (:name "lab-trend" :doc ... :slots ... :tables (:data (:fields (:time "time" :value "number" ...))) ...)
+```
+
+Times are ISO 8601 strings (`2026-03-01`, `2026-03-01T08:30`, with an
+optional seconds and zone), oldest first. Nothing is read from the
+clock: a chart that needs "today" takes an `as_of` slot.
+
+### Validation
+
+Nothing is drawn until the bindings pass. `health-chart-validate` returns
+`t` or signals `health-chart-invalid-data` (parent `health-chart-error`);
+`health-chart-check` returns `t` or the same facts as a plist. The data
+of the error is `(MESSAGE :code CODE :path PATH :index INDEX :field FIELD)`,
+and `health-chart-error-data` returns it as a plist. `PATH` is a JSON path
+such as `data[3].value`, `INDEX` the offending row and `FIELD` the offending
+field. The message says how to fix it.
+
+| Code | Meaning |
 |---|---|
-| `health-chart-backend` | `auto` |
-| `health-chart-graphic-backends`, `-terminal-backends` | `(eas vega-lite gnuplot)`, `(eas gnuplot text)` |
-| `health-chart-template-directories` | nil (bundled templates only) |
-| `health-chart-theme`, `health-chart-colors` | `auto`, per-role overrides |
-| `health-chart-image-width`, `-image-height`, `-image-scale` | 720, 360, 1 |
-| `health-chart-font-family`, `-font-size` | `"DejaVu Sans"`, 12 |
-| `health-chart-vl2svg-command`, `-vl2png-command`, `-vl2pdf-command` | nil (auto) |
-| `health-chart-vega-lite-raster` | `auto` (vl2png, else vl2svg + rsvg-convert) |
-| `health-chart-gnuplot-command`, `health-chart-rsvg-convert-command` | `("gnuplot")`, `("rsvg-convert")` |
-| `health-chart-width`, `health-chart-height` | 72, 10 |
-| `health-chart-show-ref-range`, `health-chart-show-optimal-range` | `t`, `t` |
-| `health-chart-marker-labels` | `ldl_c` → `LDL-C`, … |
-| `health-chart-marker-categories` | lipids, metabolic, inflammation, … |
-| `health-chart-status-glyphs`, `health-chart-glyph-*` | the unicode glyphs |
-| `health-chart-svg-theme`, `health-chart-svg-colors` | `auto`, per-role overrides (native SVG only) |
-| `health-chart-source-executable`, `-db`, `-extra-args` | `"biomarker"`, nil, nil |
-| `health-chart-default-person` | nil (everyone / the first person) |
-| `health-chart-source-function` | `health-chart-source-cli` |
-| `health-chart-dashboard-sections`, `-backend` | `(bullet heatmap)`, `auto` |
-| `health-chart-indicator-catalog-function` | nil (no catalog) |
-| `health-chart-indicator-cohorts`, `-evaluators` | cardio, metabolic, …; the `health.*` recipe ids |
-| `health-chart-indicator-tag` | `"health"` |
-| `health-chart-indicator-due-days`, `-stale-days` | 120, 365 |
-| `health-chart-dashboard-cohort`, `-cohort-sections` | nil, `(scorecard)` |
+| `unknown_template` | no such template; the message lists them |
+| `not_an_object`, `slot_unknown`, `missing_slot`, `slot_type` | the bindings as a whole: not an object, a slot the template lacks, a required slot left out, a slot of the wrong type |
+| `not_a_list`, `too_few_rows`, `not_a_row` | a table is not a list, is empty, or holds a non-object |
+| `missing_field` | a row lacks a required field (`data[0].value`) |
+| `not_a_number`, `negative_value`, `not_an_integer`, `out_of_range` | numeric fields: not finite, below zero, not whole, outside 0..100, 0..1 or a declared range |
+| `not_a_string`, `not_a_bool`, `not_in_enum` | text, boolean and choice fields |
+| `not_a_time`, `not_a_date` | not an ISO 8601 date-time or date (checks the calendar: `2026-02-30` fails) |
+| `time_not_ascending` | rows go back in time |
+| `range_inverted`, `interval_inverted`, `diastolic_above_systolic`, ... | a low above its high, an end before its start |
 
-Faces: `health-chart-optimal`, `-normal`, `-suboptimal`,
-`-out-of-range`, `-ref-band`, `-optimal-band`, `-improved`, `-worsened`,
-`-dim`, `-accent`, `-header`.
+## Template catalog
 
-## Layout
+| Template | Group | What it draws |
+|---|---|---|
+| [`bp-trend`](#bp-trend) | Vitals | Blood pressure over time: each reading is a bar from diastolic to systolic, drawn over the normal systolic and diastolic bands; readings outside either band are flagged by color and shape. |
+| [`vitals-dashboard`](#vitals-dashboard) | Vitals | Five vitals on one time axis, each against its normal range: heart rate, blood pressure (systolic and diastolic), temperature, SpO2 and respiratory rate. |
+| [`vitals-trend`](#vitals-trend) | Vitals | One vital sign over time against its normal range: the range as a band, readings outside it flagged by color and shape. |
+| [`ecg-strip`](#ecg-strip) | Heart and rhythm | An ECG-style strip: millivolts against seconds over ECG paper (small boxes 0.04 s by 0.1 mV, large boxes 0.2 s by 0.5 mV). |
+| [`hrv-trend`](#hrv-trend) | Heart and rhythm | Daily heart-rate variability (RMSSD) with a 7-day rolling mean and a personal baseline band; days below the baseline are flagged. |
+| [`lab-change`](#lab-change) | Lab results | Before and after for each analyte on its own reference range: a dumbbell from the earlier result (hollow) to the later one (filled). |
+| [`lab-panel`](#lab-panel) | Lab results | Small multiples: one compact trend per analyte, each on its own scale with its reference range as a band and out-of-range results flagged by color and shape. |
+| [`lab-recency`](#lab-recency) | Lab results | How long ago each test was last drawn, against how often it should be: a bar of days since the last draw and a tick at the recommended interval. |
+| [`lab-results`](#lab-results) | Lab results | Latest result of many analytes, each placed within its own reference range: the range is the bar, the result a marker, and results outside the range are flagged by color, shape and the legend. |
+| [`lab-status-grid`](#lab-status-grid) | Lab results | A grid of analytes by draw date, each cell colored and marked low, in range or high against that row's own reference range, with the glyph and the value in the cell. |
+| [`lab-trend`](#lab-trend) | Lab results | One lab analyte over time against its reference range: the range as a band, an optional optimal band inside it, and results outside the range flagged L or H by color, shape and letter. |
+| [`lipid-panel`](#lipid-panel) | Lab results | A lipid panel against goal lines: one bar per measure (total cholesterol, LDL, HDL, triglycerides, non-HDL), a tick at its goal, an optional hollow marker for the prior draw. |
+| [`agp`](#agp) | Glucose and diabetes | Ambulatory glucose profile: many days of readings folded onto one 24 hour day as the median line with the 25-75th and 5-95th percentile bands and the target range limits. |
+| [`cgm-day`](#cgm-day) | Glucose and diabetes | A continuous glucose monitor day: the glucose line over 24 hours, the target range as a band, very low and very high limits as dashed rules, readings outside the range flagged by colour and shape. |
+| [`time-in-range`](#time-in-range) | Glucose and diabetes | Time in range: the share of glucose readings very low, low, in range, high and very high per period (weeks, days, any label you give), computed from the raw readings; the consensus target is over 70 percent in range. |
+| [`a1c-trend`](#a1c-trend) | Trends against published categories (A1c, eGFR, BMI) | HbA1c (%) over time against the ADA diagnostic categories (under 5.7 normal, 5.7-6.4 prediabetes, 6.5 and over diabetes), with an optional personal target line. |
+| [`egfr-trend`](#egfr-trend) | Trends against published categories (A1c, eGFR, BMI) | Estimated GFR (mL/min/1.73 m2) over time against the KDIGO CKD stage bands G1 to G5. |
+| [`weight-bmi-trend`](#weight-bmi-trend) | Trends against published categories (A1c, eGFR, BMI) | BMI over time, computed from weight and height, against the WHO adult categories (under 18.5, 18.5-24.9, 25-29.9, 30 and over); the weight is in the tooltip. |
+| [`fluid-balance`](#fluid-balance) | Fluids | Fluid balance per day: intake bars up, output bars down, in millilitres, with the net balance marked and labelled; the totals are computed from the individual entries. |
+| [`medication-timeline`](#medication-timeline) | Medication | Medication courses as bars on a timeline, each scheduled dose marked taken, late or missed (shape and colour), with the adherence share per medication. |
+| [`immunization-timeline`](#immunization-timeline) | Immunizations | Immunization history: one row per vaccine, doses given as filled points, doses still due as grey diamonds and doses due before the as_of date as red triangles. |
+| [`symptom-diary`](#symptom-diary) | Symptoms | Symptom or pain diary: one row per symptom, one column per day, each cell shaded and numbered by the severity logged (0 none to 10 worst); a note rides in the tooltip. |
+| [`cycle-tracker`](#cycle-tracker) | Cycle tracking | Menstrual cycle tracker: one row per cycle on a cycle-day axis, phases as labelled coloured segments and optional daily markers. |
+| [`growth-chart`](#growth-chart) | Growth | Paediatric growth chart: percentile curves bound by the caller (bind published CDC or WHO curves; this package ships none) with the patient's measurements drawn over them. |
+| [`sleep-duration`](#sleep-duration) | Sleep | Nightly sleep as stacked bars by stage, the time in bed in hours above each night and the sleep goal as a dashed line. |
+| [`sleep-hypnogram`](#sleep-hypnogram) | Sleep | One night of sleep as a hypnogram: the stage (awake, REM, light, deep) over time, one segment per stage change. |
+| [`activity-calendar`](#activity-calendar) | Activity and fitness | A calendar heatmap of a daily count such as steps: weeks as columns, weekdays as rows, color by value, a check mark on days that met the goal. |
+| [`hr-zones`](#hr-zones) | Activity and fitness | Time spent in each heart-rate zone as horizontal bars, with the zone's bpm bounds and its share of the total. |
 
-| file | role |
+### Vitals
+
+#### bp-trend
+
+Blood pressure over time: each reading is a bar from diastolic to systolic, drawn over the normal systolic and diastolic bands; readings outside either band are flagged by color and shape.
+
+![bp-trend](docs/screenshots/bp-trend.png)
+
+- Takes: `data` as rows `{time, systolic, diastolic}`
+- Required slots: `sys_low`, `sys_high`, `dia_low`, `dia_high`
+- Try it: `(health-chart-demo "bp-trend")`
+
+#### vitals-dashboard
+
+Five vitals on one time axis, each against its normal range: heart rate, blood pressure (systolic and diastolic), temperature, SpO2 and respiratory rate. Readings outside a range are flagged by color and shape.
+
+![vitals-dashboard](docs/screenshots/vitals-dashboard.png)
+
+- Takes: `data` as rows `{time, metric, value}`
+- Required slots: `hr_low`, `hr_high`, `sbp_low`, `sbp_high`, `dbp_low`, `dbp_high`, `temp_low`, `temp_high`, `spo2_low`, `spo2_high`, `rr_low`, `rr_high`
+- Try it: `(health-chart-demo "vitals-dashboard")`
+
+#### vitals-trend
+
+One vital sign over time against its normal range: the range as a band, readings outside it flagged by color and shape.
+
+![vitals-trend](docs/screenshots/vitals-trend.png)
+
+- Takes: `data` as rows `{time, value}`
+- Required slots: `low`, `high`
+- Try it: `(health-chart-demo "vitals-trend")`
+
+### Heart and rhythm
+
+#### ecg-strip
+
+An ECG-style strip: millivolts against seconds over ECG paper (small boxes 0.04 s by 0.1 mV, large boxes 0.2 s by 0.5 mV). A drawing aid, not a diagnostic tool.
+
+![ecg-strip](docs/screenshots/ecg-strip.png)
+
+- Takes: `data` as rows `{t, mv}`
+- Try it: `(health-chart-demo "ecg-strip")`
+
+#### hrv-trend
+
+Daily heart-rate variability (RMSSD) with a 7-day rolling mean and a personal baseline band; days below the baseline are flagged.
+
+![hrv-trend](docs/screenshots/hrv-trend.png)
+
+- Takes: `data` as rows `{date, hrv}`
+- Required slots: `baseline_low`, `baseline_high`
+- Try it: `(health-chart-demo "hrv-trend")`
+
+### Lab results
+
+#### lab-change
+
+Before and after for each analyte on its own reference range: a dumbbell from the earlier result (hollow) to the later one (filled). Improved means nearer the range (or, inside it, nearer its middle); worsened means further; marked by color, glyph and label.
+
+![lab-change](docs/screenshots/lab-change.png)
+
+- Takes: `data` as rows `{analyte, [unit], before, after, ref_low, ref_high}`
+- Try it: `(health-chart-demo "lab-change")`
+
+#### lab-panel
+
+Small multiples: one compact trend per analyte, each on its own scale with its reference range as a band and out-of-range results flagged by color and shape.
+
+![lab-panel](docs/screenshots/lab-panel.png)
+
+- Takes: `data` as rows `{time, analyte, value}`; `panels` as rows `{analyte, label, [unit], low, high}`
+- Required slots: `panels`
+- Try it: `(health-chart-demo "lab-panel")`
+
+#### lab-recency
+
+How long ago each test was last drawn, against how often it should be: a bar of days since the last draw and a tick at the recommended interval. Fresh is within the interval, due within 1.5 times it, stale beyond that. The reference date as_of is supplied, never read from a clock.
+
+![lab-recency](docs/screenshots/lab-recency.png)
+
+- Takes: `data` as rows `{test, [last_drawn], interval_days}`
+- Required slots: `as_of`
+- Try it: `(health-chart-demo "lab-recency")`
+
+#### lab-results
+
+Latest result of many analytes, each placed within its own reference range: the range is the bar, the result a marker, and results outside the range are flagged by color, shape and the legend.
+
+![lab-results](docs/screenshots/lab-results.png)
+
+- Takes: `data` as rows `{analyte, value, [unit], ref_low, ref_high}`
+- Try it: `(health-chart-demo "lab-results")`
+
+#### lab-status-grid
+
+A grid of analytes by draw date, each cell colored and marked low, in range or high against that row's own reference range, with the glyph and the value in the cell.
+
+![lab-status-grid](docs/screenshots/lab-status-grid.png)
+
+- Takes: `data` as rows `{time, analyte, value, ref_low, ref_high}`
+- Try it: `(health-chart-demo "lab-status-grid")`
+
+#### lab-trend
+
+One lab analyte over time against its reference range: the range as a band, an optional optimal band inside it, and results outside the range flagged L or H by color, shape and letter.
+
+![lab-trend](docs/screenshots/lab-trend.png)
+
+- Takes: `data` as rows `{time, value}`
+- Required slots: `low`, `high`
+- Try it: `(health-chart-demo "lab-trend")`
+
+#### lipid-panel
+
+A lipid panel against goal lines: one bar per measure (total cholesterol, LDL, HDL, triglycerides, non-HDL), a tick at its goal, an optional hollow marker for the prior draw. Goal met or missed is shown by color, glyph and label, with direction (below or above) per measure.
+
+![lipid-panel](docs/screenshots/lipid-panel.png)
+
+- Takes: `data` as rows `{analyte, value, [unit], goal, direction, [prior]}`
+- Try it: `(health-chart-demo "lipid-panel")`
+
+### Glucose and diabetes
+
+#### agp
+
+Ambulatory glucose profile: many days of readings folded onto one 24 hour day as the median line with the 25-75th and 5-95th percentile bands and the target range limits.
+
+![agp](docs/screenshots/agp.png)
+
+- Takes: `data` as rows `{time, glucose}`
+- Try it: `(health-chart-demo "agp")`
+
+#### cgm-day
+
+A continuous glucose monitor day: the glucose line over 24 hours, the target range as a band, very low and very high limits as dashed rules, readings outside the range flagged by colour and shape.
+
+![cgm-day](docs/screenshots/cgm-day.png)
+
+- Takes: `data` as rows `{time, glucose}`
+- Try it: `(health-chart-demo "cgm-day")`
+
+#### time-in-range
+
+Time in range: the share of glucose readings very low, low, in range, high and very high per period (weeks, days, any label you give), computed from the raw readings; the consensus target is over 70 percent in range.
+
+![time-in-range](docs/screenshots/time-in-range.png)
+
+- Takes: `data` as rows `{time, glucose, [period]}`
+- Try it: `(health-chart-demo "time-in-range")`
+
+### Trends against published categories (A1c, eGFR, BMI)
+
+#### a1c-trend
+
+HbA1c (%) over time against the ADA diagnostic categories (under 5.7 normal, 5.7-6.4 prediabetes, 6.5 and over diabetes), with an optional personal target line.
+
+![a1c-trend](docs/screenshots/a1c-trend.png)
+
+- Takes: `data` as rows `{time, value}`; `bands` (optional) as rows `{label, low, high, [color]}`
+- Try it: `(health-chart-demo "a1c-trend")`
+
+#### egfr-trend
+
+Estimated GFR (mL/min/1.73 m2) over time against the KDIGO CKD stage bands G1 to G5.
+
+![egfr-trend](docs/screenshots/egfr-trend.png)
+
+- Takes: `data` as rows `{time, value}`; `bands` (optional) as rows `{label, low, high, [color]}`
+- Try it: `(health-chart-demo "egfr-trend")`
+
+#### weight-bmi-trend
+
+BMI over time, computed from weight and height, against the WHO adult categories (under 18.5, 18.5-24.9, 25-29.9, 30 and over); the weight is in the tooltip.
+
+![weight-bmi-trend](docs/screenshots/weight-bmi-trend.png)
+
+- Takes: `data` as rows `{time, weight_kg}`; `bands` (optional) as rows `{label, low, high, [color]}`
+- Required slots: `height_m`
+- Try it: `(health-chart-demo "weight-bmi-trend")`
+
+### Fluids
+
+#### fluid-balance
+
+Fluid balance per day: intake bars up, output bars down, in millilitres, with the net balance marked and labelled; the totals are computed from the individual entries.
+
+![fluid-balance](docs/screenshots/fluid-balance.png)
+
+- Takes: `data` as rows `{time, kind, ml, [source]}`
+- Try it: `(health-chart-demo "fluid-balance")`
+
+### Medication
+
+#### medication-timeline
+
+Medication courses as bars on a timeline, each scheduled dose marked taken, late or missed (shape and colour), with the adherence share per medication.
+
+![medication-timeline](docs/screenshots/medication-timeline.png)
+
+- Takes: `courses` as rows `{medication, start, end, [dose]}`; `doses` as rows `{medication, time, status}`
+- Try it: `(health-chart-demo "medication-timeline")`
+
+### Immunizations
+
+#### immunization-timeline
+
+Immunization history: one row per vaccine, doses given as filled points, doses still due as grey diamonds and doses due before the as_of date as red triangles.
+
+![immunization-timeline](docs/screenshots/immunization-timeline.png)
+
+- Takes: `data` as rows `{vaccine, date, [dose], status}`
+- Required slots: `as_of`
+- Try it: `(health-chart-demo "immunization-timeline")`
+
+### Symptoms
+
+#### symptom-diary
+
+Symptom or pain diary: one row per symptom, one column per day, each cell shaded and numbered by the severity logged (0 none to 10 worst); a note rides in the tooltip.
+
+![symptom-diary](docs/screenshots/symptom-diary.png)
+
+- Takes: `data` as rows `{date, symptom, severity, [note]}`
+- Try it: `(health-chart-demo "symptom-diary")`
+
+### Cycle tracking
+
+#### cycle-tracker
+
+Menstrual cycle tracker: one row per cycle on a cycle-day axis, phases as labelled coloured segments and optional daily markers. The caller supplies every phase boundary; nothing is predicted.
+
+![cycle-tracker](docs/screenshots/cycle-tracker.png)
+
+- Takes: `data` as rows `{cycle, start_day, end_day, phase}`; `markers` (optional) as rows `{cycle, day, marker}`
+- Try it: `(health-chart-demo "cycle-tracker")`
+
+### Growth
+
+#### growth-chart
+
+Paediatric growth chart: percentile curves bound by the caller (bind published CDC or WHO curves; this package ships none) with the patient's measurements drawn over them. The example curves are synthetic.
+
+![growth-chart](docs/screenshots/growth-chart.png)
+
+- Takes: `data` as rows `{age, value}`; `curves` as rows `{age, percentile, value}`
+- Try it: `(health-chart-demo "growth-chart")`
+
+### Sleep
+
+#### sleep-duration
+
+Nightly sleep as stacked bars by stage, the time in bed in hours above each night and the sleep goal as a dashed line.
+
+![sleep-duration](docs/screenshots/sleep-duration.png)
+
+- Takes: `data` as rows `{date, stage, minutes}`
+- Try it: `(health-chart-demo "sleep-duration")`
+
+#### sleep-hypnogram
+
+One night of sleep as a hypnogram: the stage (awake, REM, light, deep) over time, one segment per stage change.
+
+![sleep-hypnogram](docs/screenshots/sleep-hypnogram.png)
+
+- Takes: `data` as rows `{start, end, stage}`
+- Try it: `(health-chart-demo "sleep-hypnogram")`
+
+### Activity and fitness
+
+#### activity-calendar
+
+A calendar heatmap of a daily count such as steps: weeks as columns, weekdays as rows, color by value, a check mark on days that met the goal.
+
+![activity-calendar](docs/screenshots/activity-calendar.png)
+
+- Takes: `data` as rows `{date, steps}`
+- Try it: `(health-chart-demo "activity-calendar")`
+
+#### hr-zones
+
+Time spent in each heart-rate zone as horizontal bars, with the zone's bpm bounds and its share of the total.
+
+![hr-zones](docs/screenshots/hr-zones.png)
+
+- Takes: `data` as rows `{zone, minutes, low, high}`
+- Try it: `(health-chart-demo "hr-zones")`
+
+
+## API
+
+| Function | Does |
 |---|---|
-| `health-chart.el` | entry point: `describe`, doctor, entry points |
-| `health-chart-core.el` | customize group, faces, glyphs, dates, numbers, status, collection helpers |
-| `health-chart-source.el` | the biomarker wire format, normalization, CLI and static sources |
-| `health-chart-indicator.el` | indicator catalog hook and record format, indicator values, status, evaluators |
-| `health-chart-cohort.el` | named indicator cohorts: resolve, describe, evaluate, fetch, plot, explain twins |
-| `health-chart-kind.el` | kind and shape registries, example data, validate |
-| `health-chart-model.el` | per-kind models every renderer and spec draws from |
-| `health-chart-spec.el` | the chartspec/v1 builders, palettes, JSON round trip |
-| `health-chart-spec-gallery.el`, `health-chart-spec-dual.el` | spec bodies of the gallery kinds |
-| `health-chart-template.el` | template lookup, placeholder filling and escaping |
-| `health-chart-backend.el` | backend registry, rendering options, template lookup |
-| `health-chart-tools.el` | finding and running vl2svg, gnuplot and rsvg-convert (async, with a timeout) |
-| `health-chart-engines.el` | the vega-lite and gnuplot template backends |
-| `health-chart-eas.el` | the eas adapters and domain transforms (status, reference-band, change, staleness, trend) |
-| `health-chart-eas-route.el` | kinds to eas templates, their bindings, render, live views, parity |
-| `health-chart-render.el` | backend selection, `render`, `write`, render explain |
-| `templates/` | the bundled eas (`eas/`), gnuplot and Org templates; `examples/eas/` their example bindings |
-| `health-chart-text.el` | native unicode renderers |
-| `health-chart-svg.el` | native SVG renderers (obsolete) |
-| `health-chart-plot.el` | explain, plot, chart buffer, demo |
-| `health-chart-dashboard.el` | `health-charts` |
-| `health-chart-org.el`, `templates/org/` | Org dynamic block entry points, refresh, export |
-| `health-chart-org-base.el` | Org options, block parameters, query plans, asset files |
-| `health-chart-org-explain.el`, `health-chart-org-blocks.el` | pure block plans and the block writers |
-| `health-chart-org-genetics-labs.el` | the `health-genetics-labs` block |
-| `health-chart-org-report.el` | report templates and `health-chart-org-new-report` |
-| `health-chart-batch.el`, `bin/health-chart` | JSON command line |
+| `(health-chart-list-templates)` | every template as `(NAME :group G :doc D)` |
+| `(health-chart-describe-template NAME)` | slots, the rows each table takes, rules, example, default sizes |
+| `(health-chart-example NAME)` | synthetic bindings that render as is |
+| `(health-chart-validate NAME BINDINGS)` | `t` or `health-chart-invalid-data` |
+| `(health-chart-check NAME BINDINGS)` | `t` or `(:code :path :index :field :message)` |
+| `(health-chart-render NAME BINDINGS &rest PROPS)` | a string: SVG or text. PROPS: `:backend` (`text`, `svg`, `auto`), `:width`/`:height` (text columns and rows, SVG pixels), `:pixel-width`/`:pixel-height`, `:title`, `:font` |
+| `(health-chart-write NAME BINDINGS FILE)` | write SVG (or text for `.txt`) |
+| `(health-chart-insert NAME BINDINGS)` | insert at point, as an image or text |
+| `(health-chart-open NAME BINDINGS)` | a live eas view in a buffer (hover, crosshair, zoom, the eas agent verbs) |
+| `(health-chart-demo NAME)` | open a template over its example |
+| `(health-chart-read-bindings FILE-OR-JSON)` | parse bindings |
+
+Errors are typed: `health-chart-unknown-template`, `health-chart-invalid-data`
+and `health-chart-backend-error`, all under `health-chart-error`. `auto`
+draws SVG in a graphical frame and text in a terminal
+(`health-chart-backend`). Text output is deterministic and carries eas's
+hover help and datum properties, so an agent can read a chart as text.
+
+The package also registers one eas transform, `time-of-day-percentiles`
+(the percentile bands of `agp`), through eas's public registry.
+
+## Adding a template
+
+A template is `templates/NAME.json` (Vega-Lite plus an `x-eas` block of
+slots) and `examples/NAME.data.json` (synthetic bindings). Its
+`x-eas.health` block names the group, default sizes and what each table
+takes; `src/health-chart-validate.el` documents the field types. `make
+goldens` writes the goldens and `make test` then breaks every declared field
+and expects the right code and path. See `AGENTS.md` and
+`docs/design/render-only.md`.
 
 ## Tests
 
 ```sh
-make test       # ert, batch Emacs, offline; no biomarker install needed
-make test EAS=/path/to/eas.el   # with the eas backend (default ../eas.el); its tests skip without
-make compile    # byte-compile, warnings are errors (the eas files only with eas.el)
+make test EAS=/path/to/eas.el        # ERT: validation, API, goldens for text and SVG
+make compile EAS=/path/to/eas.el     # byte-compile, warnings are errors
 make checkdoc
-make lint PACKAGE_LINT=/path/to/package-lint   # dir holding package-lint.el
-make check      # compile + checkdoc + test
-make test SELECTOR=backend   # an ERT selector regexp
-emacs -Q --batch -l test/run-tests.el   # the same suite without make (Windows)
+make screenshots EAS=/path/to/eas.el # docs/screenshots/*.png (needs rsvg-convert)
 ```
 
-CI (`.github/workflows/test.yml`) runs the suite and the byte-compile
-on Linux, macOS and Windows with Emacs 29.1 and 30.1, with gnuplot and
-Vega-Lite installed, so the render tests run rather than skip.
-
-The CLI path runs `test/fixtures/fake-biomarker`, which answers from
-the JSON fixtures (a bash script: those tests skip on native Windows). Golden files in `test/fixtures/golden` pin every
-kind's text and native SVG output, the chartspec/v1 of every templated
-kind (`golden/chartspec/`) and the program each backend generates from
-it (`golden/vega-lite/`, `golden/gnuplot/`), all from the synthetic
-`examples/sample-panel.json`; regenerate with
-`HEALTH_CHART_UPDATE_GOLDEN=1 make test` and review the diff. Render
-tests run only where `gnuplot`, `vl2svg` and `rsvg-convert` are
-installed, and are skipped otherwise. `test/health-chart-org-test.el`
-pins the Org blocks' output (`golden/org-blocks.org`) over a fake
-source and, with a backend installed, exports a stamped report to HTML
-and LaTeX.
-
-`make lint` accepts package-lint findings for exactly one name, on
-purpose: `health-charts`, the user-facing name of the customize group
-and of the dashboard command alias, is off-prefix for the `health-chart`
-package (two findings, one per definition). Anything else fails. See
-`test/run-package-lint.el`.
+Goldens live in `test/golden/text` and `test/golden/svg`;
+`make goldens` rewrites them, then review the diff.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+See [LICENSE](LICENSE).
