@@ -1,0 +1,260 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "lab-status-grid",
+    "version": "1.0.0",
+    "doc": "A grid of analytes by draw date, each cell colored and marked low, in range or high against that row's own reference range, with the glyph and the value in the cell.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {time, analyte, value, ref_low, ref_high}: every result, oldest first; rows of one analyte share a line"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "A grid of analytes by draw date, each cell colored and marked low, in range or high against that row's own reference range, with the glyph and the value in the cell.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "low_color": {
+        "type": "string",
+        "default": "#9ec5f0",
+        "doc": "below range"
+      },
+      "in_color": {
+        "type": "string",
+        "default": "#cfe8d5",
+        "doc": "inside range"
+      },
+      "high_color": {
+        "type": "string",
+        "default": "#f0a9a0",
+        "doc": "above range"
+      },
+      "row_step": {
+        "type": "integer",
+        "default": 28,
+        "doc": "cell height in pixels (a multiple of 14 reads well as text)"
+      },
+      "col_step": {
+        "type": "integer",
+        "default": 64,
+        "doc": "cell width in pixels"
+      }
+    },
+    "example": "examples/lab-status-grid.data.json",
+    "health": {
+      "group": "labs",
+      "tables": {
+        "data": {
+          "fields": {
+            "time": "time",
+            "analyte": "string",
+            "value": "number",
+            "ref_low": "number",
+            "ref_high": "number"
+          },
+          "order": "time",
+          "rows": [
+            {
+              "le": [
+                "ref_low",
+                "ref_high"
+              ],
+              "code": "range_inverted"
+            }
+          ]
+        }
+      },
+      "text_size": [
+        100,
+        22
+      ],
+      "svg_size": [
+        900,
+        380
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": {
+    "step": {
+      "x-eas:slot": "col_step"
+    }
+  },
+  "height": {
+    "step": {
+      "x-eas:slot": "row_step"
+    }
+  },
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": "datum.value < datum.ref_low ? '\u25bc low' : datum.value > datum.ref_high ? '\u25b2 high' : '\u25cf in range'",
+      "as": "status"
+    },
+    {
+      "calculate": "datum.value < datum.ref_low ? '\u25bc' : datum.value > datum.ref_high ? '\u25b2' : '\u25cf'",
+      "as": "glyph"
+    },
+    {
+      "calculate": "datum.glyph + ' ' + datum.value",
+      "as": "cell"
+    },
+    {
+      "calculate": "substring(datum.time, 0, 10)",
+      "as": "day"
+    },
+    {
+      "calculate": "datum.ref_low + ' to ' + datum.ref_high",
+      "as": "range_text"
+    }
+  ],
+  "encoding": {
+    "x": {
+      "field": "day",
+      "type": "ordinal",
+      "title": null,
+      "sort": {
+        "field": "day",
+        "order": "ascending"
+      },
+      "axis": {
+        "labelAngle": 0,
+        "orient": "bottom",
+        "labelLimit": 90
+      }
+    },
+    "y": {
+      "field": "analyte",
+      "type": "nominal",
+      "title": null,
+      "sort": null,
+      "axis": {
+        "domain": false,
+        "ticks": false,
+        "labelLimit": 220
+      }
+    }
+  },
+  "layer": [
+    {
+      "name": "cells",
+      "mark": {
+        "type": "rect",
+        "stroke": {
+          "x-eas:slot": "surface"
+        },
+        "strokeWidth": 2
+      },
+      "encoding": {
+        "color": {
+          "field": "status",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25bc low",
+              "\u25cf in range",
+              "\u25b2 high"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "low_color"
+              },
+              {
+                "x-eas:slot": "in_color"
+              },
+              {
+                "x-eas:slot": "high_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "day",
+            "title": "date"
+          },
+          {
+            "field": "value"
+          },
+          {
+            "field": "status"
+          },
+          {
+            "field": "range_text",
+            "title": "reference range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "values",
+      "mark": {
+        "type": "text",
+        "fontSize": 11,
+        "color": {
+          "x-eas:slot": "ink"
+        }
+      },
+      "encoding": {
+        "text": {
+          "field": "cell"
+        }
+      }
+    }
+  ]
+}

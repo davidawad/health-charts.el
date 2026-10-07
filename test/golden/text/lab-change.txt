@@ -1,0 +1,22 @@
+                                Change between two draws (synthetic)
+                        hollow = earlier, filled = later; illustrative ranges
+                                                                                       ━ ✔ improved
+                                                                                       ━ ✖ worsened
+                                                                                       ━ ● unchanged
+
+LDL cholesterol  5.6 > 3.9 mmol/L               ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒●────────────○
+
+               HbA1c  6.4 > 5.7 %               ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ ●─────────○
+
+  Triglycerides  1.4 > 2.3 mmol/L               ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒○───────────────●
+
+           Ferritin  12 > 41 ug/L             ○─●▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+
+                 ALT  31 > 29 U/L               ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒●○▒▒▒▒▒▒
+
+        Vitamin D  38 > 74 nmol/L           ○──────────●▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+
+             TSH  2.4 > 4.6 mIU/L               ▒▒▒▒▒▒▒▒▒▒▒▒○─────────────●
+                                  ───────────────────────────────────────────────────
+
+               position within each reference range (left edge = low limit, right edge = high limit)

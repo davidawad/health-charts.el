@@ -1,0 +1,364 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "lab-panel",
+    "version": "1.0.0",
+    "doc": "Small multiples: one compact trend per analyte, each on its own scale with its reference range as a band and out-of-range results flagged by color and shape.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {time, analyte, value}: every result of every analyte, oldest first; panels names the analytes to draw"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Small multiples: one compact trend per analyte, each on its own scale with its reference range as a band and out-of-range results flagged by color and shape.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "panels": {
+        "type": "array",
+        "required": true,
+        "doc": "one object per analyte: {analyte, label, unit?, low, high}; analyte matches data rows"
+      },
+      "columns": {
+        "type": "integer",
+        "default": 2,
+        "doc": "panels per row"
+      },
+      "line_color": {
+        "type": "string",
+        "default": "#2a78d6"
+      },
+      "flag_color": {
+        "type": "string",
+        "default": "#d03b3b",
+        "doc": "out-of-range results"
+      },
+      "band_color": {
+        "type": "string",
+        "default": "#2a9d8f",
+        "doc": "reference range band"
+      },
+      "x_format": {
+        "type": "string",
+        "default": "%b",
+        "doc": "time axis label format"
+      },
+      "x_ticks": {
+        "type": "integer",
+        "default": 5,
+        "doc": "about this many time axis ticks"
+      }
+    },
+    "example": "examples/lab-panel.data.json",
+    "health": {
+      "group": "labs",
+      "tables": {
+        "data": {
+          "fields": {
+            "time": "time",
+            "analyte": "string",
+            "value": "number"
+          },
+          "order": "time"
+        },
+        "panels": {
+          "fields": {
+            "analyte": "string",
+            "label": "string",
+            "unit": "?string",
+            "low": "number",
+            "high": "number"
+          },
+          "rows": [
+            {
+              "le": [
+                "low",
+                "high"
+              ],
+              "code": "range_inverted"
+            }
+          ]
+        }
+      },
+      "text_size": [
+        110,
+        40
+      ],
+      "svg_size": [
+        900,
+        560
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "data": {
+    "name": "data"
+  },
+  "columns": {
+    "x-eas:slot": "columns"
+  },
+  "concat": [
+    {
+      "x-eas:each": "panels",
+      "spec": {
+        "title": {
+          "text": {
+            "x-eas:text": "{{@label}}{{@unit}}"
+          },
+          "fontSize": 11,
+          "anchor": "start"
+        },
+        "width": 200,
+        "height": 110,
+        "transform": [
+          {
+            "filter": {
+              "field": "analyte",
+              "equal": {
+                "x-eas:item": "analyte"
+              }
+            }
+          },
+          {
+            "calculate": {
+              "x-eas:expr": "datum.value < {{@low}} ? '\u25bc low' : datum.value > {{@high}} ? '\u25b2 high' : '\u25cf in range'"
+            },
+            "as": "status"
+          }
+        ],
+        "layer": [
+          {
+            "name": "range",
+            "transform": [
+              {
+                "aggregate": [
+                  {
+                    "op": "count",
+                    "as": "n"
+                  }
+                ]
+              },
+              {
+                "calculate": {
+                  "x-eas:expr": "{{@low}}"
+                },
+                "as": "lo"
+              },
+              {
+                "calculate": {
+                  "x-eas:expr": "{{@high}}"
+                },
+                "as": "hi"
+              }
+            ],
+            "mark": {
+              "type": "rect",
+              "opacity": 0.2,
+              "color": {
+                "x-eas:slot": "band_color"
+              }
+            },
+            "encoding": {
+              "y": {
+                "field": "lo",
+                "type": "quantitative",
+                "scale": {
+                  "zero": false,
+                  "nice": true
+                }
+              },
+              "y2": {
+                "field": "hi"
+              }
+            }
+          },
+          {
+            "name": "series",
+            "mark": {
+              "type": "line",
+              "strokeWidth": 1.6,
+              "color": {
+                "x-eas:slot": "muted"
+              }
+            },
+            "encoding": {
+              "x": {
+                "field": "time",
+                "type": "temporal",
+                "title": null,
+                "axis": {
+                  "grid": false,
+                  "format": {
+                    "x-eas:slot": "x_format"
+                  },
+                  "tickCount": {
+                    "x-eas:slot": "x_ticks"
+                  },
+                  "labelFontSize": 10
+                }
+              },
+              "y": {
+                "field": "value",
+                "type": "quantitative",
+                "title": null,
+                "scale": {
+                  "zero": false,
+                  "nice": true
+                },
+                "axis": {
+                  "labelFontSize": 10,
+                  "tickCount": 4
+                }
+              }
+            }
+          },
+          {
+            "name": "results",
+            "mark": {
+              "type": "point",
+              "filled": true,
+              "size": 50,
+              "opacity": 1,
+              "stroke": {
+                "x-eas:slot": "surface"
+              },
+              "strokeWidth": 1.2
+            },
+            "encoding": {
+              "x": {
+                "field": "time",
+                "type": "temporal",
+                "title": null,
+                "axis": {
+                  "grid": false,
+                  "format": {
+                    "x-eas:slot": "x_format"
+                  },
+                  "tickCount": {
+                    "x-eas:slot": "x_ticks"
+                  },
+                  "labelFontSize": 10
+                }
+              },
+              "y": {
+                "field": "value",
+                "type": "quantitative",
+                "title": null,
+                "scale": {
+                  "zero": false,
+                  "nice": true
+                },
+                "axis": {
+                  "labelFontSize": 10,
+                  "tickCount": 4
+                }
+              },
+              "color": {
+                "field": "status",
+                "type": "nominal",
+                "scale": {
+                  "domain": [
+                    "\u25bc low",
+                    "\u25cf in range",
+                    "\u25b2 high"
+                  ],
+                  "range": [
+                    {
+                      "x-eas:slot": "flag_color"
+                    },
+                    {
+                      "x-eas:slot": "line_color"
+                    },
+                    {
+                      "x-eas:slot": "flag_color"
+                    }
+                  ]
+                },
+                "legend": {
+                  "title": null
+                }
+              },
+              "shape": {
+                "field": "status",
+                "type": "nominal",
+                "scale": {
+                  "domain": [
+                    "\u25bc low",
+                    "\u25cf in range",
+                    "\u25b2 high"
+                  ],
+                  "range": [
+                    "triangle-down",
+                    "circle",
+                    "triangle-up"
+                  ]
+                },
+                "legend": null
+              },
+              "tooltip": [
+                {
+                  "field": "time",
+                  "type": "temporal",
+                  "format": "%Y-%m-%d"
+                },
+                {
+                  "field": "value"
+                },
+                {
+                  "field": "status"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,287 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "lab-results",
+    "version": "1.0.0",
+    "doc": "Latest result of many analytes, each placed within its own reference range: the range is the bar, the result a marker, and results outside the range are flagged by color, shape and the legend.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {analyte, value, unit?, ref_low, ref_high}: one latest result per analyte"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Latest result of many analytes, each placed within its own reference range: the range is the bar, the result a marker, and results outside the range are flagged by color, shape and the legend.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "band_color": {
+        "type": "string",
+        "default": "#2a9d8f",
+        "doc": "reference range bar"
+      },
+      "line_color": {
+        "type": "string",
+        "default": "#2a78d6",
+        "doc": "in-range results"
+      },
+      "flag_color": {
+        "type": "string",
+        "default": "#d03b3b",
+        "doc": "out-of-range results"
+      }
+    },
+    "example": "examples/lab-results.data.json",
+    "health": {
+      "group": "labs",
+      "tables": {
+        "data": {
+          "fields": {
+            "analyte": "string",
+            "value": "number",
+            "unit": "?string",
+            "ref_low": "number",
+            "ref_high": "number"
+          },
+          "rows": [
+            {
+              "le": [
+                "ref_low",
+                "ref_high"
+              ],
+              "code": "range_inverted"
+            }
+          ]
+        }
+      },
+      "text_size": [
+        100,
+        24
+      ],
+      "svg_size": [
+        1000,
+        440
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": {
+    "step": 30
+  },
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": "datum.value < datum.ref_low ? '\u25bc low' : datum.value > datum.ref_high ? '\u25b2 high' : '\u25cf in range'",
+      "as": "status"
+    },
+    {
+      "calculate": "(datum.value - datum.ref_low) / (datum.ref_high - datum.ref_low)",
+      "as": "pos_raw"
+    },
+    {
+      "calculate": "max(-0.5, min(1.5, datum.pos_raw))",
+      "as": "pos"
+    },
+    {
+      "calculate": "datum.analyte + '  ' + datum.value + (isValid(datum.unit) ? ' ' + datum.unit : '')",
+      "as": "row_label"
+    },
+    {
+      "calculate": "datum.ref_low + ' to ' + datum.ref_high + (isValid(datum.unit) ? ' ' + datum.unit : '')",
+      "as": "range_text"
+    }
+  ],
+  "encoding": {
+    "y": {
+      "field": "row_label",
+      "type": "nominal",
+      "title": null,
+      "sort": null,
+      "axis": {
+        "domain": false,
+        "ticks": false,
+        "labelLimit": 320
+      }
+    }
+  },
+  "layer": [
+    {
+      "name": "range",
+      "mark": {
+        "type": "rect",
+        "height": {
+          "band": 0.5
+        },
+        "opacity": 0.35,
+        "color": {
+          "x-eas:slot": "band_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              1.6
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "datum": 0,
+          "title": "within the reference range (left edge = low limit, right edge = high limit)",
+          "axis": {
+            "labels": false,
+            "ticks": false,
+            "grid": false
+          }
+        },
+        "x2": {
+          "datum": 1
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "range_text",
+            "title": "reference range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "result",
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 120,
+        "opacity": 1,
+        "stroke": {
+          "x-eas:slot": "surface"
+        },
+        "strokeWidth": 1.5
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              1.6
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "field": "pos"
+        },
+        "color": {
+          "field": "status",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25bc low",
+              "\u25cf in range",
+              "\u25b2 high"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "flag_color"
+              },
+              {
+                "x-eas:slot": "line_color"
+              },
+              {
+                "x-eas:slot": "flag_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "shape": {
+          "field": "status",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25bc low",
+              "\u25cf in range",
+              "\u25b2 high"
+            ],
+            "range": [
+              "triangle-down",
+              "circle",
+              "triangle-up"
+            ]
+          },
+          "legend": null
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "value"
+          },
+          {
+            "field": "status"
+          },
+          {
+            "field": "range_text",
+            "title": "reference range"
+          }
+        ]
+      }
+    }
+  ]
+}

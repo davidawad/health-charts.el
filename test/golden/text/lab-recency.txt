@@ -1,0 +1,20 @@
+                                    Testing recency (synthetic)
+                                tick = how often it should be drawn
+                                                                                     ■ ● fresh
+                                                                 │                   ■ ◐ due
+          Ferritin  (every 365 d)  never drawn                   │                   ■ ▲ stale
+                                                                 │                   ■ ? never drawn
+                 TSH  (every 365 d)  695 d ago ██████████████████│████████████████▊
+                                                                 │
+       Urine albumin  (every 365 d)  594 d ago ██████████████████│███████████▌
+                                                                 │
+           Vitamin D  (every 365 d)  470 d ago ██████████████████│█████▏
+                                                        │
+               HbA1c  (every 180 d)  195 d ago █████████│▏
+                                                                 │
+         Lipid panel  (every 365 d)  394 d ago ██████████████████│█▎
+                                                                 │
+Basic metabolic panel  (every 365 d)  52 d ago ██▋               │
+                                               ┬─────────┬─────────┬─────────┬─────
+                                               0        200       400       600
+                                                       days since last draw

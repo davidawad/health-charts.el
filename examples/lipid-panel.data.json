@@ -1,0 +1,47 @@
+{
+ "title": "Lipid panel (synthetic)",
+ "subtitle": "illustrative goals; tick = goal, hollow marker = prior draw",
+ "x_title": "mg/dL",
+ "data": [
+  {
+   "analyte": "Total cholesterol",
+   "value": 214,
+   "unit": "mg/dL",
+   "goal": 200,
+   "direction": "below",
+   "prior": 228
+  },
+  {
+   "analyte": "LDL cholesterol",
+   "value": 128,
+   "unit": "mg/dL",
+   "goal": 100,
+   "direction": "below",
+   "prior": 141
+  },
+  {
+   "analyte": "HDL cholesterol",
+   "value": 52,
+   "unit": "mg/dL",
+   "goal": 40,
+   "direction": "above",
+   "prior": 47
+  },
+  {
+   "analyte": "Triglycerides",
+   "value": 142,
+   "unit": "mg/dL",
+   "goal": 150,
+   "direction": "below",
+   "prior": 171
+  },
+  {
+   "analyte": "Non-HDL cholesterol",
+   "value": 162,
+   "unit": "mg/dL",
+   "goal": 130,
+   "direction": "below",
+   "prior": 181
+  }
+ ]
+}

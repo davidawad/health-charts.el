@@ -1,0 +1,360 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "lab-change",
+    "version": "1.0.0",
+    "doc": "Before and after for each analyte on its own reference range: a dumbbell from the earlier result (hollow) to the later one (filled). Improved means nearer the range (or, inside it, nearer its middle); worsened means further; marked by color, glyph and label.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {analyte, unit?, before, after, ref_low, ref_high}: two results per analyte"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "Before and after for each analyte on its own reference range: a dumbbell from the earlier result (hollow) to the later one (filled). Improved means nearer the range (or, inside it, nearer its middle); worsened means further; marked by color, glyph and label.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "band_color": {
+        "type": "string",
+        "default": "#2a9d8f",
+        "doc": "reference range bar"
+      },
+      "improved_color": {
+        "type": "string",
+        "default": "#0ca30c",
+        "doc": "improved"
+      },
+      "worsened_color": {
+        "type": "string",
+        "default": "#d03b3b",
+        "doc": "worsened"
+      },
+      "same_color": {
+        "type": "string",
+        "default": "#898781",
+        "doc": "unchanged"
+      },
+      "before_title": {
+        "type": "string",
+        "default": "earlier",
+        "doc": "legend word for the earlier result"
+      },
+      "after_title": {
+        "type": "string",
+        "default": "later",
+        "doc": "legend word for the later result"
+      }
+    },
+    "example": "examples/lab-change.data.json",
+    "health": {
+      "group": "labs",
+      "tables": {
+        "data": {
+          "fields": {
+            "analyte": "string",
+            "unit": "?string",
+            "before": "number",
+            "after": "number",
+            "ref_low": "number",
+            "ref_high": "number"
+          },
+          "rows": [
+            {
+              "le": [
+                "ref_low",
+                "ref_high"
+              ],
+              "code": "range_inverted"
+            }
+          ]
+        }
+      },
+      "text_size": [
+        100,
+        22
+      ],
+      "svg_size": [
+        1000,
+        400
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": {
+    "step": 34
+  },
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": "max(datum.ref_low - datum.after, datum.after - datum.ref_high, 0) < max(datum.ref_low - datum.before, datum.before - datum.ref_high, 0) ? '\u2714 improved' : max(datum.ref_low - datum.after, datum.after - datum.ref_high, 0) > max(datum.ref_low - datum.before, datum.before - datum.ref_high, 0) ? '\u2716 worsened' : (abs(datum.after - (datum.ref_low + datum.ref_high) / 2) < abs(datum.before - (datum.ref_low + datum.ref_high) / 2) ? '\u2714 improved' : abs(datum.after - (datum.ref_low + datum.ref_high) / 2) > abs(datum.before - (datum.ref_low + datum.ref_high) / 2) ? '\u2716 worsened' : '\u25cf unchanged')",
+      "as": "verdict"
+    },
+    {
+      "calculate": "max(-0.5, min(1.5, (datum.before - datum.ref_low) / (datum.ref_high - datum.ref_low)))",
+      "as": "pos_before"
+    },
+    {
+      "calculate": "max(-0.5, min(1.5, (datum.after - datum.ref_low) / (datum.ref_high - datum.ref_low)))",
+      "as": "pos_after"
+    },
+    {
+      "calculate": "datum.analyte + '  ' + datum.before + ' > ' + datum.after + (isValid(datum.unit) ? ' ' + datum.unit : '')",
+      "as": "row_label"
+    },
+    {
+      "calculate": "datum.ref_low + ' to ' + datum.ref_high",
+      "as": "range_text"
+    }
+  ],
+  "encoding": {
+    "y": {
+      "field": "row_label",
+      "type": "nominal",
+      "title": null,
+      "sort": null,
+      "axis": {
+        "domain": false,
+        "ticks": false,
+        "labelLimit": 360
+      }
+    }
+  },
+  "layer": [
+    {
+      "name": "range",
+      "mark": {
+        "type": "rect",
+        "height": {
+          "band": 0.5
+        },
+        "opacity": 0.3,
+        "color": {
+          "x-eas:slot": "band_color"
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              1.6
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "datum": 0,
+          "title": "position within each reference range (left edge = low limit, right edge = high limit)",
+          "axis": {
+            "labels": false,
+            "ticks": false,
+            "grid": false
+          }
+        },
+        "x2": {
+          "datum": 1
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "range_text",
+            "title": "reference range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "change",
+      "mark": {
+        "type": "rule",
+        "strokeWidth": 3
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              1.6
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "field": "pos_before"
+        },
+        "x2": {
+          "field": "pos_after"
+        },
+        "color": {
+          "field": "verdict",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u2714 improved",
+              "\u2716 worsened",
+              "\u25cf unchanged"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "improved_color"
+              },
+              {
+                "x-eas:slot": "worsened_color"
+              },
+              {
+                "x-eas:slot": "same_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "before"
+          },
+          {
+            "field": "after"
+          },
+          {
+            "field": "verdict"
+          },
+          {
+            "field": "range_text",
+            "title": "reference range"
+          }
+        ]
+      }
+    },
+    {
+      "name": "earlier",
+      "mark": {
+        "type": "point",
+        "filled": false,
+        "size": 100,
+        "strokeWidth": 2,
+        "color": {
+          "x-eas:slot": "ink"
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              1.6
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "field": "pos_before"
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "before",
+            "title": "earlier"
+          }
+        ]
+      }
+    },
+    {
+      "name": "later",
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 110,
+        "opacity": 1,
+        "color": {
+          "x-eas:slot": "ink"
+        },
+        "stroke": {
+          "x-eas:slot": "surface"
+        },
+        "strokeWidth": 1.5
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -0.6,
+              1.6
+            ],
+            "nice": false,
+            "zero": false
+          },
+          "field": "pos_after"
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "after",
+            "title": "later"
+          }
+        ]
+      }
+    }
+  ]
+}

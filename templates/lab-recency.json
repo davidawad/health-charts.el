@@ -1,0 +1,266 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "lab-recency",
+    "version": "1.0.0",
+    "doc": "How long ago each test was last drawn, against how often it should be: a bar of days since the last draw and a tick at the recommended interval. Fresh is within the interval, due within 1.5 times it, stale beyond that. The reference date as_of is supplied, never read from a clock.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {test, last_drawn? (ISO date, omit if never), interval_days}: one row per test"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "How long ago each test was last drawn, against how often it should be: a bar of days since the last draw and a tick at the recommended interval. Fresh is within the interval, due within 1.5 times it, stale beyond that. The reference date as_of is supplied, never read from a clock.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "as_of": {
+        "type": "string",
+        "doc": "reference date, ISO YYYY-MM-DD: days are counted up to it",
+        "required": true
+      },
+      "fresh_color": {
+        "type": "string",
+        "default": "#2a78d6",
+        "doc": "within the interval"
+      },
+      "due_color": {
+        "type": "string",
+        "default": "#e09a00",
+        "doc": "up to 1.5 times the interval"
+      },
+      "stale_color": {
+        "type": "string",
+        "default": "#d03b3b",
+        "doc": "beyond that"
+      },
+      "never_color": {
+        "type": "string",
+        "default": "#898781",
+        "doc": "no draw on record"
+      }
+    },
+    "example": "examples/lab-recency.data.json",
+    "health": {
+      "group": "labs",
+      "tables": {
+        "data": {
+          "fields": {
+            "test": "string",
+            "last_drawn": "?date",
+            "interval_days": "int"
+          }
+        }
+      },
+      "text_size": [
+        100,
+        20
+      ],
+      "svg_size": [
+        1000,
+        360
+      ],
+      "slots": {
+        "as_of": "date"
+      }
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": {
+    "step": 30
+  },
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": {
+        "x-eas:expr": "isValid(datum.last_drawn) ? round((toDate({{as_of}}) - toDate(datum.last_drawn)) / 86400000) : 0"
+      },
+      "as": "days"
+    },
+    {
+      "calculate": "!isValid(datum.last_drawn) ? '? never drawn' : datum.days <= datum.interval_days ? '\u25cf fresh' : datum.days <= datum.interval_days * 1.5 ? '\u25d0 due' : '\u25b2 stale'",
+      "as": "state"
+    },
+    {
+      "calculate": "isValid(datum.last_drawn) ? datum.days / datum.interval_days : 99",
+      "as": "ratio"
+    },
+    {
+      "calculate": "datum.test + '  (every ' + datum.interval_days + ' d)  ' + (isValid(datum.last_drawn) ? datum.days + ' d ago' : 'never drawn')",
+      "as": "row_label"
+    }
+  ],
+  "encoding": {
+    "y": {
+      "field": "row_label",
+      "type": "nominal",
+      "title": null,
+      "sort": {
+        "field": "ratio",
+        "order": "descending"
+      },
+      "axis": {
+        "domain": false,
+        "ticks": false,
+        "labelLimit": 380
+      }
+    }
+  },
+  "layer": [
+    {
+      "name": "days",
+      "mark": {
+        "type": "bar",
+        "height": {
+          "band": 0.55
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "zero": true,
+            "nice": true
+          },
+          "axis": {
+            "tickCount": 6
+          },
+          "field": "days",
+          "title": "days since last draw"
+        },
+        "color": {
+          "field": "state",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u25cf fresh",
+              "\u25d0 due",
+              "\u25b2 stale",
+              "? never drawn"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "fresh_color"
+              },
+              {
+                "x-eas:slot": "due_color"
+              },
+              {
+                "x-eas:slot": "stale_color"
+              },
+              {
+                "x-eas:slot": "never_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "tooltip": [
+          {
+            "field": "test"
+          },
+          {
+            "field": "last_drawn"
+          },
+          {
+            "field": "days",
+            "title": "days ago"
+          },
+          {
+            "field": "interval_days",
+            "title": "every (days)"
+          },
+          {
+            "field": "state"
+          }
+        ]
+      }
+    },
+    {
+      "name": "interval",
+      "mark": {
+        "type": "tick",
+        "thickness": 3,
+        "color": {
+          "x-eas:slot": "ink"
+        },
+        "orient": "vertical",
+        "size": 24
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "zero": true,
+            "nice": true
+          },
+          "axis": {
+            "tickCount": 6
+          },
+          "field": "interval_days"
+        },
+        "tooltip": [
+          {
+            "field": "test"
+          },
+          {
+            "field": "interval_days",
+            "title": "should be drawn every (days)"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,283 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "x-eas": {
+    "template": "lipid-panel",
+    "version": "1.0.0",
+    "doc": "A lipid panel against goal lines: one bar per measure (total cholesterol, LDL, HDL, triglycerides, non-HDL), a tick at its goal, an optional hollow marker for the prior draw. Goal met or missed is shown by color, glyph and label, with direction (below or above) per measure.",
+    "slots": {
+      "data": {
+        "shape": "plist",
+        "required": true,
+        "doc": "rows {analyte, value, unit?, goal, direction: below|above, prior?}: one row per lipid measure"
+      },
+      "title": {
+        "type": "string",
+        "default": ""
+      },
+      "subtitle": {
+        "type": "string",
+        "default": ""
+      },
+      "description": {
+        "type": "string",
+        "default": "A lipid panel against goal lines: one bar per measure (total cholesterol, LDL, HDL, triglycerides, non-HDL), a tick at its goal, an optional hollow marker for the prior draw. Goal met or missed is shown by color, glyph and label, with direction (below or above) per measure.",
+        "doc": "the takeaway; alt text and table-view fallback"
+      },
+      "config": {
+        "type": "object",
+        "default": {},
+        "doc": "Vega-Lite config: background and axis colors from the theme"
+      },
+      "ink": {
+        "type": "string",
+        "default": "#0b0b0b"
+      },
+      "secondary": {
+        "type": "string",
+        "default": "#52514e"
+      },
+      "muted": {
+        "type": "string",
+        "default": "#898781"
+      },
+      "surface": {
+        "type": "string",
+        "default": "#fcfcfb"
+      },
+      "grid": {
+        "type": "string",
+        "default": "#e1e0d9"
+      },
+      "met_color": {
+        "type": "string",
+        "default": "#2a78d6",
+        "doc": "goal met"
+      },
+      "missed_color": {
+        "type": "string",
+        "default": "#d03b3b",
+        "doc": "goal missed"
+      },
+      "x_title": {
+        "type": "string",
+        "default": "value",
+        "doc": "x-axis title, e.g. mg/dL"
+      }
+    },
+    "example": "examples/lipid-panel.data.json",
+    "health": {
+      "group": "labs",
+      "tables": {
+        "data": {
+          "fields": {
+            "analyte": "string",
+            "value": "nonneg",
+            "unit": "?string",
+            "goal": "nonneg",
+            "direction": "enum:below|above",
+            "prior": "?nonneg"
+          }
+        }
+      },
+      "text_size": [
+        100,
+        20
+      ],
+      "svg_size": [
+        1000,
+        360
+      ]
+    }
+  },
+  "title": {
+    "text": {
+      "x-eas:slot": "title"
+    },
+    "subtitle": {
+      "x-eas:slot": "subtitle"
+    }
+  },
+  "description": {
+    "x-eas:slot": "description"
+  },
+  "config": {
+    "x-eas:slot": "config"
+  },
+  "width": "container",
+  "height": {
+    "step": 34
+  },
+  "data": {
+    "name": "data"
+  },
+  "transform": [
+    {
+      "calculate": "(datum.direction == 'below' ? datum.value <= datum.goal : datum.value >= datum.goal) ? '\u2714 goal met' : '\u2716 goal missed'",
+      "as": "outcome"
+    },
+    {
+      "calculate": "datum.analyte + '  ' + datum.value + (isValid(datum.unit) ? ' ' + datum.unit : '') + '  (goal ' + (datum.direction == 'below' ? '<' : '>') + datum.goal + ')'",
+      "as": "row_label"
+    },
+    {
+      "calculate": "isValid(datum.prior) ? datum.prior : datum.value",
+      "as": "prior_value"
+    },
+    {
+      "calculate": "isValid(datum.prior) ? 1 : 0",
+      "as": "has_prior"
+    }
+  ],
+  "encoding": {
+    "y": {
+      "field": "row_label",
+      "type": "nominal",
+      "title": null,
+      "sort": null,
+      "axis": {
+        "domain": false,
+        "ticks": false,
+        "labelLimit": 360
+      }
+    }
+  },
+  "layer": [
+    {
+      "name": "value",
+      "mark": {
+        "type": "bar",
+        "height": {
+          "band": 0.55
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "zero": true,
+            "nice": true
+          },
+          "axis": {
+            "tickCount": 6
+          },
+          "field": "value",
+          "title": {
+            "x-eas:slot": "x_title"
+          }
+        },
+        "color": {
+          "field": "outcome",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "\u2714 goal met",
+              "\u2716 goal missed"
+            ],
+            "range": [
+              {
+                "x-eas:slot": "met_color"
+              },
+              {
+                "x-eas:slot": "missed_color"
+              }
+            ]
+          },
+          "legend": {
+            "title": null
+          }
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "value"
+          },
+          {
+            "field": "goal"
+          },
+          {
+            "field": "direction"
+          },
+          {
+            "field": "outcome",
+            "title": "goal"
+          }
+        ]
+      }
+    },
+    {
+      "name": "goal",
+      "mark": {
+        "type": "tick",
+        "thickness": 3,
+        "color": {
+          "x-eas:slot": "ink"
+        },
+        "orient": "vertical",
+        "size": 26
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "zero": true,
+            "nice": true
+          },
+          "axis": {
+            "tickCount": 6
+          },
+          "field": "goal"
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "goal",
+            "title": "goal"
+          }
+        ]
+      }
+    },
+    {
+      "name": "prior",
+      "transform": [
+        {
+          "filter": "datum.has_prior == 1"
+        }
+      ],
+      "mark": {
+        "type": "point",
+        "filled": false,
+        "size": 90,
+        "strokeWidth": 2,
+        "color": {
+          "x-eas:slot": "ink"
+        }
+      },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "scale": {
+            "zero": true,
+            "nice": true
+          },
+          "axis": {
+            "tickCount": 6
+          },
+          "field": "prior_value"
+        },
+        "tooltip": [
+          {
+            "field": "analyte"
+          },
+          {
+            "field": "prior",
+            "title": "prior draw"
+          }
+        ]
+      }
+    }
+  ]
+}
