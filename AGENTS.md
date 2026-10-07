@@ -49,10 +49,25 @@ Ask the package; do not read source to learn its state.
   CODE :path PATH :index INDEX :field FIELD)`; the message says how to fix
   it. Never message-and-return-nil.
 - Data sources stay out: no fetching, no device or EHR integration, no
-  reference-range tables. Callers supply the data and, where a chart needs
-  them, their reference ranges and thresholds. A template may carry a
-  published classification as a slot default (HbA1c categories, BMI classes,
-  CKD stages) when its doc names it and it can be overridden.
+  reference-range tables. The data source owns every clinical range, cut-off,
+  goal and category band; a template never carries one as a slot default
+  (`make test` scans for it). Callers supply them as data (`ref_low` /
+  `ref_high` in rows, `low` / `high` slots, `bands` rows with a `status`),
+  and a missing range draws grey "no range", never green. The optional
+  adapter `health-chart-from-biomarker` (src/health-chart-biomarker.el) is
+  pure: it maps a `biomarker/v1` envelope it is handed, it runs nothing.
+- One color rule, in one place. Red is out of range, yellow is within the
+  warning margin of a limit, green is in range, grey is no range; nothing
+  else is ever red, yellow or green (lab recency, overdue, adherence,
+  categories, decorations use neutral colors, markers and words). The rule
+  is `health-chart-status` (src/health-chart-status.el), reached from
+  templates through the `health-status` / `health-band-status` eas
+  transforms; colors, the margin and the surface colors are
+  `health-chart-theme` (src/health-chart-theme.el), which fills the slot
+  defaults of every template, so a template's JSON declares those slots
+  (`bad_color`, `warn_color`, `ok_color`, `unknown_color`, `line_color`,
+  `warn_margin`, `ink`, `secondary`, `muted`, `surface`, `grid`) without a
+  default. Legends say low / near limit / in range / high / no range.
 - Example data is always synthetic and labelled so. Never commit real
   patient data.
 - No personal paths, machine names or emails other than me@davidaw.ad in

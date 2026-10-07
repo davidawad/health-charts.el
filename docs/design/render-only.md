@@ -15,8 +15,22 @@ bindings (JSON / plist)
 ```
 
 - `src/health-chart-eas.el` registers `templates/` under the namespace
-  `health` and loads `src/health-chart-transforms.el` (one domain
-  transform, `time-of-day-percentiles`, for the AGP).
+  `health` and loads `src/health-chart-transforms.el` (the domain transform
+  `time-of-day-percentiles`, for the AGP), `src/health-chart-theme.el` and
+  `src/health-chart-status.el`.
+- `src/health-chart-theme.el`: the one place for the status colors, the
+  warning margin and the surface colors (`health-chart-theme`,
+  `health-chart-template-theme`). It fills the slot defaults of every
+  `health/` template when eas looks the template up, so the JSON declares
+  the slots without defaults and one setting reaches every template.
+- `src/health-chart-status.el`: the color rule as pure functions
+  (`health-chart-status`, `health-chart-status-limits`,
+  `health-chart-status-bands`, `health-chart-status-band`) and its two eas
+  transforms, `health-status` (a range) and `health-band-status`
+  (category bands). Templates call the transforms, so the rule is one
+  tested function and not an expression copied into 20 templates.
+- `src/health-chart-biomarker.el`: `health-chart-from-biomarker`, the pure
+  input adapter for the `biomarker/v1` envelope.
 - `src/health-chart-core.el`: typed errors and template lookup.
 - `src/health-chart-validate.el`: a table-driven validator. Each template
   declares what it takes in `x-eas.health` (`tables`, `slots`, `rules`,
@@ -26,7 +40,8 @@ bindings (JSON / plist)
 
 What was removed from the earlier eas port: the gnuplot and Vega-Lite
 command-line backends, the native text and SVG renderers, chartspec, the
-biomarker source and model layers (selection, ranges, status), cohorts,
+biomarker source and model layers (selection, ranges; the status rule came
+back as the small pure function above), cohorts,
 indicators, genetics, Org blocks, the batch CLI and the data adapters. A
 chart that needs a range or a threshold takes it as a slot.
 
@@ -34,9 +49,16 @@ chart that needs a range or a threshold takes it as a slot.
 
 - Out-of-range, flagged or categorical states use colour and shape or a
   glyph or text, never colour alone.
-- Slot defaults may carry a published classification (HbA1c categories, BMI
-  classes, KDIGO CKD stages, glucose consensus limits) only when the
-  template doc names it; callers override it.
+- One color meaning: red is out of range, yellow is within the warning
+  margin of a limit (default 0.2 of the range width, 0.2 of the bound for a
+  one-sided range), green is in range, grey is no range. Nothing else is red,
+  yellow or green; lab recency, overdue vaccines, missed doses and the like
+  use neutral scales and words. Legends say low / near limit / in range /
+  high / no range.
+- Clinical ranges, cut-offs, goals and category bands are data, never slot
+  defaults (HbA1c categories, BMI classes, CKD stages, glucose targets,
+  vitals ranges, growth percentiles all arrive in the bindings). The
+  examples carry illustrative values and say so.
 - Examples are synthetic and say so in the title.
 
 ## Findings about eas (version 0.2.2)

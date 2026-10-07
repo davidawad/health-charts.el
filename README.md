@@ -1,7 +1,7 @@
 # health-charts.el
 
 Medical and health charts in Emacs from data you supply. health-chart
-never fetches anything and never ships reference data: you hand it plain
+never fetches anything and never ships reference data or clinical ranges: you hand it plain
 Lisp data (or JSON), it validates that data strictly, with a reason code
 and a JSON path for every failure, and draws it through the
 [eas.el](https://github.com/davidawad/eas.el) chart engine. One call
@@ -13,7 +13,8 @@ of the screenshots.
 ![Vitals dashboard rendered by health-charts.el](docs/screenshots/vitals-dashboard.png)
 
 All example data in this repository is synthetic. Reference ranges in the
-examples are illustrative and labelled so. **These charts are for
+examples are illustrative and labelled so; the library ships none (see
+[Colors and ranges](#colors-and-ranges)). **These charts are for
 visualisation, not diagnosis or medical advice.**
 
 Requires Emacs 30.1+ and [eas.el](https://github.com/davidawad/eas.el) 0.2.2+.
@@ -121,35 +122,107 @@ field. The message says how to fix it.
 | `time_not_ascending` | rows go back in time |
 | `range_inverted`, `interval_inverted`, `diastolic_above_systolic`, ... | a low above its high, an end before its start |
 
+## Colors and ranges
+
+One color means one thing in every template.
+
+| Color | Means | Shown also by |
+|---|---|---|
+| red | out of range: below the low limit or above the high limit | triangle down / `L`, triangle up / `H` |
+| yellow | in range, but within the warning margin of a limit (a value exactly at a limit is yellow) | diamond |
+| green | in range, clear of both margins | circle |
+| grey | no range to judge by (or no number) | square, "no range" |
+
+Nothing else is red, yellow or green. Staleness (`lab-recency`), overdue
+vaccines, late or missed doses, symptom severity, sleep stages, cycle phases
+and the like use blues, greys and violets with markers and words, because
+they are not out-of-range values. Every legend says low / near limit / in
+range / high / no range (or the template's equivalent).
+
+**The warning margin** is 20 percent of the range width, measured inward from
+each limit. A range with one limit (only `ref_high`, or only `ref_low`) has no
+width, so the margin is 20 percent of that limit. A value exactly at a limit
+is in range and yellow; exactly at the inner edge of the margin it is green.
+Two places on a template change it: a `warn_margin` binding (a fraction), and
+per row `warn_margin`, or `warn_low` / `warn_high` (the value where yellow
+turns green on that side). Where 20 percent of a range is the wrong idea the
+template takes categories instead: `a1c-trend`, `egfr-trend` and
+`weight-bmi-trend` get a `bands` table whose rows carry their own `status`
+(`low`, `near`, `ok`, `high`), so what counts as borderline is the data
+source's call, not a percentage.
+
+**The ranges are data.** No template carries a clinical range, cut-off, goal,
+category band or percentile curve as a default. They arrive as `ref_low` /
+`ref_high` in rows, `low` / `high` slots, `goal` per measure, or a `bands`
+table. A limit that is missing is drawn as missing: a result with no range is
+grey, never green. The examples carry illustrative values and say so.
+
+**Configure it once.** Colors, the margin and the surface colors live in one
+place and every template reads them:
+
+```elisp
+(setq health-chart-theme
+      '(:bad "#c0392b" :warn "#f0b400" :ok "#1e8e3e" :unknown "#8a8a8a"
+        :warn-margin 0.1))                       ; also :line :ink :secondary :muted :surface :grid
+(setq health-chart-template-theme                 ; per-template overrides
+      '(("vitals-trend" :warn-margin 0.05)))
+```
+
+A binding always wins over both (`bad_color`, `warn_color`, `ok_color`,
+`unknown_color`, `line_color`, `warn_margin`, `ink`, `surface` ... as slots of
+the template). The theme is presentation only: it holds no clinical value.
+The rule itself is a pure function, `(health-chart-status VALUE LOW HIGH
+&optional MARGIN WARN-LOW WARN-HIGH)`, that answers `low`, `near`, `ok`,
+`high` or `unknown`.
+
+**From the biomarker CLI.** `health-chart-from-biomarker` maps the
+`biomarker/v1` envelope that `biomarker latest|query --format json` prints
+into the bindings of `lab-results`, `lab-status-grid`, `lab-change`,
+`lab-trend`, `lab-panel`, `lipid-panel`, `a1c-trend` and `weight-bmi-trend`.
+It is pure (it reads only the envelope it is given, runs no process, opens no
+file), and the ranges are the rows' own `ref_low`, `ref_high`, `opt_low` and
+`opt_high`:
+
+```elisp
+(let ((env (health-chart-read-bindings "latest.json")))  ; biomarker latest --format json > latest.json
+  (health-chart-render "lab-results" (health-chart-from-biomarker "lab-results" env)))
+(health-chart-render "lab-trend"
+                     (health-chart-from-biomarker "lab-trend" env :marker "hba1c"))
+```
+
+Options: `:title`, `:markers`, `:category`, `:marker`, `:height-m`, `:bands`,
+`:margin`, `:directions`. Rows without a numeric canonical value (a qualified
+result such as "<5") are skipped.
+
 ## Template catalog
 
 | Template | Group | What it draws |
 |---|---|---|
-| [`bp-trend`](#bp-trend) | Vitals | Blood pressure over time: each reading is a bar from diastolic to systolic, drawn over the normal systolic and diastolic bands; readings outside either band are flagged by color and shape. |
-| [`vitals-dashboard`](#vitals-dashboard) | Vitals | Five vitals on one time axis, each against its normal range: heart rate, blood pressure (systolic and diastolic), temperature, SpO2 and respiratory rate. |
-| [`vitals-trend`](#vitals-trend) | Vitals | One vital sign over time against its normal range: the range as a band, readings outside it flagged by color and shape. |
-| [`ecg-strip`](#ecg-strip) | Heart and rhythm | An ECG-style strip: millivolts against seconds over ECG paper (small boxes 0.04 s by 0.1 mV, large boxes 0.2 s by 0.5 mV). |
-| [`hrv-trend`](#hrv-trend) | Heart and rhythm | Daily heart-rate variability (RMSSD) with a 7-day rolling mean and a personal baseline band; days below the baseline are flagged. |
-| [`lab-change`](#lab-change) | Lab results | Before and after for each analyte on its own reference range: a dumbbell from the earlier result (hollow) to the later one (filled). |
-| [`lab-panel`](#lab-panel) | Lab results | Small multiples: one compact trend per analyte, each on its own scale with its reference range as a band and out-of-range results flagged by color and shape. |
-| [`lab-recency`](#lab-recency) | Lab results | How long ago each test was last drawn, against how often it should be: a bar of days since the last draw and a tick at the recommended interval. |
-| [`lab-results`](#lab-results) | Lab results | Latest result of many analytes, each placed within its own reference range: the range is the bar, the result a marker, and results outside the range are flagged by color, shape and the legend. |
-| [`lab-status-grid`](#lab-status-grid) | Lab results | A grid of analytes by draw date, each cell colored and marked low, in range or high against that row's own reference range, with the glyph and the value in the cell. |
-| [`lab-trend`](#lab-trend) | Lab results | One lab analyte over time against its reference range: the range as a band, an optional optimal band inside it, and results outside the range flagged L or H by color, shape and letter. |
-| [`lipid-panel`](#lipid-panel) | Lab results | A lipid panel against goal lines: one bar per measure (total cholesterol, LDL, HDL, triglycerides, non-HDL), a tick at its goal, an optional hollow marker for the prior draw. |
-| [`agp`](#agp) | Glucose and diabetes | Ambulatory glucose profile: many days of readings folded onto one 24 hour day as the median line with the 25-75th and 5-95th percentile bands and the target range limits. |
-| [`cgm-day`](#cgm-day) | Glucose and diabetes | A continuous glucose monitor day: the glucose line over 24 hours, the target range as a band, very low and very high limits as dashed rules, readings outside the range flagged by colour and shape. |
-| [`time-in-range`](#time-in-range) | Glucose and diabetes | Time in range: the share of glucose readings very low, low, in range, high and very high per period (weeks, days, any label you give), computed from the raw readings; the consensus target is over 70 percent in range. |
-| [`a1c-trend`](#a1c-trend) | Trends against published categories (A1c, eGFR, BMI) | HbA1c (%) over time against the ADA diagnostic categories (under 5.7 normal, 5.7-6.4 prediabetes, 6.5 and over diabetes), with an optional personal target line. |
-| [`egfr-trend`](#egfr-trend) | Trends against published categories (A1c, eGFR, BMI) | Estimated GFR (mL/min/1.73 m2) over time against the KDIGO CKD stage bands G1 to G5. |
-| [`weight-bmi-trend`](#weight-bmi-trend) | Trends against published categories (A1c, eGFR, BMI) | BMI over time, computed from weight and height, against the WHO adult categories (under 18.5, 18.5-24.9, 25-29.9, 30 and over); the weight is in the tooltip. |
+| [`bp-trend`](#bp-trend) | Vitals | Blood pressure over time: each reading is a bar from diastolic to systolic, drawn over the systolic and diastolic ranges (green, yellow near each limit). Systolic and diastolic are judged separately; the reading is colored by the worse of the two: red out of range (triangle-down L low, triangle-up H high), yellow near a limit, green in range, grey when neither has a range. The ranges come from the data source via the sys_low/sys_high/dia_low/dia_high slots. |
+| [`vitals-dashboard`](#vitals-dashboard) | Vitals | Five vitals on one time axis, each against its own range: heart rate, blood pressure (systolic and diastolic), temperature, SpO2 and respiratory rate. Each range is a band (green, yellow near each limit); readings are red out of range (triangle-down low, triangle-up high), yellow near a limit, green in range, grey when that metric has no range. The ranges come from the data source via the hr_/sbp_/dbp_/temp_/spo2_/rr_ low and high slots; a missing pair is grey no range. |
+| [`vitals-trend`](#vitals-trend) | Vitals | One vital sign over time against its normal range: the range as a band (green, yellow near each limit) and each reading colored red out of range, yellow near a limit, green in range, grey with no range, flagged L or H by shape and letter. The range comes from the data source via the low/high slots. |
+| [`ecg-strip`](#ecg-strip) | Heart and rhythm | An ECG-style strip: millivolts against seconds over ECG paper (small boxes 0.04 s by 0.1 mV, large boxes 0.2 s by 0.5 mV). A drawing aid, not a diagnostic tool. |
+| [`hrv-trend`](#hrv-trend) | Heart and rhythm | Daily heart-rate variability (RMSSD) with a 7-day rolling mean and a personal baseline band (green, yellow near each edge); days below the baseline are red and flagged L, days above it red and flagged H. The baseline comes from the data via the low/high slots. Legend words: below baseline / near edge / within baseline / above baseline / no baseline. |
+| [`lab-change`](#lab-change) | Lab results | Before and after for each analyte on its own reference range: a dumbbell from the earlier result (hollow) to the later one (filled) over the range bar (green, yellow near each limit). Each marker is colored by its own status (red out of range, yellow near a limit, green in range, grey with no range) and shaped by direction. The connecting line and the word at the right say how the result moved, in neutral colors: improved (nearer the range, or inside it nearer its middle), worsened, unchanged, or no range when no direction can be decided; this is not a health status. |
+| [`lab-panel`](#lab-panel) | Lab results | Small multiples: one compact trend per analyte, each on its own scale with its own reference range (from the panels table) as a band, green with yellow zones near each limit; every result is colored red out of range, yellow near a limit, green in range or grey with no range, and shaped by direction. The range is data, never a template default. |
+| [`lab-recency`](#lab-recency) | Lab results | How long ago each test was last drawn, against how often it is due: a bar of days since the last draw and a tick at the interval. Staleness is not a health status, so it is drawn in blues only: lighter within the interval, deeper when overdue (up to overdue_factor times the interval), darkest when long overdue, grey when never drawn; each state is also written next to its bar. The reference date as_of is supplied, never read from a clock. |
+| [`lab-results`](#lab-results) | Lab results | Latest result of many analytes, each placed within its own reference range: the range is the bar (green, yellow near each limit), the result a marker colored red out of range, yellow near a limit, green in range and grey when there is no range. |
+| [`lab-status-grid`](#lab-status-grid) | Lab results | A grid of analytes by draw date: each cell is filled with its status color at partial opacity (red out of range, yellow near a limit, green in range, grey with no range) and carries a glyph (low, near, in range, high, ?) and the value, judged against that row's own reference range. Ranges come from the data, either limit may be missing. |
+| [`lab-trend`](#lab-trend) | Lab results | One lab analyte over time against its reference range: the range as a band (green, yellow near each limit), an optional optimal band inside it, and each result colored red out of range, yellow near a limit, green in range, grey with no range, and flagged L or H by shape and letter. |
+| [`lipid-panel`](#lipid-panel) | Lab results | A lipid panel against goal lines: one bar per measure, a tick at its goal, an optional hollow marker for the prior draw. Each measure is judged against its own goal, a one-sided range: a 'below' goal has only an upper limit, an 'above' goal only a lower one. The bar is red when the goal is missed (low means below an 'above' goal, high above a 'below' goal), yellow when met but within the margin of the goal, green when met clear of it; the status is also written at the bar end. Goals are data. |
+| [`agp`](#agp) | Glucose and diabetes | Ambulatory glucose profile: many days of readings folded onto one 24 hour day as the median line with the 25-75th and 5-95th percentile bands (neutral blues) and, when the data source supplies it, the target range as a green band. The profile itself is not judged, so it uses no red or yellow. |
+| [`cgm-day`](#cgm-day) | Glucose and diabetes | A continuous glucose monitor day: the glucose line over 24 hours against the target range from the data source (band: green, yellow near each limit); readings are red out of range (triangle-down low, triangle-up high, letter L or H), yellow near a limit, green in range, grey with no range. Optional very low / very high limits are drawn as labelled dashed rules; a reading beyond one is red like any out-of-range reading but larger and flagged with its letter and !! (dense days are not lettered otherwise). |
+| [`time-in-range`](#time-in-range) | Glucose and diabetes | Time in range: the share of glucose readings very low, low, in range, high and very high per period (weeks, days, any label you give), computed from the raw readings against the four cut-offs from the data source (all required). Out-of-range shares are red (very low and very high solid, low and high tinted), in range is green. Shares have no warning margin, so there is no yellow. An optional target_pct draws a target tick on the in-range share. |
+| [`a1c-trend`](#a1c-trend) | Trends against published categories (A1c, eGFR, BMI) | HbA1c (%) over time against category bands bound from the data source (each band carries its own status: low, near, ok or high); bands are filled and readings colored and shaped by that status, with an optional personal target line. |
+| [`egfr-trend`](#egfr-trend) | Trends against published categories (A1c, eGFR, BMI) | Estimated GFR (mL/min/1.73 m2) over time against category bands bound from the data source (each band carries its own status: low, near, ok or high); bands are filled and readings colored and shaped by that status, with an optional personal target line. |
+| [`weight-bmi-trend`](#weight-bmi-trend) | Trends against published categories (A1c, eGFR, BMI) | BMI over time, computed from weight and height, against category bands bound from the data source (each band carries its own status: low, near, ok or high); bands are filled and readings colored and shaped by that status; the weight is in the tooltip. |
 | [`fluid-balance`](#fluid-balance) | Fluids | Fluid balance per day: intake bars up, output bars down, in millilitres, with the net balance marked and labelled; the totals are computed from the individual entries. |
-| [`medication-timeline`](#medication-timeline) | Medication | Medication courses as bars on a timeline, each scheduled dose marked taken, late or missed (shape and colour), with the adherence share per medication. |
-| [`immunization-timeline`](#immunization-timeline) | Immunizations | Immunization history: one row per vaccine, doses given as filled points, doses still due as grey diamonds and doses due before the as_of date as red triangles. |
+| [`medication-timeline`](#medication-timeline) | Medication | Medication courses as neutral bars on a timeline, each scheduled dose marked taken (blue circle), late (light blue diamond) or missed (grey cross), with the adherence share per medication. |
+| [`immunization-timeline`](#immunization-timeline) | Immunizations | Immunization history: one row per vaccine, doses given as blue circles, doses still due as grey diamonds and doses due before the as_of date as dark triangles labelled overdue (overdue is a scheduling state, not a health judgment). |
 | [`symptom-diary`](#symptom-diary) | Symptoms | Symptom or pain diary: one row per symptom, one column per day, each cell shaded and numbered by the severity logged (0 none to 10 worst); a note rides in the tooltip. |
-| [`cycle-tracker`](#cycle-tracker) | Cycle tracking | Menstrual cycle tracker: one row per cycle on a cycle-day axis, phases as labelled coloured segments and optional daily markers. |
-| [`growth-chart`](#growth-chart) | Growth | Paediatric growth chart: percentile curves bound by the caller (bind published CDC or WHO curves; this package ships none) with the patient's measurements drawn over them. |
-| [`sleep-duration`](#sleep-duration) | Sleep | Nightly sleep as stacked bars by stage, the time in bed in hours above each night and the sleep goal as a dashed line. |
+| [`cycle-tracker`](#cycle-tracker) | Cycle tracking | Menstrual cycle tracker: one row per cycle on a cycle-day axis, phases as labelled coloured segments and optional daily markers. The caller supplies every phase boundary; nothing is predicted. |
+| [`growth-chart`](#growth-chart) | Growth | Paediatric growth chart: percentile curves bound by the caller (bind published CDC or WHO curves; this package ships none) with the patient's measurements drawn over them. The example curves are synthetic. |
+| [`sleep-duration`](#sleep-duration) | Sleep | Nightly sleep as stacked bars by stage, the time in bed in hours above each night and, when a goal is supplied, the sleep goal as a dashed line. |
 | [`sleep-hypnogram`](#sleep-hypnogram) | Sleep | One night of sleep as a hypnogram: the stage (awake, REM, light, deep) over time, one segment per stage change. |
 | [`activity-calendar`](#activity-calendar) | Activity and fitness | A calendar heatmap of a daily count such as steps: weeks as columns, weekdays as rows, color by value, a check mark on days that met the goal. |
 | [`hr-zones`](#hr-zones) | Activity and fitness | Time spent in each heart-rate zone as horizontal bars, with the zone's bpm bounds and its share of the total. |
@@ -158,32 +231,32 @@ field. The message says how to fix it.
 
 #### bp-trend
 
-Blood pressure over time: each reading is a bar from diastolic to systolic, drawn over the normal systolic and diastolic bands; readings outside either band are flagged by color and shape.
+Blood pressure over time: each reading is a bar from diastolic to systolic, drawn over the systolic and diastolic ranges (green, yellow near each limit). Systolic and diastolic are judged separately; the reading is colored by the worse of the two: red out of range (triangle-down L low, triangle-up H high), yellow near a limit, green in range, grey when neither has a range. The ranges come from the data source via the sys_low/sys_high/dia_low/dia_high slots.
 
 ![bp-trend](docs/screenshots/bp-trend.png)
 
-- Takes: `data` as rows `{time, systolic, diastolic}`
-- Required slots: `sys_low`, `sys_high`, `dia_low`, `dia_high`
+- Takes: `data` as rows `{time, systolic, diastolic, [warn_margin]}`
+- Range slots, from the data source (null or left out = unknown, drawn grey): `sys_low`, `sys_high`, `dia_low`, `dia_high`
 - Try it: `(health-chart-demo "bp-trend")`
 
 #### vitals-dashboard
 
-Five vitals on one time axis, each against its normal range: heart rate, blood pressure (systolic and diastolic), temperature, SpO2 and respiratory rate. Readings outside a range are flagged by color and shape.
+Five vitals on one time axis, each against its own range: heart rate, blood pressure (systolic and diastolic), temperature, SpO2 and respiratory rate. Each range is a band (green, yellow near each limit); readings are red out of range (triangle-down low, triangle-up high), yellow near a limit, green in range, grey when that metric has no range. The ranges come from the data source via the hr_/sbp_/dbp_/temp_/spo2_/rr_ low and high slots; a missing pair is grey no range.
 
 ![vitals-dashboard](docs/screenshots/vitals-dashboard.png)
 
-- Takes: `data` as rows `{time, metric, value}`
-- Required slots: `hr_low`, `hr_high`, `sbp_low`, `sbp_high`, `dbp_low`, `dbp_high`, `temp_low`, `temp_high`, `spo2_low`, `spo2_high`, `rr_low`, `rr_high`
+- Takes: `data` as rows `{time, metric, value, [warn_low], [warn_high], [warn_margin]}`
+- Range slots, from the data source (null or left out = unknown, drawn grey): `hr_low`, `hr_high`, `sbp_low`, `sbp_high`, `dbp_low`, `dbp_high`, `temp_low`, `temp_high`, `spo2_low`, `spo2_high`, `rr_low`, `rr_high`
 - Try it: `(health-chart-demo "vitals-dashboard")`
 
 #### vitals-trend
 
-One vital sign over time against its normal range: the range as a band, readings outside it flagged by color and shape.
+One vital sign over time against its normal range: the range as a band (green, yellow near each limit) and each reading colored red out of range, yellow near a limit, green in range, grey with no range, flagged L or H by shape and letter. The range comes from the data source via the low/high slots.
 
 ![vitals-trend](docs/screenshots/vitals-trend.png)
 
-- Takes: `data` as rows `{time, value}`
-- Required slots: `low`, `high`
+- Takes: `data` as rows `{time, value, [warn_low], [warn_high], [warn_margin]}`
+- Range slots, from the data source (null or left out = unknown, drawn grey): `low`, `high`
 - Try it: `(health-chart-demo "vitals-trend")`
 
 ### Heart and rhythm
@@ -199,38 +272,37 @@ An ECG-style strip: millivolts against seconds over ECG paper (small boxes 0.04 
 
 #### hrv-trend
 
-Daily heart-rate variability (RMSSD) with a 7-day rolling mean and a personal baseline band; days below the baseline are flagged.
+Daily heart-rate variability (RMSSD) with a 7-day rolling mean and a personal baseline band (green, yellow near each edge); days below the baseline are red and flagged L, days above it red and flagged H. The baseline comes from the data via the low/high slots. Legend words: below baseline / near edge / within baseline / above baseline / no baseline.
 
 ![hrv-trend](docs/screenshots/hrv-trend.png)
 
-- Takes: `data` as rows `{date, hrv}`
-- Required slots: `baseline_low`, `baseline_high`
+- Takes: `data` as rows `{date, hrv, [warn_low], [warn_high], [warn_margin]}`
+- Range slots, from the data source (null or left out = unknown, drawn grey): `low`, `high`
 - Try it: `(health-chart-demo "hrv-trend")`
 
 ### Lab results
 
 #### lab-change
 
-Before and after for each analyte on its own reference range: a dumbbell from the earlier result (hollow) to the later one (filled). Improved means nearer the range (or, inside it, nearer its middle); worsened means further; marked by color, glyph and label.
+Before and after for each analyte on its own reference range: a dumbbell from the earlier result (hollow) to the later one (filled) over the range bar (green, yellow near each limit). Each marker is colored by its own status (red out of range, yellow near a limit, green in range, grey with no range) and shaped by direction. The connecting line and the word at the right say how the result moved, in neutral colors: improved (nearer the range, or inside it nearer its middle), worsened, unchanged, or no range when no direction can be decided; this is not a health status.
 
 ![lab-change](docs/screenshots/lab-change.png)
 
-- Takes: `data` as rows `{analyte, [unit], before, after, ref_low, ref_high}`
+- Takes: `data` as rows `{analyte, [unit], before, after, [ref_low], [ref_high], [warn_low], [warn_high], [warn_margin]}`
 - Try it: `(health-chart-demo "lab-change")`
 
 #### lab-panel
 
-Small multiples: one compact trend per analyte, each on its own scale with its reference range as a band and out-of-range results flagged by color and shape.
+Small multiples: one compact trend per analyte, each on its own scale with its own reference range (from the panels table) as a band, green with yellow zones near each limit; every result is colored red out of range, yellow near a limit, green in range or grey with no range, and shaped by direction. The range is data, never a template default.
 
 ![lab-panel](docs/screenshots/lab-panel.png)
 
-- Takes: `data` as rows `{time, analyte, value}`; `panels` as rows `{analyte, label, [unit], low, high}`
-- Required slots: `panels`
+- Takes: `data` as rows `{time, analyte, value, [warn_low], [warn_high], [warn_margin]}`; `panels` as rows `{analyte, label, [unit], [low], [high], [warn_low], [warn_high], [warn_margin]}`
 - Try it: `(health-chart-demo "lab-panel")`
 
 #### lab-recency
 
-How long ago each test was last drawn, against how often it should be: a bar of days since the last draw and a tick at the recommended interval. Fresh is within the interval, due within 1.5 times it, stale beyond that. The reference date as_of is supplied, never read from a clock.
+How long ago each test was last drawn, against how often it is due: a bar of days since the last draw and a tick at the interval. Staleness is not a health status, so it is drawn in blues only: lighter within the interval, deeper when overdue (up to overdue_factor times the interval), darkest when long overdue, grey when never drawn; each state is also written next to its bar. The reference date as_of is supplied, never read from a clock.
 
 ![lab-recency](docs/screenshots/lab-recency.png)
 
@@ -240,97 +312,100 @@ How long ago each test was last drawn, against how often it should be: a bar of 
 
 #### lab-results
 
-Latest result of many analytes, each placed within its own reference range: the range is the bar, the result a marker, and results outside the range are flagged by color, shape and the legend.
+Latest result of many analytes, each placed within its own reference range: the range is the bar (green, yellow near each limit), the result a marker colored red out of range, yellow near a limit, green in range and grey when there is no range.
 
 ![lab-results](docs/screenshots/lab-results.png)
 
-- Takes: `data` as rows `{analyte, value, [unit], ref_low, ref_high}`
+- Takes: `data` as rows `{analyte, value, [unit], [ref_low], [ref_high], [warn_low], [warn_high], [warn_margin]}`
 - Try it: `(health-chart-demo "lab-results")`
 
 #### lab-status-grid
 
-A grid of analytes by draw date, each cell colored and marked low, in range or high against that row's own reference range, with the glyph and the value in the cell.
+A grid of analytes by draw date: each cell is filled with its status color at partial opacity (red out of range, yellow near a limit, green in range, grey with no range) and carries a glyph (low, near, in range, high, ?) and the value, judged against that row's own reference range. Ranges come from the data, either limit may be missing.
 
 ![lab-status-grid](docs/screenshots/lab-status-grid.png)
 
-- Takes: `data` as rows `{time, analyte, value, ref_low, ref_high}`
+- Takes: `data` as rows `{time, analyte, value, [ref_low], [ref_high], [warn_low], [warn_high], [warn_margin]}`
 - Try it: `(health-chart-demo "lab-status-grid")`
 
 #### lab-trend
 
-One lab analyte over time against its reference range: the range as a band, an optional optimal band inside it, and results outside the range flagged L or H by color, shape and letter.
+One lab analyte over time against its reference range: the range as a band (green, yellow near each limit), an optional optimal band inside it, and each result colored red out of range, yellow near a limit, green in range, grey with no range, and flagged L or H by shape and letter.
 
 ![lab-trend](docs/screenshots/lab-trend.png)
 
-- Takes: `data` as rows `{time, value}`
-- Required slots: `low`, `high`
+- Takes: `data` as rows `{time, value, [warn_low], [warn_high], [warn_margin]}`
+- Range slots, from the data source (null or left out = unknown, drawn grey): `low`, `high`, `opt_low`, `opt_high`
 - Try it: `(health-chart-demo "lab-trend")`
 
 #### lipid-panel
 
-A lipid panel against goal lines: one bar per measure (total cholesterol, LDL, HDL, triglycerides, non-HDL), a tick at its goal, an optional hollow marker for the prior draw. Goal met or missed is shown by color, glyph and label, with direction (below or above) per measure.
+A lipid panel against goal lines: one bar per measure, a tick at its goal, an optional hollow marker for the prior draw. Each measure is judged against its own goal, a one-sided range: a 'below' goal has only an upper limit, an 'above' goal only a lower one. The bar is red when the goal is missed (low means below an 'above' goal, high above a 'below' goal), yellow when met but within the margin of the goal, green when met clear of it; the status is also written at the bar end. Goals are data.
 
 ![lipid-panel](docs/screenshots/lipid-panel.png)
 
-- Takes: `data` as rows `{analyte, value, [unit], goal, direction, [prior]}`
+- Takes: `data` as rows `{analyte, value, [unit], goal, direction, [prior], [warn_low], [warn_high], [warn_margin]}`
 - Try it: `(health-chart-demo "lipid-panel")`
 
 ### Glucose and diabetes
 
 #### agp
 
-Ambulatory glucose profile: many days of readings folded onto one 24 hour day as the median line with the 25-75th and 5-95th percentile bands and the target range limits.
+Ambulatory glucose profile: many days of readings folded onto one 24 hour day as the median line with the 25-75th and 5-95th percentile bands (neutral blues) and, when the data source supplies it, the target range as a green band. The profile itself is not judged, so it uses no red or yellow.
 
 ![agp](docs/screenshots/agp.png)
 
 - Takes: `data` as rows `{time, glucose}`
+- Range slots, from the data source (null or left out = unknown, drawn grey): `low`, `high`
 - Try it: `(health-chart-demo "agp")`
 
 #### cgm-day
 
-A continuous glucose monitor day: the glucose line over 24 hours, the target range as a band, very low and very high limits as dashed rules, readings outside the range flagged by colour and shape.
+A continuous glucose monitor day: the glucose line over 24 hours against the target range from the data source (band: green, yellow near each limit); readings are red out of range (triangle-down low, triangle-up high, letter L or H), yellow near a limit, green in range, grey with no range. Optional very low / very high limits are drawn as labelled dashed rules; a reading beyond one is red like any out-of-range reading but larger and flagged with its letter and !! (dense days are not lettered otherwise).
 
 ![cgm-day](docs/screenshots/cgm-day.png)
 
-- Takes: `data` as rows `{time, glucose}`
+- Takes: `data` as rows `{time, glucose, [warn_low], [warn_high], [warn_margin]}`
+- Range slots, from the data source (null or left out = unknown, drawn grey): `very_low`, `low`, `high`, `very_high`
 - Try it: `(health-chart-demo "cgm-day")`
 
 #### time-in-range
 
-Time in range: the share of glucose readings very low, low, in range, high and very high per period (weeks, days, any label you give), computed from the raw readings; the consensus target is over 70 percent in range.
+Time in range: the share of glucose readings very low, low, in range, high and very high per period (weeks, days, any label you give), computed from the raw readings against the four cut-offs from the data source (all required). Out-of-range shares are red (very low and very high solid, low and high tinted), in range is green. Shares have no warning margin, so there is no yellow. An optional target_pct draws a target tick on the in-range share.
 
 ![time-in-range](docs/screenshots/time-in-range.png)
 
 - Takes: `data` as rows `{time, glucose, [period]}`
+- Required slots: `very_low`, `low`, `high`, `very_high`
 - Try it: `(health-chart-demo "time-in-range")`
 
 ### Trends against published categories (A1c, eGFR, BMI)
 
 #### a1c-trend
 
-HbA1c (%) over time against the ADA diagnostic categories (under 5.7 normal, 5.7-6.4 prediabetes, 6.5 and over diabetes), with an optional personal target line.
+HbA1c (%) over time against category bands bound from the data source (each band carries its own status: low, near, ok or high); bands are filled and readings colored and shaped by that status, with an optional personal target line.
 
 ![a1c-trend](docs/screenshots/a1c-trend.png)
 
-- Takes: `data` as rows `{time, value}`; `bands` (optional) as rows `{label, low, high, [color]}`
+- Takes: `data` as rows `{time, value}`; `bands` as rows `{label, low, high, status, [color]}`
 - Try it: `(health-chart-demo "a1c-trend")`
 
 #### egfr-trend
 
-Estimated GFR (mL/min/1.73 m2) over time against the KDIGO CKD stage bands G1 to G5.
+Estimated GFR (mL/min/1.73 m2) over time against category bands bound from the data source (each band carries its own status: low, near, ok or high); bands are filled and readings colored and shaped by that status, with an optional personal target line.
 
 ![egfr-trend](docs/screenshots/egfr-trend.png)
 
-- Takes: `data` as rows `{time, value}`; `bands` (optional) as rows `{label, low, high, [color]}`
+- Takes: `data` as rows `{time, value}`; `bands` as rows `{label, low, high, status, [color]}`
 - Try it: `(health-chart-demo "egfr-trend")`
 
 #### weight-bmi-trend
 
-BMI over time, computed from weight and height, against the WHO adult categories (under 18.5, 18.5-24.9, 25-29.9, 30 and over); the weight is in the tooltip.
+BMI over time, computed from weight and height, against category bands bound from the data source (each band carries its own status: low, near, ok or high); bands are filled and readings colored and shaped by that status; the weight is in the tooltip.
 
 ![weight-bmi-trend](docs/screenshots/weight-bmi-trend.png)
 
-- Takes: `data` as rows `{time, weight_kg}`; `bands` (optional) as rows `{label, low, high, [color]}`
+- Takes: `data` as rows `{time, weight_kg}`; `bands` as rows `{label, low, high, status, [color]}`
 - Required slots: `height_m`
 - Try it: `(health-chart-demo "weight-bmi-trend")`
 
@@ -349,7 +424,7 @@ Fluid balance per day: intake bars up, output bars down, in millilitres, with th
 
 #### medication-timeline
 
-Medication courses as bars on a timeline, each scheduled dose marked taken, late or missed (shape and colour), with the adherence share per medication.
+Medication courses as neutral bars on a timeline, each scheduled dose marked taken (blue circle), late (light blue diamond) or missed (grey cross), with the adherence share per medication.
 
 ![medication-timeline](docs/screenshots/medication-timeline.png)
 
@@ -360,7 +435,7 @@ Medication courses as bars on a timeline, each scheduled dose marked taken, late
 
 #### immunization-timeline
 
-Immunization history: one row per vaccine, doses given as filled points, doses still due as grey diamonds and doses due before the as_of date as red triangles.
+Immunization history: one row per vaccine, doses given as blue circles, doses still due as grey diamonds and doses due before the as_of date as dark triangles labelled overdue (overdue is a scheduling state, not a health judgment).
 
 ![immunization-timeline](docs/screenshots/immunization-timeline.png)
 
@@ -405,7 +480,7 @@ Paediatric growth chart: percentile curves bound by the caller (bind published C
 
 #### sleep-duration
 
-Nightly sleep as stacked bars by stage, the time in bed in hours above each night and the sleep goal as a dashed line.
+Nightly sleep as stacked bars by stage, the time in bed in hours above each night and, when a goal is supplied, the sleep goal as a dashed line.
 
 ![sleep-duration](docs/screenshots/sleep-duration.png)
 
@@ -441,7 +516,6 @@ Time spent in each heart-rate zone as horizontal bars, with the zone's bpm bound
 - Takes: `data` as rows `{zone, minutes, low, high}`
 - Try it: `(health-chart-demo "hr-zones")`
 
-
 ## API
 
 | Function | Does |
@@ -457,6 +531,8 @@ Time spent in each heart-rate zone as horizontal bars, with the zone's bpm bound
 | `(health-chart-open NAME BINDINGS)` | a live eas view in a buffer (hover, crosshair, zoom, the eas agent verbs) |
 | `(health-chart-demo NAME)` | open a template over its example |
 | `(health-chart-read-bindings FILE-OR-JSON)` | parse bindings |
+| `(health-chart-from-biomarker TEMPLATE ENVELOPE &rest OPTS)` | bindings from a `biomarker/v1` envelope (pure) |
+| `(health-chart-status VALUE LOW HIGH &optional MARGIN WARN-LOW WARN-HIGH)` | `low`, `near`, `ok`, `high` or `unknown` |
 
 Errors are typed: `health-chart-unknown-template`, `health-chart-invalid-data`
 and `health-chart-backend-error`, all under `health-chart-error`. `auto`
@@ -464,8 +540,9 @@ draws SVG in a graphical frame and text in a terminal
 (`health-chart-backend`). Text output is deterministic and carries eas's
 hover help and datum properties, so an agent can read a chart as text.
 
-The package also registers one eas transform, `time-of-day-percentiles`
-(the percentile bands of `agp`), through eas's public registry.
+The package also registers eas transforms through eas's public registry:
+`time-of-day-percentiles` (the percentile bands of `agp`), `health-status`
+and `health-band-status` (the color rule above, which the templates call).
 
 ## Adding a template
 
@@ -480,7 +557,7 @@ and expects the right code and path. See `AGENTS.md` and
 ## Tests
 
 ```sh
-make test EAS=/path/to/eas.el        # ERT: validation, API, goldens for text and SVG
+make test EAS=/path/to/eas.el        # ERT: validation, API, the color rule, the adapter, goldens for text and SVG
 make compile EAS=/path/to/eas.el     # byte-compile, warnings are errors
 make checkdoc
 make screenshots EAS=/path/to/eas.el # docs/screenshots/*.png (needs rsvg-convert)
