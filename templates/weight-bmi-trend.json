@@ -88,6 +88,15 @@
       "unknown_color": {
         "type": "string",
         "doc": "no band holds the value (the theme's grey)"
+      },
+      "decimals": {
+        "type": "integer",
+        "default": null,
+        "doc": "exact decimals of every displayed number (a row's own decimals wins); without it a number shows sig_figs significant figures but never fewer decimals than its reference limits show. Display only: status is judged on the number as given"
+      },
+      "sig_figs": {
+        "type": "integer",
+        "doc": "significant figures of a displayed number when decimals is not set (the theme's :sig-figs, 3)"
       }
     },
     "example": "examples/weight-bmi-trend.data.json",
@@ -97,7 +106,8 @@
         "data": {
           "fields": {
             "time": "time",
-            "weight_kg": "range:20:400"
+            "weight_kg": "range:20:400",
+            "decimals": "?range:0:8"
           },
           "order": "time"
         },
@@ -128,7 +138,11 @@
       "svg_size": [
         1000,
         420
-      ]
+      ],
+      "slots": {
+        "decimals": "range:0:8",
+        "sig_figs": "range:1:10"
+      }
     }
   },
   "title": {
@@ -536,12 +550,11 @@
             "format": "%Y-%m-%d"
           },
           {
-            "field": "value",
-            "title": "BMI",
-            "format": ".1f"
+            "field": "value_text",
+            "title": "BMI"
           },
           {
-            "field": "weight_kg",
+            "field": "weight_kg_text",
             "title": "weight (kg)"
           },
           {
@@ -678,7 +691,7 @@
           "filter": "datum.rn == 1"
         },
         {
-          "calculate": "'latest ' + format(datum.value, '.1f')",
+          "calculate": "'latest ' + datum.value_text",
           "as": "latest_text"
         }
       ],
@@ -728,10 +741,29 @@
   ],
   "transform": [
     {
-      "calculate": {
-        "x-eas:expr": "datum.weight_kg / ({{height_m}} * {{height_m}})"
+      "x-eas:transform": "health-divide",
+      "numerator": "weight_kg",
+      "divisor": {
+        "x-eas:slot": "height_m"
       },
+      "power": 2,
       "as": "value"
+    },
+    {
+      "x-eas:transform": "health-format",
+      "fields": [
+        "value",
+        "weight_kg"
+      ],
+      "decimals": {
+        "x-eas:slot": "decimals"
+      },
+      "sig": {
+        "x-eas:slot": "sig_figs"
+      },
+      "bands": {
+        "x-eas:slot": "bands"
+      }
     },
     {
       "calculate": "'unknown'",

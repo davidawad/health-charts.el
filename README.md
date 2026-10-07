@@ -175,6 +175,21 @@ The rule itself is a pure function, `(health-chart-status VALUE LOW HIGH
 &optional MARGIN WARN-LOW WARN-HIGH)`, that answers `low`, `near`, `ok`,
 `high` or `unknown`.
 
+**Numbers are shown short, judged exact.** A computed float is drawn with 3
+significant figures (82.916685236 is `82.9`, 4.551020408 is `4.55`), but never
+with fewer decimals than the row's reference limits show (limits `0.0` and
+`0.2` keep `0.02` as `0.02`) and never with a digit of the whole part cut (132
+stays `132`). Labels, tooltips, grid cells and change arrows all use it. Three
+levers: the `sig_figs` slot (theme key `:sig-figs`), the `decimals` slot for an
+exact count, and a per-row `decimals` field that wins over both. The status
+rule always sees the number as it came: `5.6004` against a limit of `5.6` is
+drawn `5.6` and is still `high`. Row labels longer than the `label_max` slot
+(theme `:label-max`, default 28 characters) end in an ellipsis, and
+`lab-status-grid` cuts a value wider than its `col_step` cell the same way, so
+a label and a value never run together. `health-chart-from-biomarker` takes
+`:decimals`, `:sig-figs` and `:label-max` and sets those slots; the numbers it
+maps are untouched.
+
 **From the biomarker CLI.** `health-chart-from-biomarker` maps the
 `biomarker/v1` envelope that `biomarker latest|query --format json` prints
 into the bindings of `lab-results`, `lab-status-grid`, `lab-change`,

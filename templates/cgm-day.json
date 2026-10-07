@@ -114,6 +114,15 @@
         "type": "number",
         "default": null,
         "doc": "optional: the value above which a reading is yellow, replacing high - margin"
+      },
+      "decimals": {
+        "type": "integer",
+        "default": null,
+        "doc": "exact decimals of every displayed number (a row's own decimals wins); without it a number shows sig_figs significant figures but never fewer decimals than its reference limits show. Display only: status is judged on the number as given"
+      },
+      "sig_figs": {
+        "type": "integer",
+        "doc": "significant figures of a displayed number when decimals is not set (the theme's :sig-figs, 3)"
       }
     },
     "example": "examples/cgm-day.data.json",
@@ -134,7 +143,8 @@
             "glucose": "range:10:800",
             "warn_low": "?number",
             "warn_high": "?number",
-            "warn_margin": "?range:0:1"
+            "warn_margin": "?range:0:1",
+            "decimals": "?range:0:8"
           },
           "order": "time",
           "rows": [
@@ -186,7 +196,9 @@
         }
       ],
       "slots": {
-        "warn_margin": "range:0:1"
+        "warn_margin": "range:0:1",
+        "decimals": "range:0:8",
+        "sig_figs": "range:1:10"
       }
     }
   },
@@ -227,6 +239,24 @@
       },
       "margin": {
         "x-eas:slot": "warn_margin"
+      }
+    },
+    {
+      "x-eas:transform": "health-format",
+      "fields": [
+        "glucose"
+      ],
+      "decimals": {
+        "x-eas:slot": "decimals"
+      },
+      "sig": {
+        "x-eas:slot": "sig_figs"
+      },
+      "low": {
+        "x-eas:slot": "low"
+      },
+      "high": {
+        "x-eas:slot": "high"
       }
     },
     {
@@ -797,7 +827,7 @@
             "format": "%H:%M"
           },
           {
-            "field": "glucose",
+            "field": "glucose_text",
             "title": "glucose"
           },
           {

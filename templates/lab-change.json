@@ -76,6 +76,19 @@
         "type": "string",
         "default": "later",
         "doc": "legend word for the later result"
+      },
+      "decimals": {
+        "type": "integer",
+        "default": null,
+        "doc": "exact decimals of every displayed number (a row's own decimals wins); without it a number shows sig_figs significant figures but never fewer decimals than its reference limits show. Display only: status is judged on the number as given"
+      },
+      "sig_figs": {
+        "type": "integer",
+        "doc": "significant figures of a displayed number when decimals is not set (the theme's :sig-figs, 3)"
+      },
+      "label_max": {
+        "type": "integer",
+        "doc": "the most characters of a row label before an ellipsis (the theme's :label-max, 28)"
       }
     },
     "example": "examples/lab-change.data.json",
@@ -92,7 +105,8 @@
             "ref_high": "?number",
             "warn_low": "?number",
             "warn_high": "?number",
-            "warn_margin": "?range:0:1"
+            "warn_margin": "?range:0:1",
+            "decimals": "?range:0:8"
           },
           "rows": [
             {
@@ -128,7 +142,10 @@
         400
       ],
       "slots": {
-        "warn_margin": "range:0:1"
+        "warn_margin": "range:0:1",
+        "decimals": "range:0:8",
+        "sig_figs": "range:1:10",
+        "label_max": "range:4:200"
       }
     }
   },
@@ -177,6 +194,23 @@
       "normalize": true
     },
     {
+      "x-eas:transform": "health-format",
+      "fields": [
+        "before",
+        "after"
+      ],
+      "decimals": {
+        "x-eas:slot": "decimals"
+      },
+      "sig": {
+        "x-eas:slot": "sig_figs"
+      },
+      "label_field": "analyte",
+      "label_max": {
+        "x-eas:slot": "label_max"
+      }
+    },
+    {
       "calculate": "max(isValid(datum.ref_low) ? datum.ref_low - datum.before : 0, isValid(datum.ref_high) ? datum.before - datum.ref_high : 0, 0)",
       "as": "dist_before"
     },
@@ -197,7 +231,7 @@
       "as": "verdict"
     },
     {
-      "calculate": "datum.analyte + '  ' + datum.before + ' > ' + datum.after + (isValid(datum.unit) ? ' ' + datum.unit : '')",
+      "calculate": "datum.analyte_short + '  ' + datum.before_text + ' > ' + datum.after_text + (isValid(datum.unit) ? ' ' + datum.unit : '')",
       "as": "row_label"
     },
     {
@@ -218,7 +252,8 @@
       "axis": {
         "domain": false,
         "ticks": false,
-        "labelLimit": 360
+        "labelLimit": 360,
+        "labelPadding": 8
       }
     }
   },
@@ -246,7 +281,7 @@
           "scale": {
             "domain": [
               -0.6,
-              2.1
+              3.0
             ],
             "nice": false,
             "zero": false
@@ -296,7 +331,7 @@
           "scale": {
             "domain": [
               -0.6,
-              2.1
+              3.0
             ],
             "nice": false,
             "zero": false
@@ -340,7 +375,7 @@
           "scale": {
             "domain": [
               -0.6,
-              2.1
+              3.0
             ],
             "nice": false,
             "zero": false
@@ -381,7 +416,7 @@
           "scale": {
             "domain": [
               -0.6,
-              2.1
+              3.0
             ],
             "nice": false,
             "zero": false
@@ -396,10 +431,12 @@
             "field": "analyte"
           },
           {
-            "field": "before"
+            "field": "before_text",
+            "title": "before"
           },
           {
-            "field": "after"
+            "field": "after_text",
+            "title": "after"
           },
           {
             "field": "verdict",
@@ -432,7 +469,7 @@
           "scale": {
             "domain": [
               -0.6,
-              2.1
+              3.0
             ],
             "nice": false,
             "zero": false
@@ -447,10 +484,12 @@
             "field": "analyte"
           },
           {
-            "field": "before"
+            "field": "before_text",
+            "title": "before"
           },
           {
-            "field": "after"
+            "field": "after_text",
+            "title": "after"
           },
           {
             "field": "verdict",
@@ -483,7 +522,7 @@
           "scale": {
             "domain": [
               -0.6,
-              2.1
+              3.0
             ],
             "nice": false,
             "zero": false
@@ -498,10 +537,12 @@
             "field": "analyte"
           },
           {
-            "field": "before"
+            "field": "before_text",
+            "title": "before"
           },
           {
-            "field": "after"
+            "field": "after_text",
+            "title": "after"
           },
           {
             "field": "verdict",
@@ -533,7 +574,7 @@
           "scale": {
             "domain": [
               -0.6,
-              2.1
+              3.0
             ],
             "nice": false,
             "zero": false
@@ -599,7 +640,7 @@
             "field": "analyte"
           },
           {
-            "field": "before",
+            "field": "before_text",
             "title": "earlier"
           },
           {
@@ -632,7 +673,7 @@
           "scale": {
             "domain": [
               -0.6,
-              2.1
+              3.0
             ],
             "nice": false,
             "zero": false
@@ -696,7 +737,7 @@
             "field": "analyte"
           },
           {
-            "field": "after",
+            "field": "after_text",
             "title": "later"
           },
           {
@@ -727,12 +768,12 @@
           "scale": {
             "domain": [
               -0.6,
-              2.1
+              3.0
             ],
             "nice": false,
             "zero": false
           },
-          "datum": 2.08
+          "datum": 2.98
         },
         "text": {
           "field": "verdict_text"
@@ -769,7 +810,7 @@
           "scale": {
             "domain": [
               -0.6,
-              2.1
+              3.0
             ],
             "nice": false,
             "zero": false
@@ -784,10 +825,12 @@
             "field": "analyte"
           },
           {
-            "field": "before"
+            "field": "before_text",
+            "title": "before"
           },
           {
-            "field": "after"
+            "field": "after_text",
+            "title": "after"
           }
         ]
       }

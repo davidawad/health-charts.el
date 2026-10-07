@@ -385,6 +385,17 @@ marker when the envelope has one."
 
 ;;; Entry point
 
+(defun health-chart-biomarker--display (name opts bindings)
+  "BINDINGS of template NAME with the display slots OPTS asks for laid over.
+:decimals, :sig-figs and :label-max become the slots decimals, sig_figs and
+label_max when the template declares them.  Display only: no number in
+BINDINGS changes."
+  (let ((slots (plist-get (plist-get (health-chart--template name) :meta) :slots)))
+    (cl-loop for (opt slot) in '((:decimals :decimals) (:sig-figs :sig_figs) (:label-max :label_max))
+             when (and (numberp (plist-get opts opt)) (plist-member slots slot))
+             do (setq bindings (plist-put (copy-sequence bindings) slot (plist-get opts opt))))
+    bindings))
+
 ;;;###autoload
 (defun health-chart-from-biomarker (template envelope &rest opts)
   "Bindings for TEMPLATE from ENVELOPE, a `biomarker/v1' envelope.
@@ -406,21 +417,27 @@ TEMPLATE is one of `health-chart-biomarker-templates'.  OPTS:
   :margin     a1c-trend, weight-bmi-trend: warning margin of the cut bands
   :directions lipid-panel: alist of marker to \"below\" or \"above\" for a
               marker that has both limits
+  :decimals :sig-figs :label-max   display precision and label width, the
+              slots decimals, sig_figs and label_max of the template.  They
+              change the text drawn, never the numbers: a value of 82.9167
+              still sits in the data as it came and is judged as it came.
 Ranges come from the rows only; a missing limit stays missing."
   (let ((name (if (symbolp template) (symbol-name template) template))
         (rows (health-chart-biomarker--rows envelope)))
-    (pcase name
-      ("lab-results" (health-chart-biomarker--lab-results rows opts))
-      ("lab-status-grid" (health-chart-biomarker--lab-status-grid rows opts))
-      ("lab-change" (health-chart-biomarker--lab-change rows opts))
-      ("lab-trend" (health-chart-biomarker--lab-trend rows opts))
-      ("lab-panel" (health-chart-biomarker--lab-panel rows opts))
-      ("lipid-panel" (health-chart-biomarker--lipid-panel rows opts))
-      ("a1c-trend" (health-chart-biomarker--a1c-trend rows opts))
-      ("weight-bmi-trend" (health-chart-biomarker--weight-bmi-trend rows opts))
-      (_ (health-chart-biomarker--fail
-          "unsupported_template" "No biomarker mapping for template %S; supported: %s"
-          name (string-join health-chart-biomarker-templates ", "))))))
+    (health-chart-biomarker--display
+     name opts
+     (pcase name
+       ("lab-results" (health-chart-biomarker--lab-results rows opts))
+       ("lab-status-grid" (health-chart-biomarker--lab-status-grid rows opts))
+       ("lab-change" (health-chart-biomarker--lab-change rows opts))
+       ("lab-trend" (health-chart-biomarker--lab-trend rows opts))
+       ("lab-panel" (health-chart-biomarker--lab-panel rows opts))
+       ("lipid-panel" (health-chart-biomarker--lipid-panel rows opts))
+       ("a1c-trend" (health-chart-biomarker--a1c-trend rows opts))
+       ("weight-bmi-trend" (health-chart-biomarker--weight-bmi-trend rows opts))
+       (_ (health-chart-biomarker--fail
+           "unsupported_template" "No biomarker mapping for template %S; supported: %s"
+           name (string-join health-chart-biomarker-templates ", ")))))))
 
 (provide 'health-chart-biomarker)
 ;;; health-chart-biomarker.el ends here

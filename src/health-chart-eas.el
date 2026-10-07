@@ -33,6 +33,7 @@
 (require 'health-chart-theme)
 (require 'health-chart-transforms)
 (require 'health-chart-status)
+(require 'health-chart-format)
 
 (provide 'health-chart-eas)
 ;;; health-chart-eas.el ends here

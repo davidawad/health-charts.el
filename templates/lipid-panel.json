@@ -67,6 +67,19 @@
         "type": "string",
         "default": "value",
         "doc": "x-axis title, e.g. mg/dL"
+      },
+      "decimals": {
+        "type": "integer",
+        "default": null,
+        "doc": "exact decimals of every displayed number (a row's own decimals wins); without it a number shows sig_figs significant figures but never fewer decimals than its reference limits show. Display only: status is judged on the number as given"
+      },
+      "sig_figs": {
+        "type": "integer",
+        "doc": "significant figures of a displayed number when decimals is not set (the theme's :sig-figs, 3)"
+      },
+      "label_max": {
+        "type": "integer",
+        "doc": "the most characters of a row label before an ellipsis (the theme's :label-max, 28)"
       }
     },
     "example": "examples/lipid-panel.data.json",
@@ -83,7 +96,8 @@
             "prior": "?nonneg",
             "warn_low": "?number",
             "warn_high": "?number",
-            "warn_margin": "?range:0:1"
+            "warn_margin": "?range:0:1",
+            "decimals": "?range:0:8"
           },
           "rows": [
             {
@@ -112,7 +126,10 @@
         360
       ],
       "slots": {
-        "warn_margin": "range:0:1"
+        "warn_margin": "range:0:1",
+        "decimals": "range:0:8",
+        "sig_figs": "range:1:10",
+        "label_max": "range:4:200"
       }
     }
   },
@@ -157,6 +174,24 @@
       "prefix": "bel"
     },
     {
+      "x-eas:transform": "health-format",
+      "fields": [
+        "value",
+        "goal",
+        "prior"
+      ],
+      "decimals": {
+        "x-eas:slot": "decimals"
+      },
+      "sig": {
+        "x-eas:slot": "sig_figs"
+      },
+      "label_field": "analyte",
+      "label_max": {
+        "x-eas:slot": "label_max"
+      }
+    },
+    {
       "calculate": "datum.direction == 'above' ? datum.abv_label : datum.bel_label",
       "as": "status_label"
     },
@@ -169,7 +204,7 @@
       "as": "status_glyph"
     },
     {
-      "calculate": "datum.analyte + '  ' + datum.value + (isValid(datum.unit) ? ' ' + datum.unit : '') + '  (goal ' + (datum.direction == 'below' ? '<' : '>') + datum.goal + ')  ' + datum.status_glyph + ' ' + datum.status_label",
+      "calculate": "datum.analyte_short + '  ' + datum.value_text + (isValid(datum.unit) ? ' ' + datum.unit : '') + '  (goal ' + (datum.direction == 'below' ? '<' : '>') + datum.goal_text + ')  ' + datum.status_glyph + ' ' + datum.status_label",
       "as": "row_label"
     },
     {
@@ -190,7 +225,8 @@
       "axis": {
         "domain": false,
         "ticks": false,
-        "labelLimit": 460
+        "labelLimit": 460,
+        "labelPadding": 8
       }
     }
   },
@@ -256,10 +292,12 @@
             "field": "analyte"
           },
           {
-            "field": "value"
+            "field": "value_text",
+            "title": "value"
           },
           {
-            "field": "goal"
+            "field": "goal_text",
+            "title": "goal"
           },
           {
             "field": "direction"
@@ -299,7 +337,7 @@
             "field": "analyte"
           },
           {
-            "field": "goal",
+            "field": "goal_text",
             "title": "goal"
           }
         ]
@@ -338,7 +376,7 @@
             "field": "analyte"
           },
           {
-            "field": "prior",
+            "field": "prior_text",
             "title": "prior draw"
           }
         ]

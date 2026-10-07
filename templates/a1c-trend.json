@@ -83,6 +83,15 @@
       "unknown_color": {
         "type": "string",
         "doc": "no band holds the value (the theme's grey)"
+      },
+      "decimals": {
+        "type": "integer",
+        "default": null,
+        "doc": "exact decimals of every displayed number (a row's own decimals wins); without it a number shows sig_figs significant figures but never fewer decimals than its reference limits show. Display only: status is judged on the number as given"
+      },
+      "sig_figs": {
+        "type": "integer",
+        "doc": "significant figures of a displayed number when decimals is not set (the theme's :sig-figs, 3)"
       }
     },
     "example": "examples/a1c-trend.data.json",
@@ -92,7 +101,8 @@
         "data": {
           "fields": {
             "time": "time",
-            "value": "number"
+            "value": "number",
+            "decimals": "?range:0:8"
           },
           "order": "time"
         },
@@ -123,7 +133,11 @@
       "svg_size": [
         1000,
         420
-      ]
+      ],
+      "slots": {
+        "decimals": "range:0:8",
+        "sig_figs": "range:1:10"
+      }
     }
   },
   "title": {
@@ -531,7 +545,7 @@
             "format": "%Y-%m-%d"
           },
           {
-            "field": "value",
+            "field": "value_text",
             "title": "value"
           },
           {
@@ -668,7 +682,7 @@
           "filter": "datum.rn == 1"
         },
         {
-          "calculate": "'latest ' + format(datum.value, '.1f')",
+          "calculate": "'latest ' + datum.value_text",
           "as": "latest_text"
         }
       ],
@@ -720,6 +734,21 @@
     {
       "x-eas:transform": "health-band-status",
       "value": "value",
+      "bands": {
+        "x-eas:slot": "bands"
+      }
+    },
+    {
+      "x-eas:transform": "health-format",
+      "fields": [
+        "value"
+      ],
+      "decimals": {
+        "x-eas:slot": "decimals"
+      },
+      "sig": {
+        "x-eas:slot": "sig_figs"
+      },
       "bands": {
         "x-eas:slot": "bands"
       }

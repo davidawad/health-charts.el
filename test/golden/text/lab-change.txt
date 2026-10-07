@@ -4,19 +4,19 @@
                                                                                         ◆ near limit
                                                                                         ● in range
                                                                                         ▲ high
-LDL cholesterol  5.6 > 3.9 mmol/L             ▓▓▓▒▒▒▒▒▒▒▒▒●──────────△        improved  ■ no range
+LDL cholesterol  5.6 > 3.9 mmol/L          ▓▓▓▒▒▒▒▒▒●───────△                 improved  ■ no range
 
-               HbA1c  6.4 > 5.7 %             ▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓ ▲───────△   improved
+               HbA1c  6.4 > 5.7 %          ▓▓▓▒▒▒▒▒▒▒▒▓▓▓ ▲─────△             improved
 
-  Triglycerides  1.4 > 2.3 mmol/L             ▓▓▓▒▒▒▒▒▒▒▒▒▒▒○────────────▲    worsened
+  Triglycerides  1.4 > 2.3 mmol/L          ▓▓▓▒▒▒▒▒▒▒○─────────▲              worsened
 
-           Ferritin  12 > 41 ug/L           ▽─◆▓▓▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓             improved
+           Ferritin  12 > 41 ug/L        ▽─◆▓▓▒▒▒▒▒▒▒▒▓▓▓                     improved
 
-                 ALT  36 > 29 U/L             ▓▓▓▒▒▒▒▒▒▒▒▒●───◇▓▓             improved
+                 ALT  36 > 29 U/L          ▓▓▓▒▒▒▒▒▒●──◇▓                     improved
 
-             TSH  2.4 > 4.6 mIU/L             ▒▒▒▒▒▒▒▒▒▒▒○─────────▲          worsened
+             TSH  2.4 > 4.6 mIU/L          ▒▒▒▒▒▒▒▒○───────▲                  worsened
 
-        Vitamin D  38 > 74 nmol/L                  no range
+        Vitamin D  38 > 74 nmol/L             no range
                                   ────────────────────────────────────────────────────
 
                        position within each reference range (green in range, yellow near a limit)

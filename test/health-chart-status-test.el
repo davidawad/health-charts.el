@@ -315,7 +315,7 @@ This is the whole path: slot defaults, theme, binding, transform."
 
 (ert-deftest health-chart-theme-never-holds-a-clinical-value ()
   (should-not (seq-find #'numberp (cl-loop for (k v) on health-chart-theme-defaults by #'cddr
-                                           unless (eq k :warn-margin) collect v))))
+                                           unless (memq k '(:warn-margin :sig-figs :label-max)) collect v))))
 
 ;;; Per-row overrides and missing ranges, end to end
 

@@ -35,6 +35,7 @@
 (defconst health-chart-theme-slots
   '(:bad "bad_color" :warn "warn_color" :ok "ok_color" :unknown "unknown_color"
     :line "line_color" :warn-margin "warn_margin"
+    :sig-figs "sig_figs" :label-max "label_max"
     :ink "ink" :secondary "secondary" :muted "muted" :surface "surface" :grid "grid")
   "Theme key to the template slot it fills.
 A template that lacks the slot ignores the key.")
@@ -42,6 +43,7 @@ A template that lacks the slot ignores the key.")
 (defconst health-chart-theme-defaults
   '(:bad "#d03b3b" :warn "#e09a00" :ok "#2b9348" :unknown "#898781"
     :line "#2a78d6" :warn-margin 0.2
+    :sig-figs 3 :label-max 28
     :ink "#0b0b0b" :secondary "#52514e" :muted "#898781"
     :surface "#fcfcfb" :grid "#e1e0d9")
   "The theme as shipped.  `health-chart-theme' is merged over it.")
@@ -58,11 +60,15 @@ Keys (all optional, the default in parentheses):
   :warn-margin  the width of the yellow zone inside each limit, as a
             fraction of the range width (0.2).  A one-sided range uses
             the same fraction of its one bound.
+  :sig-figs  significant figures of a displayed number, never fewer
+            decimals than the reference limits show (3)
+  :label-max  the most characters of a row label before an ellipsis (28)
   :ink :secondary :muted :surface :grid  text, background and gridline
             colors.
 Set it once; every template follows.  A template's own binding wins."
   :type '(plist :key-type (choice (const :bad) (const :warn) (const :ok) (const :unknown)
-                                  (const :line) (const :warn-margin) (const :ink)
+                                  (const :line) (const :warn-margin) (const :sig-figs)
+                                  (const :label-max) (const :ink)
                                   (const :secondary) (const :muted) (const :surface)
                                   (const :grid))
                 :value-type sexp)

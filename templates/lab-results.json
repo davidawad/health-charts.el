@@ -62,6 +62,19 @@
       "warn_margin": {
         "type": "number",
         "doc": "width of the yellow zone inside each limit, as a fraction of the range width (one bound for a one-sided range)"
+      },
+      "decimals": {
+        "type": "integer",
+        "default": null,
+        "doc": "exact decimals of every displayed number (a row's own decimals wins); without it a number shows sig_figs significant figures but never fewer decimals than its reference limits show. Display only: status is judged on the number as given"
+      },
+      "sig_figs": {
+        "type": "integer",
+        "doc": "significant figures of a displayed number when decimals is not set (the theme's :sig-figs, 3)"
+      },
+      "label_max": {
+        "type": "integer",
+        "doc": "the most characters of a row label before an ellipsis (the theme's :label-max, 28)"
       }
     },
     "example": "examples/lab-results.data.json",
@@ -77,7 +90,8 @@
             "ref_high": "?number",
             "warn_low": "?number",
             "warn_high": "?number",
-            "warn_margin": "?range:0:1"
+            "warn_margin": "?range:0:1",
+            "decimals": "?range:0:8"
           },
           "rows": [
             {
@@ -113,7 +127,10 @@
         440
       ],
       "slots": {
-        "warn_margin": "range:0:1"
+        "warn_margin": "range:0:1",
+        "decimals": "range:0:8",
+        "sig_figs": "range:1:10",
+        "label_max": "range:4:200"
       }
     }
   },
@@ -150,7 +167,23 @@
       "normalize": true
     },
     {
-      "calculate": "datum.analyte + '  ' + datum.value + (isValid(datum.unit) ? ' ' + datum.unit : '')",
+      "x-eas:transform": "health-format",
+      "fields": [
+        "value"
+      ],
+      "decimals": {
+        "x-eas:slot": "decimals"
+      },
+      "sig": {
+        "x-eas:slot": "sig_figs"
+      },
+      "label_field": "analyte",
+      "label_max": {
+        "x-eas:slot": "label_max"
+      }
+    },
+    {
+      "calculate": "datum.analyte_short + '  ' + datum.value_text + (isValid(datum.unit) ? ' ' + datum.unit : '')",
       "as": "row_label"
     },
     {
@@ -167,7 +200,8 @@
       "axis": {
         "domain": false,
         "ticks": false,
-        "labelLimit": 320
+        "labelLimit": 320,
+        "labelPadding": 8
       }
     }
   },
@@ -399,7 +433,8 @@
             "field": "analyte"
           },
           {
-            "field": "value"
+            "field": "value_text",
+            "title": "value"
           },
           {
             "field": "status_label",
@@ -448,7 +483,8 @@
             "field": "analyte"
           },
           {
-            "field": "value"
+            "field": "value_text",
+            "title": "value"
           },
           {
             "field": "status_label",
