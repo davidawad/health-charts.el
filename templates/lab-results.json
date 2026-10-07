@@ -3,12 +3,12 @@
   "x-eas": {
     "template": "lab-results",
     "version": "1.0.0",
-    "doc": "Latest result of many analytes, each placed within its own reference range: the range is the bar (green, yellow near each limit), the result a marker colored red out of range, yellow near a limit, green in range and grey when there is no range.",
+    "doc": "Latest result of many analytes, each placed within its own reference range: the range is the bar (green, yellow near each limit or outside the optimal range), the result a marker colored red out of range, yellow near a limit or outside the optimal range (suboptimal), green in range and grey when there is no range.",
     "slots": {
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {analyte, value, unit?, ref_low?, ref_high?, warn_low?, warn_high?, warn_margin?}: one latest result per analyte; ref_low and ref_high come from the data source (either may be missing, both missing draws no bar and is grey)"
+        "doc": "rows {analyte, value, unit?, ref_low?, ref_high?, opt_low?, opt_high?, warn_low?, warn_high?, warn_margin?}: one latest result per analyte; ref_low and ref_high come from the data source (either may be missing, both missing draws no bar and is grey); opt_low and opt_high (optional, inside the reference range) are the optimal range: inside the reference range but outside it is yellow \"suboptimal\", red is only outside the reference range"
       },
       "title": {
         "type": "string",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "Latest result of many analytes, each placed within its own reference range: the range is the bar (green, yellow near each limit), the result a marker colored red out of range, yellow near a limit, green in range and grey when there is no range.",
+        "default": "Latest result of many analytes, each placed within its own reference range: the range is the bar (green, yellow near each limit or outside the optimal range), the result a marker colored red out of range, yellow near a limit or outside the optimal range (suboptimal), green in range and grey when there is no range.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -88,6 +88,8 @@
             "unit": "?string",
             "ref_low": "?number",
             "ref_high": "?number",
+            "opt_low": "?number",
+            "opt_high": "?number",
             "warn_low": "?number",
             "warn_high": "?number",
             "warn_margin": "?range:0:1",
@@ -114,6 +116,27 @@
                 "ref_high"
               ],
               "code": "warn_outside_range"
+            },
+            {
+              "le": [
+                "opt_low",
+                "opt_high"
+              ],
+              "code": "range_inverted"
+            },
+            {
+              "le": [
+                "ref_low",
+                "opt_low"
+              ],
+              "code": "opt_outside_range"
+            },
+            {
+              "le": [
+                "opt_high",
+                "ref_high"
+              ],
+              "code": "opt_outside_range"
             }
           ]
         }
@@ -164,7 +187,9 @@
       "margin": {
         "x-eas:slot": "warn_margin"
       },
-      "normalize": true
+      "normalize": true,
+      "opt_low_field": "opt_low",
+      "opt_high_field": "opt_high"
     },
     {
       "x-eas:transform": "health-format",
@@ -234,7 +259,7 @@
             "nice": false,
             "zero": false
           },
-          "title": "range bar: green in range, yellow near a limit",
+          "title": "range bar: green in range (optimal), yellow near a limit or suboptimal",
           "axis": {
             "labels": false,
             "ticks": false,
@@ -381,6 +406,7 @@
             "domain": [
               "low",
               "near limit",
+              "suboptimal",
               "in range",
               "high",
               "no range"
@@ -388,6 +414,9 @@
             "range": [
               {
                 "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "warn_color"
               },
               {
                 "x-eas:slot": "warn_color"
@@ -414,6 +443,7 @@
             "domain": [
               "low",
               "near limit",
+              "suboptimal",
               "in range",
               "high",
               "no range"
@@ -421,6 +451,7 @@
             "range": [
               "triangle-down",
               "diamond",
+              "cross",
               "circle",
               "triangle-up",
               "square"

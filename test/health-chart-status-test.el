@@ -426,9 +426,13 @@ This is the whole path: slot defaults, theme, binding, transform."
                          (plist-member def :default))
                do (should (member (plist-get def :default) '(nil :null [])))))))
 
-(ert-deftest health-chart-status-legends-use-the-same-five-words ()
-  "A legend scale for the status words lists exactly `health-chart-status-labels'."
-  (let ((words (mapcar #'cdr health-chart-status-labels)) (seen 0))
+(ert-deftest health-chart-status-legends-use-the-same-words ()
+  "A legend scale for the status words lists `health-chart-status-labels'.
+Templates that take an optimal range also list \"suboptimal\"; the others
+list the words without it."
+  (let* ((all (mapcar #'cdr health-chart-status-labels))
+         (plain (remove "suboptimal" all))
+         (seen 0))
     (dolist (name (health-chart-template-names))
       (let (domains)
         (let ((walk nil))
@@ -445,15 +449,126 @@ This is the whole path: slot defaults, theme, binding, transform."
           (cl-incf seen)
           ;; time-in-range names its five bands instead of judging one value
           (should (equal (cons name d)
-                         (cons name (if (equal name "time-in-range")
-                                        '("very low" "low" "in range" "high" "very high")
-                                      words)))))))
+                         (cons name (cond ((equal name "time-in-range")
+                                           '("very low" "low" "in range" "high" "very high"))
+                                          ((member name health-chart-status-test--optimal-templates)
+                                           all)
+                                          (t plain))))))))
     (should (> seen 5))))
+
+(defconst health-chart-status-test--optimal-templates
+  '("lab-results" "lab-status-grid" "lab-change" "lab-trend" "lipid-panel")
+  "The templates that judge against an optimal range inside the reference range.")
 
 (ert-deftest health-chart-lab-recency-uses-no-status-colors ()
   (let ((svg (health-chart-render "lab-recency" (health-chart-example "lab-recency") :backend 'svg)))
     (dolist (key '(:bad :warn :ok))
       (should-not (string-match-p (regexp-quote (health-chart-theme-get key)) svg)))))
+
+;;; Reference range against optimal range
+
+(ert-deftest health-chart-status-reference-and-optimal-both ()
+  "Reference 100..199, optimal 100..180: red only outside the reference range."
+  (health-chart-test-with-theme nil nil
+    (pcase-dolist (`(,value . ,want)
+                   '((99.99 . low) (100 . ok) (150 . ok)
+                     (180 . ok) (180.01 . suboptimal) (184 . suboptimal)
+                     (199 . suboptimal) (199.01 . high) (250 . high)))
+      (should (eq (health-chart-status value 100 199 nil nil nil 100 180) want)))))
+
+(ert-deftest health-chart-status-exactly-at-the-reference-limit-is-not-red ()
+  (health-chart-test-with-theme nil nil
+    (should (eq (health-chart-status 39 39 nil nil nil nil 60 nil) 'suboptimal))
+    (should (eq (health-chart-status 38.99 39 nil nil nil nil 60 nil) 'low))
+    (should (eq (health-chart-status 199 nil 199 nil nil nil nil 180) 'suboptimal))
+    (should (eq (health-chart-status 199.5 nil 199 nil nil nil nil 180) 'high))))
+
+(ert-deftest health-chart-status-exactly-at-the-optimal-limit-is-optimal ()
+  (health-chart-test-with-theme nil nil
+    (should (eq (health-chart-status 60 39 nil nil nil nil 60 nil) 'ok))
+    (should (eq (health-chart-status 59.99 39 nil nil nil nil 60 nil) 'suboptimal))
+    (should (eq (health-chart-status 180 nil 199 nil nil nil nil 180) 'ok))
+    (should (eq (health-chart-status 180.01 nil 199 nil nil nil nil 180) 'suboptimal))))
+
+(ert-deftest health-chart-status-owner-examples ()
+  "HDL 52 (reference >= 39, optimal > 60) and total cholesterol 184
+(reference 100-199, optimal < 180) are suboptimal, never red."
+  (health-chart-test-with-theme nil nil
+    (should (eq (health-chart-status 52 39 nil nil nil nil 60 nil) 'suboptimal))
+    (should (eq (health-chart-status 184 100 199 nil nil nil nil 180) 'suboptimal))
+    (should (equal (health-chart-status-label 'suboptimal) "suboptimal"))))
+
+(ert-deftest health-chart-status-reference-only-keeps-the-margin ()
+  "Without an optimal range the near-limit margin applies as before."
+  (health-chart-test-with-theme nil nil
+    (should (eq (health-chart-status 10 0 100) 'near))
+    (should (eq (health-chart-status 50 0 100) 'ok))
+    (should (eq (health-chart-status -1 0 100) 'low))
+    (should (eq (health-chart-status 10 0 100 nil nil nil nil nil) 'near))))
+
+(ert-deftest health-chart-status-optimal-only-is-never-red ()
+  "No reference limit: outside the optimal range is suboptimal, inside ok."
+  (health-chart-test-with-theme nil nil
+    (should (eq (health-chart-status 50 nil nil nil nil nil 40 60) 'ok))
+    (should (eq (health-chart-status 40 nil nil nil nil nil 40 60) 'ok))
+    (should (eq (health-chart-status 60 nil nil nil nil nil 40 60) 'ok))
+    (should (eq (health-chart-status 39.9 nil nil nil nil nil 40 60) 'suboptimal))
+    (should (eq (health-chart-status 60.1 nil nil nil nil nil 40 60) 'suboptimal))
+    (should (eq (health-chart-status 5 nil nil nil nil nil nil 60) 'ok))))
+
+(ert-deftest health-chart-status-optimal-outside-reference-is-ignored ()
+  "An optimal limit wider than the reference limit on its side changes nothing."
+  (health-chart-test-with-theme nil nil
+    (should (eq (health-chart-status 10 0 100 nil nil nil -5 120) 'near))
+    (should (eq (health-chart-status 50 0 100 nil nil nil -5 120) 'ok))))
+
+(ert-deftest health-chart-status-optimal-on-one-side-keeps-the-margin-on-the-other ()
+  (health-chart-test-with-theme nil nil
+    ;; reference 0..100, optimal upper limit 80: low side keeps the 20% margin
+    (should (eq (health-chart-status 10 0 100 nil nil nil nil 80) 'near))
+    (should (eq (health-chart-status 30 0 100 nil nil nil nil 80) 'ok))
+    (should (eq (health-chart-status 90 0 100 nil nil nil nil 80) 'suboptimal))))
+
+(ert-deftest health-chart-status-transform-optimal-fields ()
+  (health-chart-test-with-theme nil nil
+    (let* ((rows (vector (list :value 52 :ref_low 39 :opt_low 60)
+                         (list :value 184 :ref_low 100 :ref_high 199 :opt_high 180)
+                         (list :value 30 :ref_low 39 :opt_low 60)))
+           (spec '(:value "value" :low_field "ref_low" :high_field "ref_high"
+                          :opt_low_field "opt_low" :opt_high_field "opt_high"))
+           (out (seq-into (health-chart-status--transform rows spec) 'list)))
+      (should (equal (mapcar (lambda (r) (plist-get r :status)) out)
+                     '("suboptimal" "suboptimal" "low")))
+      (should (equal (plist-get (nth 0 out) :status_label) "suboptimal"))
+      (should (equal (plist-get (nth 0 out) :status_flag) ""))
+      (should (equal (plist-get (nth 2 out) :status_flag) "L"))
+      (should (equal (plist-get (nth 1 out) :range_text) "100 to 199 (optimal \u2264 180)")))))
+
+(ert-deftest health-chart-lipid-panel-optimal-goal-with-a-reference-limit ()
+  "Goal = optimal limit, ref_limit = reference limit: yellow between, red beyond."
+  (let* ((rows (vector (list :analyte "HDL" :value 52 :unit "mg/dL" :goal 60 :direction "above"
+                             :ref_limit 39)
+                       (list :analyte "Total" :value 184 :unit "mg/dL" :goal 180 :direction "below"
+                             :ref_limit 199)
+                       (list :analyte "Total2" :value 205 :unit "mg/dL" :goal 180 :direction "below"
+                             :ref_limit 199)
+                       (list :analyte "HDL2" :value 70 :unit "mg/dL" :goal 60 :direction "above"
+                             :ref_limit 39)
+                       (list :analyte "LDL" :value 128 :unit "mg/dL" :goal 100 :direction "below")))
+         (b (list :data rows))
+         (text (substring-no-properties (health-chart-render "lipid-panel" b :backend 'text)))
+         (line (lambda (name) (seq-find (lambda (l) (string-match-p (concat "\\`\\s-*" name " ") l))
+                                        (split-string text "\n")))))
+    (should (eq t (health-chart-validate "lipid-panel" b)))
+    (should (string-match-p "goal >60).*suboptimal" (funcall line "HDL")))
+    (should (string-match-p "goal <180).*suboptimal" (funcall line "Total")))
+    (should (string-match-p "goal <180).*high" (funcall line "Total2")))
+    (should (string-match-p "goal >60).*in range" (funcall line "HDL2")))
+    (should (string-match-p "goal <100).*high" (funcall line "LDL")))
+    ;; the goal stays visible as text
+    (should (string-match-p "goal <180" text))
+    (should (string-match-p "goal >60" text))
+    (should (string-match-p "suboptimal" text))))
 
 (provide 'health-chart-status-test)
 ;;; health-chart-status-test.el ends here

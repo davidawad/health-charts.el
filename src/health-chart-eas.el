@@ -34,6 +34,7 @@
 (require 'health-chart-transforms)
 (require 'health-chart-status)
 (require 'health-chart-format)
+(require 'health-chart-fit)
 
 (provide 'health-chart-eas)
 ;;; health-chart-eas.el ends here

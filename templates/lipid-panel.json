@@ -3,12 +3,12 @@
   "x-eas": {
     "template": "lipid-panel",
     "version": "1.0.0",
-    "doc": "A lipid panel against goal lines: one bar per measure, a tick at its goal, an optional hollow marker for the prior draw. Each measure is judged against its own goal, a one-sided range: a 'below' goal has only an upper limit, an 'above' goal only a lower one. The bar is red when the goal is missed (low means below an 'above' goal, high above a 'below' goal), yellow when met but within the margin of the goal, green when met clear of it; the status is also written at the bar end. Goals are data.",
+    "doc": "A lipid panel against goal lines: one bar per measure, a tick at its goal, an optional hollow marker for the prior draw. Each measure is judged against its own goal, a one-sided range: a 'below' goal has only an upper limit, an 'above' goal only a lower one. The bar is red only outside the reference limit (low means below an 'above' goal's reference limit, high above a 'below' goal's), yellow when the goal is missed but the reference limit is kept (suboptimal), green when the goal is met; a measure with no reference limit treats the goal as its limit: red when missed, yellow near it, green clear of it. The status is also written at the bar end. Goals and reference limits are data.",
     "slots": {
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {analyte, value, unit?, goal, direction: below|above, prior?, warn_low?, warn_high?, warn_margin?}: one row per lipid measure; goal and direction come from the data source (below: value should stay at or under the goal; above: at or over it); warn_high (below goals) or warn_low (above goals) sets the inner edge of the yellow zone and warn_margin its width as a fraction of |goal|, each overriding the slot warn_margin for that row"
+        "doc": "rows {analyte, value, unit?, goal, direction: below|above, ref_limit?, prior?, warn_low?, warn_high?, warn_margin?}: one row per lipid measure; goal and direction come from the data source (below: value should stay at or under the goal; above: at or over it); ref_limit is the reference limit on the goal's side (below: the reference upper limit, above: the lower), beyond which the bar is red - between it and the goal the bar is yellow; without it the goal is the limit; warn_high (below goals) or warn_low (above goals) sets the inner edge of the yellow zone and warn_margin its width as a fraction of |goal|, each overriding the slot warn_margin for that row"
       },
       "title": {
         "type": "string",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "A lipid panel against goal lines: one bar per measure, a tick at its goal, an optional hollow marker for the prior draw. Each measure is judged against its own goal, a one-sided range: a 'below' goal has only an upper limit, an 'above' goal only a lower one. The bar is red when the goal is missed (low means below an 'above' goal, high above a 'below' goal), yellow when met but within the margin of the goal, green when met clear of it; the status is also written at the bar end. Goals are data.",
+        "default": "A lipid panel against goal lines: one bar per measure, a tick at its goal, an optional hollow marker for the prior draw. Each measure is judged against its own goal, a one-sided range: a 'below' goal has only an upper limit, an 'above' goal only a lower one. The bar is red only outside the reference limit (low means below an 'above' goal's reference limit, high above a 'below' goal's), yellow when the goal is missed but the reference limit is kept (suboptimal), green when the goal is met; a measure with no reference limit treats the goal as its limit: red when missed, yellow near it, green clear of it. The status is also written at the bar end. Goals and reference limits are data.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -93,6 +93,7 @@
             "unit": "?string",
             "goal": "nonneg",
             "direction": "enum:below|above",
+            "ref_limit": "?nonneg",
             "prior": "?nonneg",
             "warn_low": "?number",
             "warn_high": "?number",
@@ -158,7 +159,9 @@
     {
       "x-eas:transform": "health-status",
       "value": "value",
-      "low_field": "goal",
+      "low_field": "ref_limit",
+      "opt_low_field": "goal",
+      "opt_as_limit": true,
       "margin": {
         "x-eas:slot": "warn_margin"
       },
@@ -167,7 +170,9 @@
     {
       "x-eas:transform": "health-status",
       "value": "value",
-      "high_field": "goal",
+      "high_field": "ref_limit",
+      "opt_high_field": "goal",
+      "opt_as_limit": true,
       "margin": {
         "x-eas:slot": "warn_margin"
       },
@@ -261,6 +266,7 @@
             "domain": [
               "low",
               "near limit",
+              "suboptimal",
               "in range",
               "high",
               "no range"
@@ -268,6 +274,9 @@
             "range": [
               {
                 "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "warn_color"
               },
               {
                 "x-eas:slot": "warn_color"
@@ -301,6 +310,10 @@
           },
           {
             "field": "direction"
+          },
+          {
+            "field": "ref_limit",
+            "title": "reference limit"
           },
           {
             "field": "status_label",

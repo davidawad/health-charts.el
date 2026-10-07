@@ -77,9 +77,13 @@
     (let ((lpa (health-chart-biomarker-test--row b :data :analyte "Lipoprotein(a)")))
       (should-not (plist-member lpa :ref_low))
       (should-not (plist-member lpa :ref_high)))
-    ;; the colors those ranges give: high, ok, ok, low, near, unknown (not green)
+    ;; the colors those ranges give: LDL 3.9 is inside its reference range
+    ;; (<= 4.9) but over its optimal limit (3.4): suboptimal, not red
+    (let ((ldl (health-chart-biomarker-test--row b :data :analyte "LDL cholesterol")))
+      (should (= (plist-get ldl :opt_high) 3.4))
+      (should-not (plist-member ldl :opt_low)))
     (should (equal (health-chart-biomarker-test--statuses "lab-results" b)
-                   '("high" "ok" "ok" "low" "near" "unknown")))))
+                   '("high" "ok" "suboptimal" "low" "near" "unknown")))))
 
 (ert-deftest health-chart-biomarker-markers-and-category-filters ()
   (let ((env (health-chart-biomarker-test--fixture "latest-all")))

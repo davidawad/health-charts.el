@@ -1,16 +1,16 @@
 {
  "title": "Lipid panel (synthetic)",
- "subtitle": "synthetic data; illustrative goals; tick = goal, hollow marker = prior draw",
+ "subtitle": "synthetic data; illustrative goals and reference limits; tick = goal, hollow marker = prior draw; yellow = short of the goal but inside the reference limit",
  "x_title": "mg/dL",
  "data": [
   {
    "analyte": "Total cholesterol",
    "value": 188,
    "unit": "mg/dL",
-   "goal": 200,
+   "goal": 180,
    "direction": "below",
    "prior": 214,
-   "warn_high": 180
+   "ref_limit": 199
   },
   {
    "analyte": "LDL cholesterol",
@@ -18,15 +18,17 @@
    "unit": "mg/dL",
    "goal": 100,
    "direction": "below",
-   "prior": 141
+   "prior": 141,
+   "ref_limit": 129
   },
   {
    "analyte": "HDL cholesterol",
    "value": 56,
    "unit": "mg/dL",
-   "goal": 40,
+   "goal": 60,
    "direction": "above",
-   "prior": 47
+   "prior": 47,
+   "ref_limit": 40
   },
   {
    "analyte": "Triglycerides",
@@ -42,7 +44,8 @@
    "unit": "mg/dL",
    "goal": 130,
    "direction": "below",
-   "prior": 181
+   "prior": 181,
+   "ref_limit": 159
   }
  ]
 }

@@ -146,6 +146,18 @@ A limit ROW lacks is left out."
   (let ((lk (or low-key :ref_low)) (hk (or high-key :ref_high)))
     (health-chart-biomarker--limits row lk hk)))
 
+(defun health-chart-biomarker--ref-opt (row)
+  "ROW's reference range and, inside it, its optimal range, as one plist.
+An optimal limit that lies outside the reference range on its side, or
+an inverted optimal range, is left out: red is only ever the reference."
+  (let* ((ref (health-chart-biomarker--ref row))
+         (opt (health-chart-status--opt (plist-get ref :ref_low) (plist-get ref :ref_high)
+                                        (health-chart-biomarker--num row :opt_low)
+                                        (health-chart-biomarker--num row :opt_high)))
+         (ol (car opt)) (oh (cdr opt)))
+    (when (and ol oh (> ol oh)) (setq ol nil oh nil))
+    (append ref (health-chart-biomarker--with :opt_low ol :opt_high oh))))
+
 (defun health-chart-biomarker--name (row)
   "ROW's display name: marker_name, else the marker."
   (or (health-chart-biomarker--str row :marker_name) (plist-get row :marker)))
@@ -183,7 +195,7 @@ A limit ROW lacks is left out."
                       (append (list :analyte (health-chart-biomarker--name row)
                                     :value (plist-get row :value_canonical))
                               (health-chart-biomarker--with :unit (health-chart-biomarker--unit row))
-                              (health-chart-biomarker--ref row))))
+                              (health-chart-biomarker--ref-opt row))))
                   (health-chart-biomarker--markers rows))))))
 
 (defun health-chart-biomarker--lab-status-grid (rows opts)
@@ -195,7 +207,7 @@ A limit ROW lacks is left out."
                            (append (list :time (plist-get row :taken_at)
                                          :analyte (health-chart-biomarker--name row)
                                          :value (plist-get row :value_canonical))
-                                   (health-chart-biomarker--ref row)))
+                                   (health-chart-biomarker--ref-opt row)))
                          rows)))))
 
 (defun health-chart-biomarker--lab-change (rows opts)
@@ -217,7 +229,7 @@ The later result's range is used.  A marker with one result is skipped."
                                            :after (plist-get after :value_canonical))
                                      (health-chart-biomarker--with
                                       :unit (health-chart-biomarker--unit after))
-                                     (health-chart-biomarker--ref after))))
+                                     (health-chart-biomarker--ref-opt after))))
                          pairs)))))
 
 (defun health-chart-biomarker--axis-title (row)
@@ -231,7 +243,7 @@ The later result's range is used.  A marker with one result is skipped."
 The range and the optimal band are the newest result's."
   (let* ((own (health-chart-biomarker--one-marker rows opts "lab-trend"))
          (last-row (car (last own)))
-         (opt (health-chart-biomarker--limits last-row :opt_low :opt_high)))
+         (ref (health-chart-biomarker--ref-opt last-row)))
     (append
      (list :title (health-chart-biomarker--title opts (health-chart-biomarker--name last-row))
            :y_title (health-chart-biomarker--axis-title last-row)
@@ -241,9 +253,9 @@ The range and the optimal band are the newest result's."
                                   own)))
      (health-chart-biomarker--with :low (health-chart-biomarker--num last-row :ref_low)
                                    :high (health-chart-biomarker--num last-row :ref_high))
-     (and (plist-get opt :opt_low) (plist-get opt :opt_high)
-          (list :show_optimal t :opt_low (plist-get opt :opt_low)
-                :opt_high (plist-get opt :opt_high))))))
+     (health-chart-biomarker--with :opt_low (plist-get ref :opt_low)
+                                   :opt_high (plist-get ref :opt_high))
+     (and (plist-get ref :opt_low) (plist-get ref :opt_high) (list :show_optimal t)))))
 
 (defun health-chart-biomarker--lab-panel (rows opts)
   "Bindings of lab-panel from ROWS and OPTS: a panel per marker, newest range."
@@ -270,23 +282,29 @@ The range and the optimal band are the newest result's."
                                  (health-chart-biomarker--sorted rows))))))
 
 (defun health-chart-biomarker--goal (row directions)
-  "ROW's goal as (GOAL . DIRECTION), or nil when it has no limit to use.
-DIRECTIONS is an alist of marker to \"below\" or \"above\".  The optimal
-limit is preferred over the reference limit.  With only an upper limit
-the goal is to stay below it, with only a lower limit above it; with
-both, the entry of DIRECTIONS decides (default below)."
-  (let* ((high (or (health-chart-biomarker--num row :opt_high)
-                   (health-chart-biomarker--num row :ref_high)))
-         (low (or (health-chart-biomarker--num row :opt_low)
-                  (health-chart-biomarker--num row :ref_low)))
-         (wanted (cdr (assoc (plist-get row :marker) directions))))
-    (cond ((and high low) (if (equal wanted "above") (cons low "above") (cons high "below")))
-          (high (cons high "below"))
-          (low (cons low "above")))))
+  "ROW's goal as (GOAL DIRECTION . REF-LIMIT), or nil when it has no limit to use.
+DIRECTIONS is an alist of marker to \"below\" or \"above\".  The goal is the
+optimal limit, else the reference limit.  With only an upper limit the
+goal is to stay below it, with only a lower limit above it; with both,
+the entry of DIRECTIONS decides (default below).  REF-LIMIT is the
+reference limit on the goal's side when it differs from the goal (the
+bar is red only beyond it), else nil."
+  (let* ((ref (health-chart-biomarker--ref-opt row))
+         (high (or (plist-get ref :opt_high) (plist-get ref :ref_high)))
+         (low (or (plist-get ref :opt_low) (plist-get ref :ref_low)))
+         (wanted (cdr (assoc (plist-get row :marker) directions)))
+         (below (cond ((and high low) (not (equal wanted "above"))) (high t)))
+         (goal (if below high low))
+         (limit (plist-get ref (if below :ref_high :ref_low))))
+    (when goal
+      (cons goal (cons (if below "below" "above")
+                       (and limit (/= limit goal) limit))))))
 
 (defun health-chart-biomarker--lipid-panel (rows opts)
   "Bindings of lipid-panel from ROWS: each marker's newest result and goal.
-The goal comes from the row's optimal (else reference) limit.  OPTS'
+The goal comes from the row's optimal (else reference) limit and the
+reference limit on its side is the row's ref_limit: a result is red only
+beyond that, yellow between it and the goal.  OPTS'
 :directions maps a marker with both limits to \"below\" or \"above\".
 The previous result, when there is one, is the hollow prior marker."
   (let* ((rows (health-chart-biomarker--select rows opts))
@@ -300,8 +318,9 @@ The previous result, when there is one, is the hollow prior marker."
            collect (append
                     (list :analyte (health-chart-biomarker--name row)
                           :value (plist-get row :value_canonical)
-                          :goal (car goal) :direction (cdr goal))
+                          :goal (car goal) :direction (cadr goal))
                     (health-chart-biomarker--with
+                     :ref_limit (cddr goal)
                      :unit (health-chart-biomarker--unit row)
                      :prior (and (cdr own)
                                  (plist-get (car (last own 2)) :value_canonical)))))))
@@ -387,11 +406,12 @@ marker when the envelope has one."
 
 (defun health-chart-biomarker--display (name opts bindings)
   "BINDINGS of template NAME with the display slots OPTS asks for laid over.
-:decimals, :sig-figs and :label-max become the slots decimals, sig_figs and
-label_max when the template declares them.  Display only: no number in
-BINDINGS changes."
+:decimals, :sig-figs, :label-max and :max-draws become the slots decimals,
+sig_figs, label_max and max_draws when the template declares them.
+Display only: no number in BINDINGS changes."
   (let ((slots (plist-get (plist-get (health-chart--template name) :meta) :slots)))
-    (cl-loop for (opt slot) in '((:decimals :decimals) (:sig-figs :sig_figs) (:label-max :label_max))
+    (cl-loop for (opt slot) in '((:decimals :decimals) (:sig-figs :sig_figs) (:label-max :label_max)
+                                  (:max-draws :max_draws))
              when (and (numberp (plist-get opts opt)) (plist-member slots slot))
              do (setq bindings (plist-put (copy-sequence bindings) slot (plist-get opts opt))))
     bindings))
@@ -417,6 +437,9 @@ TEMPLATE is one of `health-chart-biomarker-templates'.  OPTS:
   :margin     a1c-trend, weight-bmi-trend: warning margin of the cut bands
   :directions lipid-panel: alist of marker to \"below\" or \"above\" for a
               marker that has both limits
+  :max-draws  lab-status-grid: show only the latest N draw dates (0: all);
+              the slot max_draws.  Without it a text view shows as many
+              draws as its width holds.
   :decimals :sig-figs :label-max   display precision and label width, the
               slots decimals, sig_figs and label_max of the template.  They
               change the text drawn, never the numbers: a value of 82.9167

@@ -129,7 +129,7 @@ One color means one thing in every template.
 | Color | Means | Shown also by |
 |---|---|---|
 | red | out of range: below the low limit or above the high limit | triangle down / `L`, triangle up / `H` |
-| yellow | in range, but within the warning margin of a limit (a value exactly at a limit is yellow) | diamond |
+| yellow | in range, but within the warning margin of a limit (a value exactly at a limit is yellow); or, where a row has an optimal range, inside the reference range but outside the optimal one ("suboptimal") | diamond, cross |
 | green | in range, clear of both margins | circle |
 | grey | no range to judge by (or no number) | square, "no range" |
 
@@ -137,7 +137,25 @@ Nothing else is red, yellow or green. Staleness (`lab-recency`), overdue
 vaccines, late or missed doses, symptom severity, sleep stages, cycle phases
 and the like use blues, greys and violets with markers and words, because
 they are not out-of-range values. Every legend says low / near limit / in
-range / high / no range (or the template's equivalent).
+range / high / no range (or the template's equivalent); a template that takes
+an optimal range (`lab-results`, `lab-status-grid`, `lab-change`, `lab-trend`,
+`lipid-panel`) adds suboptimal.
+
+**Reference range against optimal range.** Red means unhealthy: outside the
+reference range (`ref_low` / `ref_high`), nothing else. A row may also carry an
+optimal range inside it (`opt_low` / `opt_high`): inside the reference range
+but outside the optimal one is yellow and says "suboptimal"; inside the optimal
+range is green. HDL 52 mg/dL (reference at least 39, optimal above 60) is
+suboptimal, not low; total cholesterol 184 (reference 100 to 199, optimal below
+180) is suboptimal, not high. The optimal limit replaces the warning margin on
+its side; with only a reference range the margin applies as below. A value
+exactly at a limit is inside it (at a reference limit: not red, at an optimal
+limit: optimal). An optimal limit outside the reference range on its side is
+ignored; an optimal range with no reference range at all is never red, outside
+it is suboptimal. In `lipid-panel` the goal is the optimal limit and a
+`ref_limit` per row is the reference limit on its side (without it the goal is
+the limit, as before). `health-chart-from-biomarker` fills all of these from
+`ref_low`, `ref_high`, `opt_low` and `opt_high` of the rows.
 
 **The warning margin** is 20 percent of the range width, measured inward from
 each limit. A range with one limit (only `ref_high`, or only `ref_low`) has no
@@ -148,7 +166,7 @@ per row `warn_margin`, or `warn_low` / `warn_high` (the value where yellow
 turns green on that side). Where 20 percent of a range is the wrong idea the
 template takes categories instead: `a1c-trend`, `egfr-trend` and
 `weight-bmi-trend` get a `bands` table whose rows carry their own `status`
-(`low`, `near`, `ok`, `high`), so what counts as borderline is the data
+(`low`, `near`, `suboptimal`, `ok`, `high`), so what counts as borderline is the data
 source's call, not a percentage.
 
 **The ranges are data.** No template carries a clinical range, cut-off, goal,
@@ -172,8 +190,8 @@ A binding always wins over both (`bad_color`, `warn_color`, `ok_color`,
 `unknown_color`, `line_color`, `warn_margin`, `ink`, `surface` ... as slots of
 the template). The theme is presentation only: it holds no clinical value.
 The rule itself is a pure function, `(health-chart-status VALUE LOW HIGH
-&optional MARGIN WARN-LOW WARN-HIGH)`, that answers `low`, `near`, `ok`,
-`high` or `unknown`.
+&optional MARGIN WARN-LOW WARN-HIGH OPT-LOW OPT-HIGH)`, that answers `low`,
+`near`, `suboptimal`, `ok`, `high` or `unknown`.
 
 **Numbers are shown short, judged exact.** A computed float is drawn with 3
 significant figures (82.916685236 is `82.9`, 4.551020408 is `4.55`), but never
@@ -186,7 +204,12 @@ rule always sees the number as it came: `5.6004` against a limit of `5.6` is
 drawn `5.6` and is still `high`. Row labels longer than the `label_max` slot
 (theme `:label-max`, default 28 characters) end in an ellipsis, and
 `lab-status-grid` cuts a value wider than its `col_step` cell the same way, so
-a label and a value never run together. `health-chart-from-biomarker` takes
+a label and a value never run together. A grid also shows only as many draws
+as its width holds: in a text view a column never gets narrower than its widest
+cell text plus a space, and when there are more draws than that the latest ones
+are shown and the subtitle says so ("latest 6 of 12 draws"). The `max_draws`
+slot (`:max-draws` for `health-chart-from-biomarker`) sets the number
+yourself; 0 shows every draw. `health-chart-from-biomarker` takes
 `:decimals`, `:sig-figs` and `:label-max` and sets those slots; the numbers it
 maps are untouched.
 
@@ -221,10 +244,10 @@ result such as "<5") are skipped.
 | [`lab-change`](#lab-change) | Lab results | Before and after for each analyte on its own reference range: a dumbbell from the earlier result (hollow) to the later one (filled) over the range bar (green, yellow near each limit). Each marker is colored by its own status (red out of range, yellow near a limit, green in range, grey with no range) and shaped by direction. The connecting line and the word at the right say how the result moved, in neutral colors: improved (nearer the range, or inside it nearer its middle), worsened, unchanged, or no range when no direction can be decided; this is not a health status. |
 | [`lab-panel`](#lab-panel) | Lab results | Small multiples: one compact trend per analyte, each on its own scale with its own reference range (from the panels table) as a band, green with yellow zones near each limit; every result is colored red out of range, yellow near a limit, green in range or grey with no range, and shaped by direction. The range is data, never a template default. |
 | [`lab-recency`](#lab-recency) | Lab results | How long ago each test was last drawn, against how often it is due: a bar of days since the last draw and a tick at the interval. Staleness is not a health status, so it is drawn in blues only: lighter within the interval, deeper when overdue (up to overdue_factor times the interval), darkest when long overdue, grey when never drawn; each state is also written next to its bar. The reference date as_of is supplied, never read from a clock. |
-| [`lab-results`](#lab-results) | Lab results | Latest result of many analytes, each placed within its own reference range: the range is the bar (green, yellow near each limit), the result a marker colored red out of range, yellow near a limit, green in range and grey when there is no range. |
-| [`lab-status-grid`](#lab-status-grid) | Lab results | A grid of analytes by draw date: each cell is filled with its status color at partial opacity (red out of range, yellow near a limit, green in range, grey with no range) and carries a glyph (low, near, in range, high, ?) and the value, judged against that row's own reference range. Ranges come from the data, either limit may be missing. |
-| [`lab-trend`](#lab-trend) | Lab results | One lab analyte over time against its reference range: the range as a band (green, yellow near each limit), an optional optimal band inside it, and each result colored red out of range, yellow near a limit, green in range, grey with no range, and flagged L or H by shape and letter. |
-| [`lipid-panel`](#lipid-panel) | Lab results | A lipid panel against goal lines: one bar per measure, a tick at its goal, an optional hollow marker for the prior draw. Each measure is judged against its own goal, a one-sided range: a 'below' goal has only an upper limit, an 'above' goal only a lower one. The bar is red when the goal is missed (low means below an 'above' goal, high above a 'below' goal), yellow when met but within the margin of the goal, green when met clear of it; the status is also written at the bar end. Goals are data. |
+| [`lab-results`](#lab-results) | Lab results | Latest result of many analytes, each placed within its own reference range: the range is the bar (green, yellow near each limit or outside the optimal range), the result a marker colored red out of range, yellow near a limit or outside the optimal range (suboptimal), green in range and grey when there is no range. |
+| [`lab-status-grid`](#lab-status-grid) | Lab results | A grid of analytes by draw date: each cell is filled with its status color at partial opacity (red out of range, yellow near a limit or, with an optimal range, outside it (suboptimal), green in range, grey with no range) and carries a glyph (low, near, suboptimal, in range, high, ?) and the value, judged against that row's own reference range. Ranges come from the data, either limit may be missing. |
+| [`lab-trend`](#lab-trend) | Lab results | One lab analyte over time against its reference range: the range as a band (green, yellow near each limit), an optional optimal band inside it, and each result colored red out of the reference range, yellow near a limit or outside the optimal range (suboptimal), green in range, grey with no range, and flagged L or H by shape and letter. |
+| [`lipid-panel`](#lipid-panel) | Lab results | A lipid panel against goal lines: one bar per measure, a tick at its goal, an optional hollow marker for the prior draw. Each measure is judged against its own goal, a one-sided range: a 'below' goal has only an upper limit, an 'above' goal only a lower one. The bar is red only outside the reference limit (low means below an 'above' goal's reference limit, high above a 'below' goal's), yellow when the goal is missed but the reference limit is kept (suboptimal), green when the goal is met; a measure with no reference limit treats the goal as its limit: red when missed, yellow near it, green clear of it. The status is also written at the bar end. Goals and reference limits are data. |
 | [`agp`](#agp) | Glucose and diabetes | Ambulatory glucose profile: many days of readings folded onto one 24 hour day as the median line with the 25-75th and 5-95th percentile bands (neutral blues) and, when the data source supplies it, the target range as a green band. The profile itself is not judged, so it uses no red or yellow. |
 | [`cgm-day`](#cgm-day) | Glucose and diabetes | A continuous glucose monitor day: the glucose line over 24 hours against the target range from the data source (band: green, yellow near each limit); readings are red out of range (triangle-down low, triangle-up high, letter L or H), yellow near a limit, green in range, grey with no range. Optional very low / very high limits are drawn as labelled dashed rules; a reading beyond one is red like any out-of-range reading but larger and flagged with its letter and !! (dense days are not lettered otherwise). |
 | [`time-in-range`](#time-in-range) | Glucose and diabetes | Time in range: the share of glucose readings very low, low, in range, high and very high per period (weeks, days, any label you give), computed from the raw readings against the four cut-offs from the data source (all required). Out-of-range shares are red (very low and very high solid, low and high tinted), in range is green. Shares have no warning margin, so there is no yellow. An optional target_pct draws a target tick on the in-range share. |
@@ -303,7 +326,7 @@ Before and after for each analyte on its own reference range: a dumbbell from th
 
 ![lab-change](docs/screenshots/lab-change.png)
 
-- Takes: `data` as rows `{analyte, [unit], before, after, [ref_low], [ref_high], [warn_low], [warn_high], [warn_margin]}`
+- Takes: `data` as rows `{analyte, [unit], before, after, [ref_low], [ref_high], [opt_low], [opt_high], [warn_low], [warn_high], [warn_margin]}`
 - Try it: `(health-chart-demo "lab-change")`
 
 #### lab-panel
@@ -327,25 +350,25 @@ How long ago each test was last drawn, against how often it is due: a bar of day
 
 #### lab-results
 
-Latest result of many analytes, each placed within its own reference range: the range is the bar (green, yellow near each limit), the result a marker colored red out of range, yellow near a limit, green in range and grey when there is no range.
+Latest result of many analytes, each placed within its own reference range: the range is the bar (green, yellow near each limit or outside the optimal range), the result a marker colored red out of range, yellow near a limit or outside the optimal range (suboptimal), green in range and grey when there is no range.
 
 ![lab-results](docs/screenshots/lab-results.png)
 
-- Takes: `data` as rows `{analyte, value, [unit], [ref_low], [ref_high], [warn_low], [warn_high], [warn_margin]}`
+- Takes: `data` as rows `{analyte, value, [unit], [ref_low], [ref_high], [opt_low], [opt_high], [warn_low], [warn_high], [warn_margin]}`
 - Try it: `(health-chart-demo "lab-results")`
 
 #### lab-status-grid
 
-A grid of analytes by draw date: each cell is filled with its status color at partial opacity (red out of range, yellow near a limit, green in range, grey with no range) and carries a glyph (low, near, in range, high, ?) and the value, judged against that row's own reference range. Ranges come from the data, either limit may be missing.
+A grid of analytes by draw date: each cell is filled with its status color at partial opacity (red out of range, yellow near a limit or, with an optimal range, outside it (suboptimal), green in range, grey with no range) and carries a glyph (low, near, suboptimal, in range, high, ?) and the value, judged against that row's own reference range. Ranges come from the data, either limit may be missing.
 
 ![lab-status-grid](docs/screenshots/lab-status-grid.png)
 
-- Takes: `data` as rows `{time, analyte, value, [ref_low], [ref_high], [warn_low], [warn_high], [warn_margin]}`
+- Takes: `data` as rows `{time, analyte, value, [ref_low], [ref_high], [opt_low], [opt_high], [warn_low], [warn_high], [warn_margin]}`
 - Try it: `(health-chart-demo "lab-status-grid")`
 
 #### lab-trend
 
-One lab analyte over time against its reference range: the range as a band (green, yellow near each limit), an optional optimal band inside it, and each result colored red out of range, yellow near a limit, green in range, grey with no range, and flagged L or H by shape and letter.
+One lab analyte over time against its reference range: the range as a band (green, yellow near each limit), an optional optimal band inside it, and each result colored red out of the reference range, yellow near a limit or outside the optimal range (suboptimal), green in range, grey with no range, and flagged L or H by shape and letter.
 
 ![lab-trend](docs/screenshots/lab-trend.png)
 
@@ -355,11 +378,11 @@ One lab analyte over time against its reference range: the range as a band (gree
 
 #### lipid-panel
 
-A lipid panel against goal lines: one bar per measure, a tick at its goal, an optional hollow marker for the prior draw. Each measure is judged against its own goal, a one-sided range: a 'below' goal has only an upper limit, an 'above' goal only a lower one. The bar is red when the goal is missed (low means below an 'above' goal, high above a 'below' goal), yellow when met but within the margin of the goal, green when met clear of it; the status is also written at the bar end. Goals are data.
+A lipid panel against goal lines: one bar per measure, a tick at its goal, an optional hollow marker for the prior draw. Each measure is judged against its own goal, a one-sided range: a 'below' goal has only an upper limit, an 'above' goal only a lower one. The bar is red only outside the reference limit (low means below an 'above' goal's reference limit, high above a 'below' goal's), yellow when the goal is missed but the reference limit is kept (suboptimal), green when the goal is met; a measure with no reference limit treats the goal as its limit: red when missed, yellow near it, green clear of it. The status is also written at the bar end. Goals and reference limits are data.
 
 ![lipid-panel](docs/screenshots/lipid-panel.png)
 
-- Takes: `data` as rows `{analyte, value, [unit], goal, direction, [prior], [warn_low], [warn_high], [warn_margin]}`
+- Takes: `data` as rows `{analyte, value, [unit], goal, direction, [ref_limit], [prior], [warn_low], [warn_high], [warn_margin]}`
 - Try it: `(health-chart-demo "lipid-panel")`
 
 ### Glucose and diabetes
@@ -547,7 +570,7 @@ Time spent in each heart-rate zone as horizontal bars, with the zone's bpm bound
 | `(health-chart-demo NAME)` | open a template over its example |
 | `(health-chart-read-bindings FILE-OR-JSON)` | parse bindings |
 | `(health-chart-from-biomarker TEMPLATE ENVELOPE &rest OPTS)` | bindings from a `biomarker/v1` envelope (pure) |
-| `(health-chart-status VALUE LOW HIGH &optional MARGIN WARN-LOW WARN-HIGH)` | `low`, `near`, `ok`, `high` or `unknown` |
+| `(health-chart-status VALUE LOW HIGH &optional MARGIN WARN-LOW WARN-HIGH OPT-LOW OPT-HIGH)` | `low`, `near`, `suboptimal`, `ok`, `high` or `unknown` |
 
 Errors are typed: `health-chart-unknown-template`, `health-chart-invalid-data`
 and `health-chart-backend-error`, all under `health-chart-error`. `auto`

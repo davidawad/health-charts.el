@@ -15,6 +15,8 @@
 (require 'health-chart)
 (require 'health-chart-format)
 (require 'health-chart-biomarker)
+(require 'health-chart-fit)
+(require 'health-chart-biomarker-test)
 (require 'health-chart-test-support)
 
 ;;; The number rule
@@ -359,6 +361,105 @@ digit or a drawn glyph, a glyph directly followed by a letter, or the first draw
                                        :goal 100 :direction "below"
                                        :prior (* 31 (health-chart-format-test--noisy-value i))))))
    (list "Estimated Glomerular" "Baso (Absolute)" "Body Mass Index" "Hematocrit" "Cholesterol/HDL")))
+
+;;; The grid at real terminal sizes
+
+(defconst health-chart-format-test--grid-names
+  '("Baso (Absolute)" "Platelets" "Thyroid Stimulating Hormone" "Body Mass Index"
+    "Estimated Glomerular Filtration Rate (CKD-EPI)" "Hematocrit" "Glucose" "Glycated Hemoglobin"
+    "LDL cholesterol" "HDL cholesterol" "Triglycerides" "Sodium" "Potassium" "Chloride"
+    "Calcium" "Albumin" "Bilirubin" "ALT" "AST" "Creatinine" "BUN" "Ferritin" "Vitamin D"
+    "Cobalamin" "Free Thyroxine" "Magnesium" "Zinc" "RBC" "WBC" "MCV" "MCH" "RDW" "Neutrophils"
+    "Lymphocytes" "Monocytes")
+  "Thirty-five synthetic analyte names, long and short.")
+
+(defun health-chart-format-test--grid-data (dates)
+  "Synthetic grid rows: DATES draw dates of every name in `health-chart-format-test--grid-names'."
+  (vconcat
+   (cl-loop for d below dates
+            append (cl-loop for name in health-chart-format-test--grid-names
+                            for i from 0
+                            for scale = (pcase (mod i 4) (0 0.02) (1 1.0) (2 27.7) (_ 90.8))
+                            collect (list :time (format "2025-%02d-15" (1+ d)) :analyte name
+                                          :value (* scale (+ 0.8 (/ (mod (+ d i) 9) 10.0)))
+                                          :ref_low (* scale 0.7) :ref_high (* scale 1.5))))))
+
+(defun health-chart-format-test--grid-lines (dates cols rows &rest bindings)
+  "The lab-status-grid of DATES draws, COLS by ROWS text cells, as lines."
+  (split-string (substring-no-properties
+                 (health-chart-render "lab-status-grid"
+                                      (append (list :title "Results" :data (health-chart-format-test--grid-data dates)) bindings)
+                                      :backend 'text :width cols :height rows))
+                "\n"))
+
+(defun health-chart-format-test--first-drawn (line)
+  "The index of the first drawn glyph in LINE (a fill, marker, tick or swatch), or nil."
+  (string-match (format "[%s]" health-chart-format-test--glyphs) line))
+
+(defun health-chart-format-test--cells (line)
+  "How many status glyphs of cells LINE holds in its plot (its legend swatch excluded)."
+  (let ((n 0) (start 0))
+    (while (string-match "[\u25c6\u25cf\u25b2\u25bc\u25c7?] [0-9-]" line start)
+      (setq n (1+ n) start (match-end 0)))
+    n))
+
+(ert-deftest health-chart-format-grid-label-never-touches-the-first-value ()
+  "At common terminal sizes, with 7 and 12 draws of 35 markers, a space
+separates every label from the first value, and no cell loses its text."
+  (dolist (size '((90 22) (105 26) (140 40)))
+    (dolist (dates '(7 12))
+      (let* ((lines (health-chart-format-test--grid-lines dates (car size) (cadr size)))
+             (cells nil))
+        (dolist (line lines)
+          (should (<= (string-width line) (car size)))
+          (when-let* ((i (health-chart-format-test--first-drawn line)))
+            ;; the first drawn character has a space (or the margin) before it
+            (should (or (= i 0) (eq (aref line (1- i)) ?\s))))
+          (should-not (health-chart-format-test--touching line))
+          (let ((n (health-chart-format-test--cells line)))
+            (when (> n 0) (push n cells))))
+        (let ((case-name (format "%dx%d with %d draws" (car size) (cadr size) dates)))
+          ;; every drawn row shows the same number of whole cells, at least 3
+          (should (equal (cons case-name (seq-uniq cells))
+                         (cons case-name (list (car cells)))))
+          (should (>= (car cells) (min dates 3)))
+          (should (<= (car cells) dates)))))))
+
+(ert-deftest health-chart-format-grid-shows-the-latest-draws-that-fit ()
+  (let* ((narrow (health-chart-format-test--grid-lines 12 90 22))
+         (wide (health-chart-format-test--grid-lines 7 140 40))
+         (cells (lambda (lines) (apply #'max (mapcar #'health-chart-format-test--cells lines)))))
+    (should (< (funcall cells narrow) 12))
+    (should (= (funcall cells wide) 7))
+    ;; the subtitle says what was left out, and it is the oldest draws that go
+    (should (seq-some (lambda (l) (string-match-p (format "latest %d of 12 draws" (funcall cells narrow)) l))
+                      narrow))
+    (should-not (seq-some (lambda (l) (string-match-p "latest .* of 7 draws" l)) wide))
+    (should (seq-some (lambda (l) (string-match-p "2025-12-15" l)) narrow))
+    (should-not (seq-some (lambda (l) (string-match-p "2025-01-15" l)) narrow))))
+
+(ert-deftest health-chart-format-grid-max-draws-is-configurable ()
+  (let ((three (health-chart-format-test--grid-lines 7 140 40 :max_draws 3))
+        (all (health-chart-format-test--grid-lines 12 90 22 :max_draws 0)))
+    (should (= (apply #'max (mapcar #'health-chart-format-test--cells three)) 3))
+    (should (seq-some (lambda (l) (string-match-p "latest 3 of 7 draws" l)) three))
+    ;; 0 asks for every draw, squeezed or not
+    (should-not (seq-some (lambda (l) (string-match-p "latest .* of 12 draws" l)) all))
+    ;; the biomarker adapter passes it on
+    (let ((b (health-chart-from-biomarker
+              "lab-status-grid" (health-chart-biomarker-test--fixture "latest-all") :max-draws 2)))
+      (should (= (plist-get b :max_draws) 2)))))
+
+(ert-deftest health-chart-format-latest-draws-transform ()
+  (let* ((rows (vector (list :time "2025-01-15" :v 1) (list :time "2025-03-15T08:00" :v 2)
+                       (list :time "2025-03-15T09:00" :v 3) (list :time "2025-05-15" :v 4)))
+         (keep (lambda (max) (mapcar (lambda (r) (plist-get r :v))
+                                     (append (health-chart-fit--latest rows (list :max max)) nil)))))
+    (should (equal (funcall keep 2) '(2 3 4)))
+    (should (equal (funcall keep 1) '(4)))
+    (should (equal (funcall keep 0) '(1 2 3 4)))
+    (should (equal (funcall keep nil) '(1 2 3 4)))
+    (should (equal (funcall keep 9) '(1 2 3 4)))))
 
 (provide 'health-chart-format-test)
 ;;; health-chart-format-test.el ends here

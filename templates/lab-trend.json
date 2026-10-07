@@ -3,7 +3,7 @@
   "x-eas": {
     "template": "lab-trend",
     "version": "1.0.0",
-    "doc": "One lab analyte over time against its reference range: the range as a band (green, yellow near each limit), an optional optimal band inside it, and each result colored red out of range, yellow near a limit, green in range, grey with no range, and flagged L or H by shape and letter.",
+    "doc": "One lab analyte over time against its reference range: the range as a band (green, yellow near each limit), an optional optimal band inside it, and each result colored red out of the reference range, yellow near a limit or outside the optimal range (suboptimal), green in range, grey with no range, and flagged L or H by shape and letter.",
     "slots": {
       "data": {
         "shape": "plist",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "One lab analyte over time against its reference range: the range as a band (green, yellow near each limit), an optional optimal band inside it, and each result colored red out of range, yellow near a limit, green in range, grey with no range, and flagged L or H by shape and letter.",
+        "default": "One lab analyte over time against its reference range: the range as a band (green, yellow near each limit), an optional optimal band inside it, and each result colored red out of the reference range, yellow near a limit or outside the optimal range (suboptimal), green in range, grey with no range, and flagged L or H by shape and letter.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -61,12 +61,12 @@
       "opt_low": {
         "type": "number",
         "default": null,
-        "doc": "lower limit of the optimal band"
+        "doc": "lower limit of the optimal range inside the reference range: results between low and it are yellow (suboptimal), and with show_optimal it is drawn as a band"
       },
       "opt_high": {
         "type": "number",
         "default": null,
-        "doc": "upper limit of the optimal band"
+        "doc": "upper limit of the optimal range inside the reference range: results between it and high are yellow (suboptimal), and with show_optimal it is drawn as a band"
       },
       "band_label": {
         "type": "string",
@@ -190,6 +190,20 @@
             "high"
           ],
           "code": "warn_outside_range"
+        },
+        {
+          "le": [
+            "low",
+            "opt_low"
+          ],
+          "code": "opt_outside_range"
+        },
+        {
+          "le": [
+            "opt_high",
+            "high"
+          ],
+          "code": "opt_outside_range"
         }
       ],
       "text_size": [
@@ -244,6 +258,12 @@
       },
       "margin": {
         "x-eas:slot": "warn_margin"
+      },
+      "opt_low": {
+        "x-eas:slot": "opt_low"
+      },
+      "opt_high": {
+        "x-eas:slot": "opt_high"
       }
     },
     {
@@ -609,6 +629,7 @@
             "domain": [
               "low",
               "near limit",
+              "suboptimal",
               "in range",
               "high",
               "no range"
@@ -616,6 +637,9 @@
             "range": [
               {
                 "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "warn_color"
               },
               {
                 "x-eas:slot": "warn_color"
@@ -642,6 +666,7 @@
             "domain": [
               "low",
               "near limit",
+              "suboptimal",
               "in range",
               "high",
               "no range"
@@ -649,6 +674,7 @@
             "range": [
               "triangle-down",
               "diamond",
+              "cross",
               "circle",
               "triangle-up",
               "square"

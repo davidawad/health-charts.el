@@ -1,13 +1,15 @@
 {
  "title": "Latest results (synthetic)",
- "subtitle": "illustrative reference ranges; the data source owns the real ones",
+ "subtitle": "illustrative reference and optimal ranges; the data source owns the real ones",
  "data": [
   {
    "analyte": "Glucose, fasting",
    "value": 5.1,
    "unit": "mmol/L",
    "ref_low": 3.9,
-   "ref_high": 5.6
+   "ref_high": 5.6,
+   "opt_low": 4.2,
+   "opt_high": 5.3
   },
   {
    "analyte": "HbA1c",
@@ -21,7 +23,8 @@
    "value": 4.8,
    "unit": "mmol/L",
    "ref_low": 2.0,
-   "ref_high": 4.9
+   "ref_high": 4.9,
+   "opt_high": 3.4
   },
   {
    "analyte": "HDL cholesterol",

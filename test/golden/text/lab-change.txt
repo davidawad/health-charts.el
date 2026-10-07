@@ -2,10 +2,10 @@
   synthetic, illustrative ranges; hollow earlier, filled later; blue line improved, black worsened
                                                                                         ▼ low
                                                                                         ◆ near limit
+                                                                                        ✚ suboptimal
                                                                                         ● in range
-                                                                                        ▲ high
-LDL cholesterol  5.6 > 3.9 mmol/L          ▓▓▓▒▒▒▒▒▒●───────△                 improved  ■ no range
-
+LDL cholesterol  5.6 > 3.9 mmol/L          ▓▓▓▒▒▒▒▒▒●───────△                 improved  ▲ high
+                                                                                        ■ no range
                HbA1c  6.4 > 5.7 %          ▓▓▓▒▒▒▒▒▒▒▒▓▓▓ ▲─────△             improved
 
   Triglycerides  1.4 > 2.3 mmol/L          ▓▓▓▒▒▒▒▒▒▒○─────────▲              worsened
@@ -19,4 +19,4 @@ LDL cholesterol  5.6 > 3.9 mmol/L          ▓▓▓▒▒▒▒▒▒●──�
         Vitamin D  38 > 74 nmol/L             no range
                                   ────────────────────────────────────────────────────
 
-                       position within each reference range (green in range, yellow near a limit)
+            position within each reference range (green in range, yellow near a limit or suboptimal)

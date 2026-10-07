@@ -38,6 +38,7 @@
 (require 'health-chart-eas)
 (require 'health-chart-theme)
 (require 'health-chart-status)
+(require 'health-chart-fit)
 (require 'health-chart-core)
 (require 'health-chart-validate)
 
@@ -160,9 +161,11 @@ the datum behind each cell) with `text'."
   (health-chart-validate name bindings)
   (let* ((template (health-chart--template name))
          (backend (health-chart--backend (plist-get props :backend)))
-         (spec (health-chart--resolve template (health-chart--bindings bindings props) props))
-         (scene (eas-compile spec :target backend
-                             :size (health-chart--size template backend props))))
+         (size (health-chart--size template backend props))
+         (bindings (health-chart-fit-bindings template (health-chart--bindings bindings props)
+                                              backend (and (eq backend 'text) (plist-get size :cols))))
+         (spec (health-chart--resolve template bindings props))
+         (scene (eas-compile spec :target backend :size size)))
     (if (eq backend 'text) (eas-text-render scene) (eas-svg-render scene))))
 
 ;;;###autoload

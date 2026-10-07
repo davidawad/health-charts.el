@@ -1,14 +1,14 @@
                                       Lipid panel (synthetic)
-            synthetic data; illustrative goals; tick = goal, hollow marker = prior draw
-                                                                                   │    ■ low
-Total cholesterol  188 mg/dL  (goal <200)  ◆ near limit █████████████████████████▋ │ ○  ■ near limit
-                                                                                   │    ■ in range
-                                                                     │                  ■ high
-        LDL cholesterol  128 mg/dL  (goal <100)  ▲ high █████████████│███▌ ○            ■ no range
-                                                                     │
-                                                             │
-      HDL cholesterol  56 mg/dL  (goal >40)  ● in range █████│○▋
-                                                             │
+ goals and reference limits; tick = goal, hollow marker = prior draw; yellow = short of the goal but
+                                                                                │       ■ low
+Total cholesterol  188 mg/dL  (goal <180)  ◇ suboptimal ████████████████████████│▋   ○  ■ near limit
+                                                                                │       ■ suboptimal
+                                                                     │                  ■ in range
+  LDL cholesterol  128 mg/dL  (goal <100)  ◇ suboptimal █████████████│███▌ ○            ■ high
+                                                                     │                  ■ no range
+                                                                │
+    HDL cholesterol  56 mg/dL  (goal >60)  ◇ suboptimal ██████○▋│
+                                                                │
                                                                             │
     Triglycerides  142 mg/dL  (goal <150)  ◆ near limit ███████████████████▍│  ○
                                                                             │

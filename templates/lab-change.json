@@ -8,7 +8,7 @@
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {analyte, unit?, before, after, ref_low?, ref_high?, warn_low?, warn_high?, warn_margin?}: two results per analyte; ref_low and ref_high come from the data source (either may be missing: one-sided; both missing: grey markers and no direction); the warn fields override the yellow zone of that analyte"
+        "doc": "rows {analyte, unit?, before, after, ref_low?, ref_high?, opt_low?, opt_high?, warn_low?, warn_high?, warn_margin?}: two results per analyte; ref_low and ref_high come from the data source (either may be missing: one-sided; both missing: grey markers and no direction); the warn fields override the yellow zone of that analyte; opt_low and opt_high (optional, inside the reference range) are the optimal range: inside the reference range but outside it is yellow \"suboptimal\", red is only outside the reference range"
       },
       "title": {
         "type": "string",
@@ -103,6 +103,8 @@
             "after": "number",
             "ref_low": "?number",
             "ref_high": "?number",
+            "opt_low": "?number",
+            "opt_high": "?number",
             "warn_low": "?number",
             "warn_high": "?number",
             "warn_margin": "?range:0:1",
@@ -129,6 +131,27 @@
                 "ref_high"
               ],
               "code": "warn_outside_range"
+            },
+            {
+              "le": [
+                "opt_low",
+                "opt_high"
+              ],
+              "code": "range_inverted"
+            },
+            {
+              "le": [
+                "ref_low",
+                "opt_low"
+              ],
+              "code": "opt_outside_range"
+            },
+            {
+              "le": [
+                "opt_high",
+                "ref_high"
+              ],
+              "code": "opt_outside_range"
             }
           ]
         }
@@ -180,7 +203,9 @@
         "x-eas:slot": "warn_margin"
       },
       "prefix": "bef",
-      "normalize": true
+      "normalize": true,
+      "opt_low_field": "opt_low",
+      "opt_high_field": "opt_high"
     },
     {
       "x-eas:transform": "health-status",
@@ -191,7 +216,9 @@
         "x-eas:slot": "warn_margin"
       },
       "prefix": "aft",
-      "normalize": true
+      "normalize": true,
+      "opt_low_field": "opt_low",
+      "opt_high_field": "opt_high"
     },
     {
       "x-eas:transform": "health-format",
@@ -227,7 +254,15 @@
       "as": "mid_after"
     },
     {
-      "calculate": "!isValid(datum.ref_low) && !isValid(datum.ref_high) ? 'no range' : datum.dist_after < datum.dist_before ? 'improved' : datum.dist_after > datum.dist_before ? 'worsened' : datum.after == datum.before ? 'unchanged' : (isValid(datum.ref_low) && isValid(datum.ref_high)) ? (datum.mid_after < datum.mid_before ? 'improved' : datum.mid_after > datum.mid_before ? 'worsened' : 'unchanged') : datum.dist_after > 0 ? 'unchanged' : 'no range'",
+      "calculate": "max(isValid(datum.opt_low) ? datum.opt_low - datum.before : 0, isValid(datum.opt_high) ? datum.before - datum.opt_high : 0, 0)",
+      "as": "odist_before"
+    },
+    {
+      "calculate": "max(isValid(datum.opt_low) ? datum.opt_low - datum.after : 0, isValid(datum.opt_high) ? datum.after - datum.opt_high : 0, 0)",
+      "as": "odist_after"
+    },
+    {
+      "calculate": "!isValid(datum.ref_low) && !isValid(datum.ref_high) ? 'no range' : datum.dist_after < datum.dist_before ? 'improved' : datum.dist_after > datum.dist_before ? 'worsened' : datum.odist_after < datum.odist_before ? 'improved' : datum.odist_after > datum.odist_before ? 'worsened' : datum.after == datum.before ? 'unchanged' : (isValid(datum.ref_low) && isValid(datum.ref_high)) ? (datum.mid_after < datum.mid_before ? 'improved' : datum.mid_after > datum.mid_before ? 'worsened' : 'unchanged') : datum.dist_after > 0 ? 'unchanged' : 'no range'",
       "as": "verdict"
     },
     {
@@ -286,7 +321,7 @@
             "nice": false,
             "zero": false
           },
-          "title": "position within each reference range (green in range, yellow near a limit)",
+          "title": "position within each reference range (green in range, yellow near a limit or suboptimal)",
           "axis": {
             "labels": false,
             "ticks": false,
@@ -588,6 +623,7 @@
             "domain": [
               "low",
               "near limit",
+              "suboptimal",
               "in range",
               "high",
               "no range"
@@ -595,6 +631,9 @@
             "range": [
               {
                 "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "warn_color"
               },
               {
                 "x-eas:slot": "warn_color"
@@ -621,6 +660,7 @@
             "domain": [
               "low",
               "near limit",
+              "suboptimal",
               "in range",
               "high",
               "no range"
@@ -628,6 +668,7 @@
             "range": [
               "triangle-down",
               "diamond",
+              "cross",
               "circle",
               "triangle-up",
               "square"
@@ -687,6 +728,7 @@
             "domain": [
               "low",
               "near limit",
+              "suboptimal",
               "in range",
               "high",
               "no range"
@@ -694,6 +736,9 @@
             "range": [
               {
                 "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "warn_color"
               },
               {
                 "x-eas:slot": "warn_color"
@@ -718,6 +763,7 @@
             "domain": [
               "low",
               "near limit",
+              "suboptimal",
               "in range",
               "high",
               "no range"
@@ -725,6 +771,7 @@
             "range": [
               "triangle-down",
               "diamond",
+              "cross",
               "circle",
               "triangle-up",
               "square"

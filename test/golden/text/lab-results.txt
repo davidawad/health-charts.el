@@ -1,15 +1,15 @@
                                      Latest results (synthetic)
-                  illustrative reference ranges; the data source owns the real ones
+            illustrative reference and optimal ranges; the data source owns the real ones
                                                                                         ▼ low
                                                                                         ◆ near limit
+                                                                                        ✚ suboptimal
                                                                                         ● in range
                                                                                         ▲ high
                                                                                         ■ no range
 
-
-        Glucose, fasting  5.1 mmol/L              ▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒●▒▓▓▓▓▓
+        Glucose, fasting  5.1 mmol/L              ▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒●▒▒▓▓▓▓
                         HbA1c  6.1 %              ▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓      ▲
-         LDL cholesterol  4.8 mmol/L              ▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓◆▓
+         LDL cholesterol  4.8 mmol/L              ▓▓▓▓▓▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓✚▓
          HDL cholesterol  0.9 mmol/L            ▼ ▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓
            Triglycerides  2.4 mmol/L              ▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓          ▲
                Creatinine  82 umol/L              ▓▓▓▓▓▒▒▒▒▒●▒▒▒▒▒▒▒▓▓▓▓▓
@@ -21,4 +21,4 @@
 Lp(a) (no range supplied)  40 nmol/L                      no range
                                      ─────────────────────────────────────────────────
 
-                                      range bar: green in range, yellow near a limit
+                          range bar: green in range (optimal), yellow near a limit or suboptimal

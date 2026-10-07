@@ -3,12 +3,12 @@
   "x-eas": {
     "template": "lab-status-grid",
     "version": "1.0.0",
-    "doc": "A grid of analytes by draw date: each cell is filled with its status color at partial opacity (red out of range, yellow near a limit, green in range, grey with no range) and carries a glyph (low, near, in range, high, ?) and the value, judged against that row's own reference range. Ranges come from the data, either limit may be missing.",
+    "doc": "A grid of analytes by draw date: each cell is filled with its status color at partial opacity (red out of range, yellow near a limit or, with an optimal range, outside it (suboptimal), green in range, grey with no range) and carries a glyph (low, near, suboptimal, in range, high, ?) and the value, judged against that row's own reference range. Ranges come from the data, either limit may be missing.",
     "slots": {
       "data": {
         "shape": "plist",
         "required": true,
-        "doc": "rows {time, analyte, value, ref_low?, ref_high?, warn_low?, warn_high?, warn_margin?}: every result, oldest first; rows of one analyte share a line; ref_low and ref_high come from the data source (either may be missing: one-sided; both missing: a grey ? cell); the warn fields override the yellow zone of that result"
+        "doc": "rows {time, analyte, value, ref_low?, ref_high?, opt_low?, opt_high?, warn_low?, warn_high?, warn_margin?}: every result, oldest first; rows of one analyte share a line; ref_low and ref_high come from the data source (either may be missing: one-sided; both missing: a grey ? cell); the warn fields override the yellow zone of that result; opt_low and opt_high (optional, inside the reference range) are the optimal range: inside the reference range but outside it is yellow \"suboptimal\", red is only outside the reference range"
       },
       "title": {
         "type": "string",
@@ -20,7 +20,7 @@
       },
       "description": {
         "type": "string",
-        "default": "A grid of analytes by draw date: each cell is filled with its status color at partial opacity (red out of range, yellow near a limit, green in range, grey with no range) and carries a glyph (low, near, in range, high, ?) and the value, judged against that row's own reference range. Ranges come from the data, either limit may be missing.",
+        "default": "A grid of analytes by draw date: each cell is filled with its status color at partial opacity (red out of range, yellow near a limit or, with an optimal range, outside it (suboptimal), green in range, grey with no range) and carries a glyph (low, near, suboptimal, in range, high, ?) and the value, judged against that row's own reference range. Ranges come from the data, either limit may be missing.",
         "doc": "the takeaway; alt text and table-view fallback"
       },
       "config": {
@@ -90,6 +90,11 @@
       "label_max": {
         "type": "integer",
         "doc": "the most characters of a row label before an ellipsis (the theme's :label-max, 28)"
+      },
+      "max_draws": {
+        "type": "integer",
+        "default": null,
+        "doc": "show only the latest N draw dates (0 shows all). Without it a text view shows as many draws as its width holds, so no column is narrower than its cell text; the subtitle says when draws are left out"
       }
     },
     "example": "examples/lab-status-grid.data.json",
@@ -103,6 +108,8 @@
             "value": "number",
             "ref_low": "?number",
             "ref_high": "?number",
+            "opt_low": "?number",
+            "opt_high": "?number",
             "warn_low": "?number",
             "warn_high": "?number",
             "warn_margin": "?range:0:1",
@@ -130,6 +137,27 @@
                 "ref_high"
               ],
               "code": "warn_outside_range"
+            },
+            {
+              "le": [
+                "opt_low",
+                "opt_high"
+              ],
+              "code": "range_inverted"
+            },
+            {
+              "le": [
+                "ref_low",
+                "opt_low"
+              ],
+              "code": "opt_outside_range"
+            },
+            {
+              "le": [
+                "opt_high",
+                "ref_high"
+              ],
+              "code": "opt_outside_range"
             }
           ]
         }
@@ -147,8 +175,10 @@
         "fill_opacity": "range:0:1",
         "decimals": "range:0:8",
         "sig_figs": "range:1:10",
-        "label_max": "range:4:200"
-      }
+        "label_max": "range:4:200",
+        "max_draws": "range:0:1000"
+      },
+      "fit": "draws"
     }
   },
   "title": {
@@ -180,13 +210,22 @@
   },
   "transform": [
     {
+      "x-eas:transform": "health-latest-draws",
+      "time": "time",
+      "max": {
+        "x-eas:slot": "max_draws"
+      }
+    },
+    {
       "x-eas:transform": "health-status",
       "value": "value",
       "low_field": "ref_low",
       "high_field": "ref_high",
       "margin": {
         "x-eas:slot": "warn_margin"
-      }
+      },
+      "opt_low_field": "opt_low",
+      "opt_high_field": "opt_high"
     },
     {
       "x-eas:transform": "health-format",
@@ -262,6 +301,7 @@
             "domain": [
               "low",
               "near limit",
+              "suboptimal",
               "in range",
               "high",
               "no range"
@@ -269,6 +309,9 @@
             "range": [
               {
                 "x-eas:slot": "bad_color"
+              },
+              {
+                "x-eas:slot": "warn_color"
               },
               {
                 "x-eas:slot": "warn_color"
