@@ -4,7 +4,7 @@
 
 ;; Author: David Awad <me@davidaw.ad>
 ;; URL: https://github.com/davidawad/health-charts.el
-;; Version: 2.0.1
+;; Version: 2.1.0
 ;; Package-Requires: ((emacs "30.1") (eas "0.2.2"))
 ;; Keywords: hypermedia, tools
 
