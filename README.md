@@ -205,11 +205,17 @@ drawn `5.6` and is still `high`. Row labels longer than the `label_max` slot
 (theme `:label-max`, default 28 characters) end in an ellipsis, and
 `lab-status-grid` cuts a value wider than its `col_step` cell the same way, so
 a label and a value never run together. A grid also shows only as many draws
-as its width holds: in a text view a column never gets narrower than its widest
-cell text plus a space, and when there are more draws than that the latest ones
-are shown and the subtitle says so ("latest 6 of 12 draws"). The `max_draws`
-slot (`:max-draws` for `health-chart-from-biomarker`) sets the number
-yourself; 0 shows every draw. `health-chart-from-biomarker` takes
+as its width holds: a column never gets narrower than its widest cell text plus
+a space (in text cells, or in pixels for SVG), and when there are more draws
+than that the latest ones are shown and the subtitle says so ("latest 6 of 12
+draws"). A live view (`health-chart-open`) is fitted again whenever its window
+is resized. The `max_draws` slot (`:max-draws` for
+`health-chart-from-biomarker`) sets the number yourself; 0 shows every draw.
+The columns are the draw dates of the markers shown: a marker drawn far more
+often than the rest (more than 4 times the median number of draw dates, such
+as daily weight beside a few lab draws) is left out by default, so its dates do
+not crowd out the lab columns, and the subtitle names it; the
+`include_frequent` slot (`:include-frequent`) keeps it. `health-chart-from-biomarker` takes
 `:decimals`, `:sig-figs` and `:label-max` and sets those slots; the numbers it
 maps are untouched.
 
@@ -229,7 +235,10 @@ file), and the ranges are the rows' own `ref_low`, `ref_high`, `opt_low` and
 ```
 
 Options: `:title`, `:markers`, `:category`, `:marker`, `:height-m`, `:bands`,
-`:margin`, `:directions`. Rows without a numeric canonical value (a qualified
+`:margin`, `:directions`, `:all-markers`, `:include-frequent`. For
+`lab-status-grid` only markers with a reference range in some row are drawn
+unless `:markers` names them or `:all-markers` is set (when no marker has a
+range, all are drawn). Rows without a numeric canonical value (a qualified
 result such as "<5") are skipped.
 
 ## Template catalog

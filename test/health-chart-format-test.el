@@ -461,5 +461,104 @@ separates every label from the first value, and no cell loses its text."
     (should (equal (funcall keep nil) '(1 2 3 4)))
     (should (equal (funcall keep 9) '(1 2 3 4)))))
 
+;;; Frequent markers and live views
+
+(defun health-chart-format-test--mixed-data ()
+  "Synthetic rows: 35 lab markers at 7 draws, plus weight and BMI at 105
+readings and a biological age at 242, oldest first."
+  (vconcat
+   (sort (append (health-chart-format-test--grid-data 7)
+                 (cl-loop for (name n) in '(("Weight" 105) ("BMI" 105) ("Biological age" 242))
+                          append (cl-loop for k below n
+                                          collect (list :time (format-time-string
+                                                               "%Y-%m-%d" (+ 1735689600 (* k 86400 (/ 250.0 n))) t)
+                                                        :analyte name :value (+ 20 (mod k 7))))))
+         (lambda (a b) (string< (plist-get a :time) (plist-get b :time))))))
+
+(defun health-chart-format-test--view-lines (view cols rows)
+  "VIEW resized to COLS by ROWS text cells, drawn, as lines."
+  (eas-view-resize view (list :cols cols :rows rows) 'text)
+  (split-string (substring-no-properties (eas-text-render (eas-view-scene view))) "\n"))
+
+(defun health-chart-format-test--check-grid (lines cols &optional ragged)
+  "Every line of LINES fits COLS, nothing touches, every row has the same cells.
+Returns the most cells of a row.  RAGGED allows rows with fewer cells."
+  (let (cells)
+    (dolist (line lines)
+      (should (<= (string-width line) cols))
+      (should-not (health-chart-format-test--touching line))
+      (let ((n (health-chart-format-test--cells line)))
+        (when (> n 0) (push n cells))))
+    (should cells)
+    (unless ragged (should (equal (seq-uniq cells) (list (car cells)))))
+    (apply #'max cells)))
+
+(ert-deftest health-chart-format-frequent-markers-are-found ()
+  (let ((frequent (health-chart-fit-frequent (health-chart-format-test--mixed-data))))
+    (should (equal (sort (copy-sequence frequent) #'string<) '("BMI" "Biological age" "Weight"))))
+  ;; one cadence, or a few more draws than the rest, is not frequent
+  (should-not (health-chart-fit-frequent (health-chart-format-test--grid-data 12)))
+  (should-not (health-chart-fit-frequent
+               (vconcat (health-chart-format-test--grid-data 2)
+                        (cl-loop for d from 3 to 9
+                                 collect (list :time (format "2025-%02d-01" d) :analyte "Extra" :value 1)))))
+  (should-not (health-chart-fit-frequent [])))
+
+(ert-deftest health-chart-format-grid-live-view-fits-and-refits ()
+  "35 lab rows at 7 draws and 3 rows at 105-242 readings in a live view."
+  (let* ((bindings (list :title "Results" :data (health-chart-format-test--mixed-data)))
+         (view (health-chart-open "lab-status-grid" bindings :backend 'text :id "health-fit-test")))
+    (unwind-protect
+        (let* ((at-105 (health-chart-format-test--view-lines view 105 26))
+               (n105 (health-chart-format-test--check-grid at-105 105)))
+          ;; the columns are the lab draws, not the 300-odd dates of the frequent rows
+          (should (<= 3 n105 7))
+          (should (seq-some (lambda (l) (string-match-p "not shown.*Weight, BMI\\|Weight.*not shown" l)) at-105))
+          (should-not (seq-some (lambda (l) (string-match-p "Biological age  *[^ ]" l)) at-105))
+          (let ((fitted (eas-view-bindings view)))
+            (should (equal (health-chart-fit-days (health-chart-fit--common (plist-get fitted :data) nil))
+                           (health-chart-fit-days (health-chart-format-test--grid-data 7))))
+            (should (= (or (plist-get fitted :max_draws) 7) n105)))
+          ;; a narrower window shows fewer draws, a wider one all 7, without reopening
+          (let ((n60 (health-chart-format-test--check-grid
+                      (health-chart-format-test--view-lines view 60 20) 60))
+                (n160 (health-chart-format-test--check-grid
+                       (health-chart-format-test--view-lines view 160 40) 160)))
+            (should (< n60 n105))
+            (should (= n160 7)))
+          ;; back at 105x26 it is what it was
+          (should (equal (health-chart-format-test--view-lines view 105 26) at-105)))
+      (eas-view-close view)
+      (when (get-buffer "*eas health-fit-test*") (kill-buffer "*eas health-fit-test*")))))
+
+(ert-deftest health-chart-format-grid-include-frequent-keeps-them ()
+  (let* ((data (health-chart-format-test--mixed-data))
+         (lines (split-string (substring-no-properties
+                               (health-chart-render "lab-status-grid"
+                                                    (list :data data :include_frequent t)
+                                                    :backend 'text :width 105 :height 26))
+                              "\n"))
+         (fitted (health-chart-fit-bindings (health-chart--template "lab-status-grid")
+                                            (list :data data :include_frequent t) 'text 105)))
+    (should (seq-some (lambda (l) (string-match-p "Biological age" l)) lines))
+    (should-not (seq-some (lambda (l) (string-match-p "not shown" l)) lines))
+    ;; still fitted: the latest few of every date
+    (should (< (plist-get fitted :max_draws) 20))
+    ;; a lab row has no result on most of the latest dates
+    (health-chart-format-test--check-grid lines 105 t)))
+
+(ert-deftest health-chart-format-grid-svg-fits-its-width ()
+  (let ((days (lambda (width)
+                (let ((s (health-chart-render "lab-status-grid"
+                                              (list :data (health-chart-format-test--mixed-data))
+                                              :backend 'svg :width width :height 380))
+                      (st 0) (out nil))
+                  (while (string-match ">\\(20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]\\)<" s st)
+                    (push (match-string 1 s) out)
+                    (setq st (match-end 0)))
+                  (length (seq-uniq out))))))
+    (should (= (funcall days 900) 7))
+    (should (< 1 (funcall days 500) 7))))
+
 (provide 'health-chart-format-test)
 ;;; health-chart-format-test.el ends here

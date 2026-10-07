@@ -163,7 +163,7 @@ the datum behind each cell) with `text'."
          (backend (health-chart--backend (plist-get props :backend)))
          (size (health-chart--size template backend props))
          (bindings (health-chart-fit-bindings template (health-chart--bindings bindings props)
-                                              backend (and (eq backend 'text) (plist-get size :cols))))
+                                              backend (if (eq backend 'text) (plist-get size :cols) (car size))))
          (spec (health-chart--resolve template bindings props))
          (scene (eas-compile spec :target backend :size size)))
     (if (eq backend 'text) (eas-text-render scene) (eas-svg-render scene))))
@@ -192,12 +192,17 @@ PROPS are those of `health-chart-render'."
 (defun health-chart-open (name bindings &rest props)
   "Open template NAME from BINDINGS as a live eas view and show it.
 Hover, crosshair and zoom come from eas.  PROPS: :backend `text' or
-`svg' to force one, :id for the view's name.  Returns the view."
+`svg' to force one, :id for the view's name.  A grid of draws is
+fitted to the window again whenever the view is resized.  Returns the
+view."
   (health-chart-validate name bindings)
   (let* ((template (health-chart--template name))
-         (view (eas-view-open (plist-get template :name) :bindings bindings
+         (backend (and (plist-get props :backend) (health-chart--backend (plist-get props :backend))))
+         (view (eas-view-open (plist-get template :name)
+                              :bindings (health-chart-fit-bindings template bindings backend nil)
                               :id (plist-get props :id))))
-    (eas-show view (and (plist-get props :backend) (health-chart--backend (plist-get props :backend))))
+    (health-chart-fit-watch view template bindings)
+    (eas-show view backend)
     view))
 
 ;;;###autoload

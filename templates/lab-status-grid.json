@@ -94,7 +94,12 @@
       "max_draws": {
         "type": "integer",
         "default": null,
-        "doc": "show only the latest N draw dates (0 shows all). Without it a text view shows as many draws as its width holds, so no column is narrower than its cell text; the subtitle says when draws are left out"
+        "doc": "show only the latest N draw dates of the markers shown (0 shows all). Without it a view shows as many draws as its width holds (text columns, or SVG pixels), so no column is narrower than its cell text, and a live view fits again when resized; the subtitle says when draws are left out"
+      },
+      "include_frequent": {
+        "type": "boolean",
+        "default": false,
+        "doc": "keep markers drawn far more often than the rest (more than 4 times the median count of draw dates, such as daily weight beside a few lab draws); by default they are left out, so their dates do not crowd out the lab columns, and the subtitle names them"
       }
     },
     "example": "examples/lab-status-grid.data.json",
@@ -176,7 +181,8 @@
         "decimals": "range:0:8",
         "sig_figs": "range:1:10",
         "label_max": "range:4:200",
-        "max_draws": "range:0:1000"
+        "max_draws": "range:0:1000",
+        "include_frequent": "bool"
       },
       "fit": "draws"
     }
@@ -209,6 +215,14 @@
     "name": "data"
   },
   "transform": [
+    {
+      "x-eas:transform": "health-common-cadence",
+      "analyte": "analyte",
+      "time": "time",
+      "include": {
+        "x-eas:slot": "include_frequent"
+      }
+    },
     {
       "x-eas:transform": "health-latest-draws",
       "time": "time",

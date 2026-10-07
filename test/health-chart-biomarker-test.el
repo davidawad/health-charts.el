@@ -112,6 +112,29 @@
       (should (= (plist-get hdl :ref_low) 1.0))
       (should-not (plist-member hdl :ref_high)))))
 
+(ert-deftest health-chart-biomarker-lab-status-grid-defaults-to-ranged-markers ()
+  (let* ((analytes (lambda (b) (seq-uniq (mapcar (lambda (r) (plist-get r :analyte))
+                                                 (health-chart-biomarker-test--rows b :data)))))
+         (env (health-chart-biomarker-test--fixture "latest-all"))
+         (ranged (funcall analytes (health-chart-from-biomarker "lab-status-grid" env)))
+         (all (funcall analytes (health-chart-from-biomarker "lab-status-grid" env :all-markers t))))
+    ;; lpa has neither limit: left out by default, kept on request (crp has no value)
+    (should (= (length all) 6))
+    (should (= (length ranged) 5))
+    (should (equal (seq-difference all ranged) '("Lipoprotein(a)")))
+    ;; markers named by the caller are drawn as asked
+    (should (= (length (funcall analytes (health-chart-from-biomarker
+                                          "lab-status-grid" env :markers '("lpa" "ferritin"))))
+               2)))
+  ;; weight and height have no range, bmi has one
+  (let ((b (health-chart-from-biomarker "lab-status-grid"
+                                        (health-chart-biomarker-test--fixture "measurements-body")
+                                        :include-frequent t)))
+    (should (equal (seq-uniq (mapcar (lambda (r) (plist-get r :analyte))
+                                     (health-chart-biomarker-test--rows b :data)))
+                   '("Body mass index")))
+    (should (eq (plist-get b :include_frequent) t))))
+
 (ert-deftest health-chart-biomarker-lab-change ()
   (let* ((b (health-chart-biomarker-test--check
              "lab-change"

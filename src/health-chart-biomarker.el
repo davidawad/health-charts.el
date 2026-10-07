@@ -198,9 +198,25 @@ an inverted optimal range, is left out: red is only ever the reference."
                               (health-chart-biomarker--ref-opt row))))
                   (health-chart-biomarker--markers rows))))))
 
+(defun health-chart-biomarker--ranged (rows opts)
+  "ROWS of the markers that have a reference range in some row.
+All ROWS when OPTS name :markers or set :all-markers, or when no marker
+has a range (the grid then draws them grey, no range)."
+  (let ((ranged (seq-uniq
+                 (mapcar (lambda (row) (plist-get row :marker))
+                         (seq-filter (lambda (row) (or (health-chart-biomarker--num row :ref_low)
+                                                       (health-chart-biomarker--num row :ref_high)))
+                                     rows)))))
+    (if (or (plist-get opts :markers) (plist-get opts :all-markers) (null ranged))
+        rows
+      (seq-filter (lambda (row) (member (plist-get row :marker) ranged)) rows))))
+
 (defun health-chart-biomarker--lab-status-grid (rows opts)
-  "Bindings of lab-status-grid from ROWS and OPTS: every result, oldest first."
-  (let ((rows (health-chart-biomarker--sorted (health-chart-biomarker--select rows opts))))
+  "Bindings of lab-status-grid from ROWS and OPTS: every result, oldest first.
+Only markers with a reference range, unless OPTS say otherwise
+\(`health-chart-biomarker--ranged')."
+  (let ((rows (health-chart-biomarker--sorted
+               (health-chart-biomarker--ranged (health-chart-biomarker--select rows opts) opts))))
     (list :title (health-chart-biomarker--title opts "Results by draw")
           :data (vconcat
                  (mapcar (lambda (row)
@@ -406,14 +422,17 @@ marker when the envelope has one."
 
 (defun health-chart-biomarker--display (name opts bindings)
   "BINDINGS of template NAME with the display slots OPTS asks for laid over.
-:decimals, :sig-figs, :label-max and :max-draws become the slots decimals,
-sig_figs, label_max and max_draws when the template declares them.
+:decimals, :sig-figs, :label-max, :max-draws and :include-frequent become
+the slots decimals, sig_figs, label_max, max_draws and include_frequent
+when the template declares them.
 Display only: no number in BINDINGS changes."
   (let ((slots (plist-get (plist-get (health-chart--template name) :meta) :slots)))
     (cl-loop for (opt slot) in '((:decimals :decimals) (:sig-figs :sig_figs) (:label-max :label_max)
                                   (:max-draws :max_draws))
              when (and (numberp (plist-get opts opt)) (plist-member slots slot))
              do (setq bindings (plist-put (copy-sequence bindings) slot (plist-get opts opt))))
+    (when (and (plist-get opts :include-frequent) (plist-member slots :include_frequent))
+      (setq bindings (plist-put (copy-sequence bindings) :include_frequent t)))
     bindings))
 
 ;;;###autoload
@@ -437,6 +456,11 @@ TEMPLATE is one of `health-chart-biomarker-templates'.  OPTS:
   :margin     a1c-trend, weight-bmi-trend: warning margin of the cut bands
   :directions lipid-panel: alist of marker to \"below\" or \"above\" for a
               marker that has both limits
+  :all-markers lab-status-grid: every marker; by default only markers with
+              a reference range in some row are drawn (all of them when
+              none has one, or when :markers names them)
+  :include-frequent lab-status-grid: keep markers drawn far more often
+              than the rest (the slot include_frequent)
   :max-draws  lab-status-grid: show only the latest N draw dates (0: all);
               the slot max_draws.  Without it a text view shows as many
               draws as its width holds.
