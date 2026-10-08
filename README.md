@@ -25,7 +25,7 @@ Install eas, then this package. On macOS or Linux with Homebrew the eas
 command-line tool comes from the tap:
 
 ```sh
-brew install davidawad/tap/eas
+brew install davidawad/tap/easel
 ```
 
 For Emacs (30.1 or newer), with `:vc`:
